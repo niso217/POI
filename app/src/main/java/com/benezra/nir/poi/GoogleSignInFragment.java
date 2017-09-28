@@ -25,8 +25,6 @@ package com.benezra.nir.poi;
         import android.view.LayoutInflater;
         import android.view.View;
         import android.view.ViewGroup;
-        import android.widget.Button;
-        import android.widget.TextView;
         import android.widget.Toast;
 
         import com.google.android.gms.auth.api.Auth;
@@ -45,8 +43,6 @@ package com.benezra.nir.poi;
         import com.google.firebase.auth.FirebaseAuth;
         import com.google.firebase.auth.FirebaseUser;
         import com.google.firebase.auth.GoogleAuthProvider;
-
-        import java.util.concurrent.Executor;
 
 /**
  * Demonstrate Firebase Authentication using a Google ID Token.
@@ -69,7 +65,7 @@ public class GoogleSignInFragment extends Fragment implements
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.activity_google, container, false);
+        View view = inflater.inflate(R.layout.fragment_google, container, false);
 
         mSignInButton = (SignInButton)view.findViewById(R.id.sign_in_button_google);
         mSignInButton.setOnClickListener(this);
@@ -95,20 +91,12 @@ public class GoogleSignInFragment extends Fragment implements
                 .build();
 
         // [START initialize_auth]
-        mAuth = FirebaseAuth.getInstance();
+        mAuth = ((LogInActivity)getActivity()).getmAuth();
         // [END initialize_auth]
 
 
     }
 
-    // [START on_start_check_user]
-    @Override
-    public void onStart() {
-        super.onStart();
-        // Check if user is signed in (non-null) and update UI accordingly.
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-    }
-    // [END on_start_check_user]
 
     // [START onactivityresult]
     @Override
@@ -147,6 +135,7 @@ public class GoogleSignInFragment extends Fragment implements
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithCredential:success");
                             FirebaseUser user = mAuth.getCurrentUser();
+                            ((LogInActivity)getActivity()).startActivity();
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithCredential:failure", task.getException());
