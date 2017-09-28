@@ -91,6 +91,9 @@ public class MainActivity extends AppCompatActivity {
 
 
         toggleButton();
+
+        addUserChangeListener();
+
     }
 
     // Changing button text
@@ -122,7 +125,6 @@ public class MainActivity extends AppCompatActivity {
 
         mFirebaseDatabase.child(userId).setValue(user);
 
-        addUserChangeListener();
     }
 
     /**
@@ -130,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void addUserChangeListener() {
         // User data change listener
-        mFirebaseDatabase.child(userId).addValueEventListener(new ValueEventListener() {
+        mFirebaseDatabase.child(mAuth.getCurrentUser().getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 User user = dataSnapshot.getValue(User.class);
@@ -159,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "Failed to read user", error.toException());
             }
         });
-        
+
     }
 
 
