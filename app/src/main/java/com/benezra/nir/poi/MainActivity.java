@@ -9,11 +9,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnSave;
     private DatabaseReference mFirebaseDatabase;
     private FirebaseDatabase mFirebaseInstance;
-
+    private FirebaseAuth mAuth;
     private String userId;
 
     @Override
@@ -83,6 +87,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mAuth = FirebaseAuth.getInstance();
+
+
         toggleButton();
     }
 
@@ -103,10 +110,15 @@ public class MainActivity extends AppCompatActivity {
         // In real apps this userId should be fetched
         // by implementing firebase auth
         if (TextUtils.isEmpty(userId)) {
-            userId = mFirebaseDatabase.push().getKey();
+            //userId = mFirebaseDatabase.push().getKey();
+            userId = mAuth.getCurrentUser().getUid();
         }
 
-        User user = new User(name, email);
+        List<String> temp = new ArrayList<>();
+        temp.add("Dance");
+        temp.add("Claim");
+
+        User user = new User(name, email,temp);
 
         mFirebaseDatabase.child(userId).setValue(user);
 
@@ -147,7 +159,10 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "Failed to read user", error.toException());
             }
         });
+        
     }
+
+
 
     private void updateUser(String name, String email) {
         // updating the user via child nodes

@@ -21,9 +21,10 @@ public class User {
     public User() {
     }
 
-    public User(String name, String email) {
+    public User(String name, String email, List<String> intrests) {
         this.name = name;
         this.email = email;
+        this.intrests = intrests;
     }
 
 
