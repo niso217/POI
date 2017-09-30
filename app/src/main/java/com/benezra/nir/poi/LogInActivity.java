@@ -15,8 +15,6 @@ import android.support.v7.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import java.util.Map;
-
 public class LogInActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
@@ -49,7 +47,7 @@ public class LogInActivity extends AppCompatActivity {
     public void showProgressDialog() {
         if (mProgressDialog == null) {
             mProgressDialog = new ProgressDialog(this);
-            mProgressDialog.setMessage(getString(R.string.loading));
+            //mProgressDialog.setMessage(getString(R.string.loading));
             mProgressDialog.setIndeterminate(true);
         }
 
@@ -69,7 +67,7 @@ public class LogInActivity extends AppCompatActivity {
     }
 
     public void startActivity(){
-        Intent i = new Intent(this, MainActivity.class);
+        Intent i = new Intent(this, MainActivityOld.class);
         startActivity(i);
         finish();
     }

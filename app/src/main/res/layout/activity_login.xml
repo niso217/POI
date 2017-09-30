@@ -13,7 +13,7 @@
 
     <fragment
         android:id="@+id/fragment2"
-        android:name="com.benezra.nir.poi.FacebookLoginActivity"
+        android:name="com.benezra.nir.poi.FacebookLoginFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 </LinearLayout>

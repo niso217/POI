@@ -39,7 +39,7 @@ import static com.facebook.FacebookSdk.getApplicationContext;
 /**
  * Demonstrate Firebase Authentication using a Facebook access token.
  */
-public class FacebookLoginActivity extends Fragment implements
+public class FacebookLoginFragment extends Fragment implements
         View.OnClickListener,
         FacebookCallback<LoginResult>{
 
