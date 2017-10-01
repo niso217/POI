@@ -52,7 +52,7 @@ public class MainActivityOld extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        addUserChangeListener();
+        addEventChangeListener();
         addInterestsChangeListener();
         getUserEventsChangeListener();
 
@@ -79,7 +79,6 @@ public class MainActivityOld extends AppCompatActivity {
         });
     }
 
-
     private void addInterestsChangeListener() {
         mFirebaseInstance.getReference("interests").addValueEventListener(new ValueEventListener() {
             @Override
@@ -94,7 +93,7 @@ public class MainActivityOld extends AppCompatActivity {
         });
     }
 
-    private void addUserChangeListener() {
+    private void addEventChangeListener() {
         String [] temp = new String[]{"Dance","Swim"};
 
         for (int i = 0; i < temp.length; i++) {
