@@ -11,6 +11,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.android.volley.toolbox.ImageLoader;
+import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareButton;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -49,7 +51,7 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
         //Getting the intent with the category title, image resource ID and first paragraph text for this category
         Intent categoryDetail = getIntent();
         String title = categoryDetail.getStringExtra("categoryTitle");
-        int image = categoryDetail.getIntExtra("imageResourceId", 0);
+        String image = categoryDetail.getStringExtra("imageResourceId");
         String firstParagraph = categoryDetail.getStringExtra("firstParagraphText");
         final double longitude = categoryDetail.getDoubleExtra("longitude", 0);
         final double latitude = categoryDetail.getDoubleExtra("latitude", 0);
@@ -64,7 +66,9 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
 
         //Setting the category image onto collapsing toolbar
         ImageView imageView = (ImageView) findViewById(R.id.backdrop);
-        imageView.setImageResource(image);
+                VolleyHelper.getInstance(this).getImageLoader().get(image, ImageLoader.getImageListener(imageView,
+                R.mipmap.ic_launcher, android.R.drawable
+                        .ic_dialog_alert));
 
         //Setting the paragraph text onto TextView
         TextView textView = (TextView) findViewById(R.id.first_paragraph);

@@ -25,14 +25,15 @@ public class SimpleFragmentPagerAdapter extends FragmentPagerAdapter {
     @Override
     public Fragment getItem(int position) {
         if (position == 0) {
-            return new UsefulInfoFragment();
+
         } else if (position == 1){
-            return new PlacesFragment();
+            //return new PlacesFragment();
         } else if (position == 2){
-            return new FoodFragment();
+            //return new FoodFragment();
         } else {
-            return new NatureFragment();
+            //return new NatureFragment();
         }
+        return new UsefulInfoFragment();
     }
 
     // This determines the number of tabs

@@ -6,12 +6,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.android.volley.toolbox.ImageLoader;
+import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.google.android.gms.maps.GoogleMap;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by justynagolawska on 12/03/2017.
@@ -22,10 +26,12 @@ import java.util.ArrayList;
 * {@link CategoryAdapter} is an {@link ArrayAdapter} that can provide the layout for each list
 * based on a data source, which is a list of {@link Category} objects.
 * */
-public class CategoryAdapter extends ArrayAdapter<Category> {
+public class CategoryAdapter extends BaseAdapter {
 
     private Context mContext;
     private GoogleMap mMap;
+    private String mPhotoUrl;
+    private ArrayList<Event> mEvents;
 
     /**
      * This is our own custom constructor (it doesn't mirror a superclass constructor).
@@ -33,14 +39,39 @@ public class CategoryAdapter extends ArrayAdapter<Category> {
      * to populate into the lists.
      *
      * @param context The current context. Used to inflate the layout file.
-     * @param categories A List of Category objects to display in a list
+     * @param events A List of events objects to display in a list
      */
-    public CategoryAdapter(Activity context, ArrayList<Category> categories) {
+    public CategoryAdapter(Activity context, ArrayList<Event> events,String photoUrl) {
         // Here, we initialize the ArrayAdapter's internal storage for the context and the list.
         // the second argument is used when the ArrayAdapter is populating a single TextView.
         // Because this is a custom adapter for one TextView and an ImageView, the adapter is not
         // going to use this second argument, so it can be any value. Here, we used 0.
-        super(context, 0, categories);
+        this.mContext = context;
+        this.mEvents = events;
+        this.mPhotoUrl = photoUrl;
+    }
+
+    public void setItems(ArrayList<Event> events) {
+        this.mEvents.clear();
+        this.mEvents = events;
+        this.notifyDataSetChanged();
+
+    }
+
+
+    @Override
+    public int getCount() {
+        return mEvents.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return mEvents.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return 0;
     }
 
     /**
@@ -57,24 +88,38 @@ public class CategoryAdapter extends ArrayAdapter<Category> {
         // Check if the existing view is being reused, otherwise inflate the view
         View listItemView = convertView;
         if (listItemView == null) {
-            listItemView = LayoutInflater.from(getContext()).inflate(
+            listItemView = LayoutInflater.from(mContext).inflate(
                     R.layout.category_list_item, parent, false);
         }
 
-        // Get the {@link Category} object located at this position in the list
-        Category currentCategory = getItem(position);
+        // Get the {@link Event} object located at this position in the list
+        Event currentEvent = (Event) getItem(position);
 
         // Find the TextView in the category_list_item.xml layout with the ID category_name
-        TextView nameTextView = (TextView) listItemView.findViewById(R.id.category_name);
+        TextView titleTextView = (TextView) listItemView.findViewById(R.id.tv_title_txt);
         // Get the category name from the current Category object and
         // set this text on the nameTextView
-        nameTextView.setText(currentCategory.getCategoryName());
+        titleTextView.setText(currentEvent.getTitle());
 
-        // Find the ImageView in the category_list_item.xml layout with the ID category_image
-        ImageView imageView = (ImageView) listItemView.findViewById(R.id.category_image);
-        // Get the image resource ID from the current Category object and
-        // set the image to imageView
-        imageView.setImageResource(currentCategory.getImageResourceId());
+        // Find the TextView in the category_list_item.xml layout with the ID category_name
+        TextView timeTextView = (TextView) listItemView.findViewById(R.id.tv_start_txt);
+        // Get the category name from the current Category object and
+        // set this text on the nameTextView
+        timeTextView.setText(currentEvent.getStart());
+
+        // Find the TextView in the category_list_item.xml layout with the ID category_name
+        TextView distanceTextView = (TextView) listItemView.findViewById(R.id.tv_distance_txt);
+        // Get the category name from the current Category object and
+        // set this text on the nameTextView
+        distanceTextView.setText(currentEvent.getDistance()+"");
+
+//        // Find the ImageView in the category_list_item.xml layout with the ID category_image
+        ImageView imageView = (ImageView) listItemView.findViewById(R.id.img_event);
+//        // Get the image resource ID from the current Category object and
+//        // set the image to imageView
+//        VolleyHelper.getInstance(mContext).getImageLoader().get(mPhotoUrl, ImageLoader.getImageListener(imageView,
+//                R.mipmap.ic_launcher, android.R.drawable
+//                        .ic_dialog_alert));
 
         // Return the whole list item layout (containing 2 TextViews and an ImageView)
         // so that it can be shown in the ListView
