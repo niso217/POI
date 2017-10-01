@@ -137,6 +137,8 @@ public class UsefulInfoFragment extends Fragment implements ValueEventListener {
 
                 Intent categoryDetail = new Intent(getActivity(), CategoryDeatailActivity.class);
                 //Passing the category title to the CategoryDetailActivity
+                categoryDetail.putExtra("eventId", event.getId());
+                //Passing the category title to the CategoryDetailActivity
                 categoryDetail.putExtra("categoryTitle", title);
                 //Passing the image id to the CategoryDetailActivity
                 categoryDetail.putExtra("imageResourceId", imageResourceUrl);
@@ -158,6 +160,7 @@ public class UsefulInfoFragment extends Fragment implements ValueEventListener {
         return rootView;
     }
 
+
     @Override
     public void onDataChange(DataSnapshot dataSnapshot) {
         if (dataSnapshot.exists()) {
@@ -165,6 +168,7 @@ public class UsefulInfoFragment extends Fragment implements ValueEventListener {
                 Event event = data.getValue(Event.class);
                 if (!mFirebaseUser.getUid().equals(event.getOwner())){  //skip events from owner
                     event.setDistance(mLastLocation);
+                    event.setId(data.getKey());
                     mEventModel.addEvent(data.getKey(),event);
                 }
             }

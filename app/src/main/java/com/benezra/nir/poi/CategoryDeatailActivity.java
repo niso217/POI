@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -21,17 +22,24 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 
 
 public class CategoryDeatailActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    private FirebaseUser mFirebaseUser;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_category_deatail);
+
+        mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -53,6 +61,7 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
         String title = categoryDetail.getStringExtra("categoryTitle");
         String image = categoryDetail.getStringExtra("imageResourceId");
         String firstParagraph = categoryDetail.getStringExtra("firstParagraphText");
+        final String eventId = categoryDetail.getStringExtra("eventId");
         final double longitude = categoryDetail.getDoubleExtra("longitude", 0);
         final double latitude = categoryDetail.getDoubleExtra("latitude", 0);
 
@@ -63,6 +72,24 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
         //Setting the styles to expanded and collapsed toolbar
         collapsingToolbar.setExpandedTitleTextAppearance(R.style.ExpandedAppBar);
         collapsingToolbar.setCollapsedTitleTextAppearance(R.style.CollapsedAppBar);
+
+        Button ButtonJoin = (Button) findViewById(R.id.btn_join);
+        ButtonJoin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FirebaseDatabase.getInstance().getReference("events").child(eventId).child("participates").child(mFirebaseUser.getUid()).setValue(true);
+
+            }
+        });
+
+        Button ButtonRemove = (Button) findViewById(R.id.btn_remove);
+        ButtonRemove.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FirebaseDatabase.getInstance().getReference("events").child(eventId).child("participates").child(mFirebaseUser.getUid()).removeValue();
+
+            }
+        });
 
         //Setting the category image onto collapsing toolbar
         ImageView imageView = (ImageView) findViewById(R.id.backdrop);

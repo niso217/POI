@@ -55,6 +55,18 @@
             android:orientation="vertical"
             android:paddingTop="24dp">
 
+            <Button
+                android:id="@+id/btn_join"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Join" />
+
+            <Button
+                android:id="@+id/btn_remove"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Remove" />
+
             <TextView
                 android:id="@+id/first_paragraph"
                 android:layout_width="wrap_content"

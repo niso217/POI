@@ -6,6 +6,7 @@ import android.util.Log;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.IgnoreExtraProperties;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,7 +26,19 @@ public class Event {
     private String details;
     private double distance;
     private String title;
+    private Map<String,Boolean> participates;
 
+    public Event() {
+    }
+
+
+    public Map<String, Boolean> getParticipates() {
+        return participates;
+    }
+
+    public void setParticipates(Map<String, Boolean> participates) {
+        this.participates = participates;
+    }
 
     public String getTitle() {
         return title;
