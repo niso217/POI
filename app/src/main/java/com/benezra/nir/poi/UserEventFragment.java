@@ -26,12 +26,11 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class UsefulInfoFragment extends Fragment implements ValueEventListener {
+public class UserEventFragment extends Fragment implements ValueEventListener {
 
     private EventModel mEventModel;
     private ArrayList<Event> mEventList;
@@ -52,48 +51,17 @@ public class UsefulInfoFragment extends Fragment implements ValueEventListener {
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventList = new ArrayList<>();
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-    }
-
-    private void initFusedLocation() {
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
-
-        if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        mFusedLocationClient.getLastLocation()
-                .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            mLastLocation = location;
-                            addEventChangeListener();
-                        }
-                    }
-                });
+        addEventChangeListener();
     }
 
 
     private void addEventChangeListener() {
-        String[] temp = new String[]{"Dance", "Swim"};
-
-        for (int i = 0; i < temp.length; i++) {
-            Query query = mFirebaseInstance.getReference("events").orderByChild("interest").equalTo(temp[i]);
+            Query query = mFirebaseInstance.getReference("events").orderByChild("owner").equalTo(mFirebaseUser.getUid());
             query.addValueEventListener(this);
-
-        }
-
     }
 
 
-    public UsefulInfoFragment() {
+    public UserEventFragment() {
         // Required empty public constructor
     }
 
@@ -155,8 +123,6 @@ public class UsefulInfoFragment extends Fragment implements ValueEventListener {
             }
         });
 
-        initFusedLocation();
-
         return rootView;
     }
 
@@ -166,11 +132,8 @@ public class UsefulInfoFragment extends Fragment implements ValueEventListener {
         if (dataSnapshot.exists()) {
             for (DataSnapshot data : dataSnapshot.getChildren()) {
                 Event event = data.getValue(Event.class);
-                if (!mFirebaseUser.getUid().equals(event.getOwner())){  //skip events from owner
-                    event.setDistance(mLastLocation);
                     event.setId(data.getKey());
                     mEventModel.addEvent(data.getKey(),event);
-                }
             }
             mEventList =new ArrayList<>(mEventModel.getEvents().values());
             mCategoryAdapter.setItems(mEventList);

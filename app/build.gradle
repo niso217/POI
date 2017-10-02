@@ -40,6 +40,7 @@ dependencies {
     compile 'com.elmargomez.typer:typerlib:1.0.0'
     compile 'com.google.android.gms:play-services-maps:11.4.0'
     compile 'com.google.android.gms:play-services-location:11.4.0'
+    compile 'com.google.android.gms:play-services-places:11.4.0'
 
 
     // Facebook Android SDK (only required for Facebook Login)
@@ -47,6 +48,8 @@ dependencies {
     // app. You can build a 'minSdkGingerbread' variant to test on devices with 9 <= SDK <= 15.
     compile 'com.facebook.android:facebook-android-sdk:4.25.0'
     compile 'com.android.volley:volley:1.0.0'
+    compile 'de.hdodenhof:circleimageview:2.1.0'
+
 
 
 }

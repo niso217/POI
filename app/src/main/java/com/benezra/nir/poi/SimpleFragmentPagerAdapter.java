@@ -25,15 +25,16 @@ public class SimpleFragmentPagerAdapter extends FragmentPagerAdapter {
     @Override
     public Fragment getItem(int position) {
         if (position == 0) {
-
+            return new EventByInterestFragment();
         } else if (position == 1){
+            return new UserEventFragment();
             //return new PlacesFragment();
         } else if (position == 2){
             //return new FoodFragment();
         } else {
             //return new NatureFragment();
         }
-        return new UsefulInfoFragment();
+        return new EventByInterestFragment();
     }
 
     // This determines the number of tabs
@@ -48,9 +49,9 @@ public class SimpleFragmentPagerAdapter extends FragmentPagerAdapter {
         // Generate title based on item position
         switch (position) {
             case 0:
-                return mContext.getString(R.string.category_usefulinfo);
+                return mContext.getString(R.string.event_by_interests);
             case 1:
-                return mContext.getString(R.string.category_places);
+                return mContext.getString(R.string.events_by_user);
             case 2:
                 return mContext.getString(R.string.category_food);
             case 3:

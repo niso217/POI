@@ -67,6 +67,12 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
 
         //Setting the category title onto collapsing toolbar
         CollapsingToolbarLayout collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
+        collapsingToolbar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("","");
+            }
+        });
         collapsingToolbar.setTitle(title);
 
         //Setting the styles to expanded and collapsed toolbar
