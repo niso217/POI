@@ -142,16 +142,16 @@ public class CreateEventActivity extends AppCompatActivity implements View.OnCli
                 event.setId(UUID.randomUUID().toString());
                 event.setLatitude(mLatLng.latitude);
                 event.setLongitude(mLatLng.longitude);
-                event.setStart("");
+                event.setStart(tvTimePicker.getText().toString());
                 event.setEnd("");
                 event.setOwner(mFirebaseUser.getUid());
                 event.setInterest("Dance");
-                event.setTitle("Dancing with nior");
+                event.setTitle(mEventTitle);
                 event.setDetails("dsfsdfdsFdsfdsfdsfdsfdsfdsfdsfdsfdsfdsfds");
                 event.setImage(encodeBitmapAndSaveToFirebase(myBitmap));
 
                 FirebaseDatabase.getInstance().getReference("events").child(event.getId()).setValue(event);
-
+                finish();
                 break;
         }
     }
