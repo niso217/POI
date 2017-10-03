@@ -4,6 +4,7 @@ import android.location.Location;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 
 import java.util.List;
@@ -24,9 +25,22 @@ public class Event {
     private String id;
     private String owner;
     private String details;
+
+    @Exclude
     private double distance;
+
     private String title;
+    private String image;
     private Map<String,Boolean> participates;
+
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
 
     public Event() {
     }
@@ -60,6 +74,7 @@ public class Event {
         return distance;
     }
 
+    @Exclude
     public void setDistance(Location current) {
         Location loc = new Location("");
         loc.setLatitude(latitude);

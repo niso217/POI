@@ -2,6 +2,8 @@ package com.benezra.nir.poi;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -21,18 +23,31 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
+
+import java.io.ByteArrayOutputStream;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 import com.android.volley.toolbox.ImageLoader;
 import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareButton;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.Place;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -41,20 +56,25 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
 import static android.Manifest.permission.CAMERA;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+import static android.icu.lang.UCharacter.GraphemeClusterBreak.T;
 
 
-public class CreateEventActivity extends AppCompatActivity {
+public class CreateEventActivity extends AppCompatActivity implements View.OnClickListener {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -66,7 +86,93 @@ public class CreateEventActivity extends AppCompatActivity {
     private ArrayList<String> permissions = new ArrayList<>();
     private final static int ALL_PERMISSIONS_RESULT = 107;
     ImageView image;
+    TextView tvDatePicker, tvTimePicker;
+    private Switch mSwitch;
+    private int mYear, mMonth, mDay, mHour, mMinute;
+    private Button btnSave;
+    private String EventDetails;
+    private LatLng mLatLng;
 
+
+    @Override
+    public void onClick(View v) {
+        final Calendar c = Calendar.getInstance();
+
+        switch (v.getId()) {
+            case R.id.tv_date:
+                // Get Current Date
+                mYear = c.get(Calendar.YEAR);
+                mMonth = c.get(Calendar.MONTH);
+                mDay = c.get(Calendar.DAY_OF_MONTH);
+
+
+                DatePickerDialog datePickerDialog = new DatePickerDialog(this,
+                        new DatePickerDialog.OnDateSetListener() {
+                            @Override
+                            public void onDateSet(DatePicker view, int year,
+                                                  int monthOfYear, int dayOfMonth) {
+                                String thedate = FormatDate(year, monthOfYear, dayOfMonth);
+                                tvDatePicker.setText(thedate);
+                            }
+                        }, mYear, mMonth, mDay);
+                datePickerDialog.show();
+                break;
+            case R.id.tv_time:
+                // Get Current Time
+                mHour = c.get(Calendar.HOUR_OF_DAY);
+                mMinute = c.get(Calendar.MINUTE);
+
+                // Launch Time Picker Dialog
+                TimePickerDialog timePickerDialog = new TimePickerDialog(this,
+                        new TimePickerDialog.OnTimeSetListener() {
+
+                            @Override
+                            public void onTimeSet(TimePicker view, int hourOfDay,
+                                                  int minute) {
+
+                                int hour = hourOfDay % 12;
+                                tvTimePicker.setText(String.format("%2d:%02d %s", hour == 0 ? 12 : hour,
+                                        minute, hourOfDay < 12 ? "AM" : "PM"));
+                            }
+                        }, mHour, mMinute, false);
+                timePickerDialog.show();
+                break;
+            case R.id.btn_save:
+                Event event = new Event();
+                event.setId(UUID.randomUUID().toString());
+                event.setLatitude(mLatLng.latitude);
+                event.setLongitude(mLatLng.longitude);
+                event.setStart("");
+                event.setEnd("");
+                event.setOwner(mFirebaseUser.getUid());
+                event.setInterest("Dance");
+                event.setTitle("Dancing with nior");
+                event.setDetails("dsfsdfdsFdsfdsfdsfdsfdsfdsfdsfdsfdsfdsfds");
+                event.setImage(encodeBitmapAndSaveToFirebase(myBitmap));
+
+                FirebaseDatabase.getInstance().getReference("events").child(event.getId()).setValue(event);
+
+                break;
+        }
+    }
+
+    private String FormatDate(int year, int month, int day) {
+
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, year);
+        cal.set(Calendar.MONTH, month);
+        cal.set(Calendar.DAY_OF_MONTH, day);
+        Date dateRepresentation = cal.getTime();
+
+        return CalendartoDate(dateRepresentation);
+    }
+
+    private String CalendartoDate(Date date) {
+        String format = "EEE, MMM d, yyyy";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format, Locale.US);
+        String formattedNow = simpleDateFormat.format(date);
+        return formattedNow;
+    }
 
 
     @Override
@@ -120,10 +226,10 @@ public class CreateEventActivity extends AppCompatActivity {
                 Button finish = (Button) mView.findViewById(R.id.btn_finish);
                 image = (ImageView) mView.findViewById(R.id.ivImage);
 
-                if (myBitmap!=null)
+                if (myBitmap != null)
                     image.setImageBitmap(myBitmap);
 
-                if (mEventTitle!=null)
+                if (mEventTitle != null)
                     mTitle.setText(mEventTitle);
 
                 mBuilder.setView(mView);
@@ -158,12 +264,9 @@ public class CreateEventActivity extends AppCompatActivity {
         });
 
 
-
         //Setting the styles to expanded and collapsed toolbar
         collapsingToolbar.setExpandedTitleTextAppearance(R.style.ExpandedAppBar);
         collapsingToolbar.setCollapsedTitleTextAppearance(R.style.CollapsedAppBar);
-
-
 
 
         //Setting the category image onto collapsing toolbar
@@ -173,13 +276,42 @@ public class CreateEventActivity extends AppCompatActivity {
         //Setting the paragraph text onto TextView
         TextView textView = (TextView) findViewById(R.id.first_paragraph);
 
+        tvDatePicker = (TextView) findViewById(R.id.tv_date);
+        tvTimePicker = (TextView) findViewById(R.id.tv_time);
+        mSwitch = (Switch) findViewById(R.id.tgl_allday);
+        btnSave = (Button) findViewById(R.id.btn_save);
+
+        tvDatePicker.setText(CalendartoDate(Calendar.getInstance().getTime()));
+
+        btnSave.setOnClickListener(this);
+        tvDatePicker.setOnClickListener(this);
+        tvTimePicker.setOnClickListener(this);
+        mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked)
+                    tvTimePicker.setVisibility(View.INVISIBLE);
+                else
+                    tvTimePicker.setVisibility(View.VISIBLE);
+
+            }
+        });
+
 
     }
 
-    public void setmMap(GoogleMap map){
+    public void setmMap(GoogleMap map) {
         mMap = map;
         onMapReady();
     }
+
+    public void onPlaceSelected(Place place) {
+        Log.d("", place.getName().toString());
+        mLatLng = place.getLatLng();
+        mMap.addMarker(new MarkerOptions().position(mLatLng).title(place.getAddress().toString()));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mLatLng, 15.0f));
+    }
+
 
     public void onMapReady() {
 
@@ -286,10 +418,9 @@ public class CreateEventActivity extends AppCompatActivity {
                     //myBitmap = rotateImageIfRequired(myBitmap, picUri);
                     myBitmap = getResizedBitmap(myBitmap, 500);
 
-                   // CircleImageView croppedImageView = (CircleImageView) findViewById(R.id.img_profile);
-                   // croppedImageView.setImageBitmap(myBitmap);
+                    // CircleImageView croppedImageView = (CircleImageView) findViewById(R.id.img_profile);
+                    // croppedImageView.setImageBitmap(myBitmap);
                     image.setImageBitmap(myBitmap);
-
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -314,6 +445,13 @@ public class CreateEventActivity extends AppCompatActivity {
 
 
         }
+
+    }
+
+    public String encodeBitmapAndSaveToFirebase(Bitmap bitmap) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+        return  Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
 
     }
 
@@ -470,5 +608,6 @@ public class CreateEventActivity extends AppCompatActivity {
         }
 
     }
+
 }
 

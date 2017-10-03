@@ -93,7 +93,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
                 //Getting the category name
                 String title = event.getTitle();
                 // Getting the image resource id for the category
-                String imageResourceUrl = mFirebaseUser.getPhotoUrl().toString();
+                String imageResourceUrl = event.getImage();
                 // Getting the first paragraph text
                 String firstParagraph = event.getDetails();
                 // Getting the longitude

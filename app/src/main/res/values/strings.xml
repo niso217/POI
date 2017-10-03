@@ -67,5 +67,7 @@
     <string name="login_label">Login</string>
     <string name="success_login_msg">Login successful</string>
     <string name="error_login_msg">Please fill any empty fields</string>
+    <string name="all_day">All-day</string>
+    <string name="not_repeat">Does not repeat</string>
 
 </resources>

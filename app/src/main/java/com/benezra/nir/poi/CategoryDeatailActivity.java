@@ -1,11 +1,14 @@
 package com.benezra.nir.poi;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -25,6 +28,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
+
+import java.io.ByteArrayOutputStream;
 
 
 public class CategoryDeatailActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -60,6 +65,7 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
         Intent categoryDetail = getIntent();
         String title = categoryDetail.getStringExtra("categoryTitle");
         String image = categoryDetail.getStringExtra("imageResourceId");
+
         String firstParagraph = categoryDetail.getStringExtra("firstParagraphText");
         final String eventId = categoryDetail.getStringExtra("eventId");
         final double longitude = categoryDetail.getDoubleExtra("longitude", 0);
@@ -99,9 +105,10 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
 
         //Setting the category image onto collapsing toolbar
         ImageView imageView = (ImageView) findViewById(R.id.backdrop);
-                VolleyHelper.getInstance(this).getImageLoader().get(image, ImageLoader.getImageListener(imageView,
-                R.mipmap.ic_launcher, android.R.drawable
-                        .ic_dialog_alert));
+        imageView.setImageBitmap(encodeBitmapAndSaveToFirebase(image));
+//                VolleyHelper.getInstance(this).getImageLoader().get(image, ImageLoader.getImageListener(imageView,
+//                R.mipmap.ic_launcher, android.R.drawable
+//                        .ic_dialog_alert));
 
         //Setting the paragraph text onto TextView
         TextView textView = (TextView) findViewById(R.id.first_paragraph);
@@ -156,6 +163,12 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
             }
         });
 
+    }
+
+    public Bitmap encodeBitmapAndSaveToFirebase(String encodedImage) {
+        byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
+        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+        return decodedByte;
     }
 
     @Override

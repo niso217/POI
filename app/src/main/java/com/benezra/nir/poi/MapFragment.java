@@ -73,12 +73,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,PlaceSel
 
     @Override
     public void onPlaceSelected(Place place) {
-        Log.d("",place.getName().toString());
+        try{
+            ((CreateEventActivity) getActivity()).onPlaceSelected(place);
+        }catch (ClassCastException cce){
+
+        }
     }
 
     @Override
     public void onError(Status status) {
-        Log.d("",status.toString());
-
+            Log.e("MapFragment",status.getStatusMessage());
     }
 }
