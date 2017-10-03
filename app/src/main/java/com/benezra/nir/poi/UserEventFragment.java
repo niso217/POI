@@ -3,11 +3,15 @@ package com.benezra.nir.poi;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +29,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -93,7 +98,13 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
                 //Getting the category name
                 String title = event.getTitle();
                 // Getting the image resource id for the category
-                String imageResourceUrl = event.getImage();
+//                Bitmap imageResourceUrl = null;
+//                try {
+//                    if (event.getImage()!=null)
+//                    imageResourceUrl = decodeFromFirebaseBase64(event.getImage());
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
                 // Getting the first paragraph text
                 String firstParagraph = event.getDetails();
                 // Getting the longitude
@@ -109,7 +120,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
                 //Passing the category title to the CategoryDetailActivity
                 categoryDetail.putExtra("categoryTitle", title);
                 //Passing the image id to the CategoryDetailActivity
-                categoryDetail.putExtra("imageResourceId", imageResourceUrl);
+               // categoryDetail.putExtra("imageResourceId", imageResourceUrl);
                 //Passing the first paragraph text to the CategoryDetailActivity
                 categoryDetail.putExtra("firstParagraphText", firstParagraph);
                 //Passing the longitude google coordinate to the CategoryDetailActivity
@@ -119,11 +130,21 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
                 //Passing the map location title to the CategoryDetailActivity
                 categoryDetail.putExtra("locationTitle", locationTitle);
 
-                startActivity(categoryDetail);
+                try{
+                    startActivity(categoryDetail);
+                }
+                catch (Exception e){
+                    Log.d("",e.getMessage());
+                }
             }
         });
 
         return rootView;
+    }
+
+    public static Bitmap decodeFromFirebaseBase64(String image) throws IOException {
+        byte[] decodedByteArray = android.util.Base64.decode(image, Base64.DEFAULT);
+        return BitmapFactory.decodeByteArray(decodedByteArray, 0, decodedByteArray.length);
     }
 
 

@@ -27,7 +27,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.ByteArrayOutputStream;
 
@@ -36,6 +40,7 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
+    private FirebaseDatabase mFirebaseInstance;
 
 
     @Override
@@ -44,7 +49,7 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
         setContentView(R.layout.activity_category_deatail);
 
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-
+        mFirebaseInstance = FirebaseDatabase.getInstance();
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -64,12 +69,29 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
         //Getting the intent with the category title, image resource ID and first paragraph text for this category
         Intent categoryDetail = getIntent();
         String title = categoryDetail.getStringExtra("categoryTitle");
-        String image = categoryDetail.getStringExtra("imageResourceId");
-
+        //Bitmap image = categoryDetail.getParcelableExtra("imageResourceId");
         String firstParagraph = categoryDetail.getStringExtra("firstParagraphText");
         final String eventId = categoryDetail.getStringExtra("eventId");
         final double longitude = categoryDetail.getDoubleExtra("longitude", 0);
         final double latitude = categoryDetail.getDoubleExtra("latitude", 0);
+
+        Query query = mFirebaseInstance.getReference("events").child(eventId).child("image");
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                String image = snapshot.getValue(String.class);
+                if (image!=null){
+                    ImageView imageView = (ImageView) findViewById(R.id.backdrop);
+                    imageView.setImageBitmap(encodeBitmapAndSaveToFirebase(image));
+
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError firebaseError) {
+                Log.e("The read failed: ", firebaseError.getMessage());
+            }
+        });
 
         //Setting the category title onto collapsing toolbar
         CollapsingToolbarLayout collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
@@ -104,8 +126,8 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
         });
 
         //Setting the category image onto collapsing toolbar
-        ImageView imageView = (ImageView) findViewById(R.id.backdrop);
-        imageView.setImageBitmap(encodeBitmapAndSaveToFirebase(image));
+        //ImageView imageView = (ImageView) findViewById(R.id.backdrop);
+        //imageView.setImageBitmap(image);
 //                VolleyHelper.getInstance(this).getImageLoader().get(image, ImageLoader.getImageListener(imageView,
 //                R.mipmap.ic_launcher, android.R.drawable
 //                        .ic_dialog_alert));
@@ -130,7 +152,7 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
         });
 
         Log.v("my_tag", "category passed title is " + title);
-        Log.v("my_tag", "category passed image is " + image);
+        //Log.v("my_tag", "category passed image is " + image);
         Log.v("my_tag", "category passed paragraph text is " + firstParagraph);
 
 
