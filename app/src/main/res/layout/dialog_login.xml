@@ -7,7 +7,7 @@
     android:padding="5dp">
 
     <EditText
-        android:id="@+id/etTitle"
+        android:id="@+id/et_dialogtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -16,13 +16,13 @@
         android:inputType="text" />
 
     <ImageView
-        android:id="@+id/ivImage"
+        android:id="@+id/iv_dialogimage"
         android:layout_width="match_parent"
         android:layout_height="200dp"
         app:srcCompat="@android:drawable/ic_menu_gallery" />
 
     <Button
-        android:id="@+id/btn_finish"
+        android:id="@+id/btn_dialogfinish"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="finish" />

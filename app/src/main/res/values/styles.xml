@@ -67,5 +67,8 @@
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
+    <style name="PermissionsDialogFragmentStyle" parent="Base.Theme.AppCompat.Dialog">
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
 
 </resources>

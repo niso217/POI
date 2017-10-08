@@ -1,6 +1,8 @@
 package com.benezra.nir.poi;
 
 import android.location.Location;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -15,7 +17,7 @@ import java.util.Map;
  */
 
 @IgnoreExtraProperties
-public class Event {
+public class Event implements Parcelable {
 
     private String interest;
     private double latitude;
@@ -25,10 +27,8 @@ public class Event {
     private String id;
     private String owner;
     private String details;
-
     @Exclude
     private double distance;
-
     private String title;
     private String image;
     private Map<String,Boolean> participates;
@@ -43,6 +43,10 @@ public class Event {
     }
 
     public Event() {
+    }
+
+    public Event(String uuid) {
+        this.id = uuid;
     }
 
 
@@ -137,4 +141,55 @@ public class Event {
     public void setEnd(String end) {
         this.end = end;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(interest);
+
+
+        dest.writeString(start);
+        dest.writeString(end);
+        dest.writeString(id);
+        dest.writeString(owner);
+        dest.writeString(details);
+        dest.writeString(title);
+        dest.writeString(image);
+
+        dest.writeDouble(latitude);
+        dest.writeDouble(longitude);
+        dest.writeDouble(distance);
+    }
+
+    private Event(Parcel in){
+        this.interest = in.readString();
+        this.start = in.readString();
+        this.end = in.readString();
+        this.id = in.readString();
+        this.owner = in.readString();
+        this.details = in.readString();
+        this.title = in.readString();
+        this.image = in.readString();
+        this.latitude = in.readDouble();
+        this.longitude = in.readDouble();
+        this.distance = in.readDouble();
+
+    }
+
+    public static final Parcelable.Creator<Event> CREATOR = new Parcelable.Creator<Event>() {
+
+        @Override
+        public Event createFromParcel(Parcel source) {
+            return new Event(source);
+        }
+
+        @Override
+        public Event[] newArray(int size) {
+            return new Event[size];
+        }
+    };
 }
