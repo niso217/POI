@@ -287,8 +287,11 @@ public class CreateEventActivity extends AppCompatActivity
 
     @Override
     public void DialogResults(String title, Bitmap bitmap) {
+        mBackgroundImage = bitmap;
         collapsingToolbar.setTitle(title);
         collapsingToolbar.setBackground(new BitmapDrawable(getResources(), bitmap));
+
+        mCurrentEvent.setTitle(title);
         mCurrentEvent.setImage(BitmapUtil.encodeBitmapAndSaveToFirebase(bitmap));
     }
 }
