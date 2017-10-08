@@ -22,8 +22,8 @@ public class Event implements Parcelable {
     private String interest;
     private double latitude;
     private double longitude;
-    private String start;
-    private String end;
+    private long start;
+    private long end;
     private String id;
     private String owner;
     private String details;
@@ -45,8 +45,10 @@ public class Event implements Parcelable {
     public Event() {
     }
 
-    public Event(String uuid) {
+    public Event(String uuid,String userid) {
         this.id = uuid;
+        this.owner = userid;
+        this.interest = "Dance";
     }
 
 
@@ -126,25 +128,26 @@ public class Event implements Parcelable {
         this.longitude = longitude;
     }
 
-    public String getStart() {
-        return start;
-    }
-
-    public void setStart(String start) {
-        this.start = start;
-    }
-
-    public String getEnd() {
-        return end;
-    }
-
-    public void setEnd(String end) {
-        this.end = end;
-    }
 
     @Override
     public int describeContents() {
         return 0;
+    }
+
+    public long getStart() {
+        return start;
+    }
+
+    public void setStart(long start) {
+        this.start = start;
+    }
+
+    public long getEnd() {
+        return end;
+    }
+
+    public void setEnd(long end) {
+        this.end = end;
     }
 
     @Override
@@ -152,8 +155,8 @@ public class Event implements Parcelable {
         dest.writeString(interest);
 
 
-        dest.writeString(start);
-        dest.writeString(end);
+        dest.writeLong(start);
+        dest.writeLong(end);
         dest.writeString(id);
         dest.writeString(owner);
         dest.writeString(details);
@@ -167,8 +170,8 @@ public class Event implements Parcelable {
 
     private Event(Parcel in){
         this.interest = in.readString();
-        this.start = in.readString();
-        this.end = in.readString();
+        this.start = in.readLong();
+        this.end = in.readLong();
         this.id = in.readString();
         this.owner = in.readString();
         this.details = in.readString();

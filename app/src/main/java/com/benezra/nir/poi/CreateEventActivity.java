@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -20,6 +21,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -58,8 +61,9 @@ public class CreateEventActivity extends AppCompatActivity
         PermissionsDialogFragment.PermissionsGrantedCallback,
         DatePickerDialog.OnDateSetListener,
         TimePickerDialog.OnTimeSetListener,
-        CompoundButton.OnCheckedChangeListener ,
-        ImageCameraDialogFragment.ImageCameraDialogCallback {
+        CompoundButton.OnCheckedChangeListener,
+        ImageCameraDialogFragment.ImageCameraDialogCallback,
+        TextWatcher {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -67,13 +71,14 @@ public class CreateEventActivity extends AppCompatActivity
     private Switch mSwitch;
     private Button btnSave;
     private Event mCurrentEvent;
-    private LatLng mLatLng;
     final static String TAG = CreateEventActivity.class.getSimpleName();
-    CollapsingToolbarLayout collapsingToolbar;
+    private CollapsingToolbarLayout collapsingToolbar;
+    private ImageView mToolbarBackgroundImage;
     private Calendar mEventTime;
 
     //event fields
     private Bitmap mBackgroundImage;
+    private EditText mEventDetails;
 
 
     @Override
@@ -98,18 +103,7 @@ public class CreateEventActivity extends AppCompatActivity
                 timePickerDialog.show();
                 break;
             case R.id.btn_save:
-                Event event = new Event();
-                //event.setId();
-                event.setLatitude(mLatLng.latitude);
-                event.setLongitude(mLatLng.longitude);
-                event.setStart(tvTimePicker.getText().toString());
-                event.setEnd("");
-                event.setOwner(mFirebaseUser.getUid());
-                event.setInterest("Dance");
-                //event.setTitle(mEventTitle);
-                event.setDetails("dsfsdfdsFdsfdsfdsfdsfdsfdsfdsfdsfdsfdsfds");
-
-                FirebaseDatabase.getInstance().getReference("events").child(event.getId()).setValue(event);
+                FirebaseDatabase.getInstance().getReference("events").child(mCurrentEvent.getId()).setValue(mCurrentEvent);
                 finish();
                 break;
             case R.id.collapsing_toolbar:
@@ -127,7 +121,7 @@ public class CreateEventActivity extends AppCompatActivity
         mEventTime.set(Calendar.YEAR, year);
         mEventTime.set(Calendar.MONTH, month);
         mEventTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-        mCurrentEvent.setStart(mEventTime.getTimeInMillis() + "");
+        mCurrentEvent.setStart(mEventTime.getTimeInMillis());
 
     }
 
@@ -139,7 +133,7 @@ public class CreateEventActivity extends AppCompatActivity
 
         mEventTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
         mEventTime.set(Calendar.MINUTE, minute);
-        mCurrentEvent.setStart(mEventTime.getTimeInMillis() + "");
+        mCurrentEvent.setStart(mEventTime.getTimeInMillis());
 
     }
 
@@ -151,6 +145,21 @@ public class CreateEventActivity extends AppCompatActivity
             tvTimePicker.setVisibility(View.VISIBLE);
     }
 
+    @Override
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+    }
+
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+    }
+
+    @Override
+    public void afterTextChanged(Editable s) {
+        mCurrentEvent.setDetails(s.toString());
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -159,7 +168,7 @@ public class CreateEventActivity extends AppCompatActivity
 
 
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        mCurrentEvent = new Event(UUID.randomUUID().toString());
+        mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
         mEventTime = Calendar.getInstance();
 
 
@@ -184,11 +193,12 @@ public class CreateEventActivity extends AppCompatActivity
 
 
         //Setting the category mDialogImageView onto collapsing toolbar
-        ImageView imageView = (ImageView) findViewById(R.id.backdrop);
+        mToolbarBackgroundImage = (ImageView) findViewById(R.id.backdrop);
 
 
         //Setting the paragraph text onto TextView
-        TextView textView = (TextView) findViewById(R.id.first_paragraph);
+        mEventDetails = (EditText) findViewById(R.id.first_paragraph);
+        mEventDetails.addTextChangedListener(this);
 
         tvDatePicker = (TextView) findViewById(R.id.tv_date);
         tvDatePicker.setText(DateUtil.CalendartoDate(Calendar.getInstance().getTime()));
@@ -208,14 +218,15 @@ public class CreateEventActivity extends AppCompatActivity
 
     public void setmMap(GoogleMap map) {
         mMap = map;
-        onMapReady();
     }
 
     public void onPlaceSelected(Place place) {
-        Log.d("", place.getName().toString());
-        mLatLng = place.getLatLng();
-        mMap.addMarker(new MarkerOptions().position(mLatLng).title(place.getAddress().toString()));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mLatLng, 15.0f));
+        Log.d(TAG, place.getName().toString());
+
+        mCurrentEvent.setLatitude(place.getLatLng().latitude);
+        mCurrentEvent.setLongitude(place.getLatLng().longitude);
+        initMap(place.getLatLng().latitude, place.getLatLng().longitude, place.getAddress().toString());
+
     }
 
     private void buildImageAndTitleChooser() {
@@ -226,17 +237,11 @@ public class CreateEventActivity extends AppCompatActivity
 
     }
 
-    public void onMapReady() {
-        //Getting the intent with the attraction latitude and longitude
-        Intent categoryDetail = getIntent();
-        double longitude = categoryDetail.getDoubleExtra("longitude", 0);
-        double latitude = categoryDetail.getDoubleExtra("latitude", 0);
-        String locationTitle = categoryDetail.getStringExtra("locationTitle");
-
+    public void initMap(double latitude, double longitude, String address) {
 
         // Add a marker in the respective location and move the camera and set the zoom level to 15
         LatLng location = new LatLng(latitude, longitude);
-        mMap.addMarker(new MarkerOptions().position(location).title(locationTitle));
+        mMap.addMarker(new MarkerOptions().position(location).title(address));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15.0f));
 
     }
@@ -244,21 +249,38 @@ public class CreateEventActivity extends AppCompatActivity
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString("title",collapsingToolbar.getTitle().toString());
-        outState.putParcelable("back_image",mBackgroundImage);
+        outState.putString("title", collapsingToolbar.getTitle().toString());
+        Bitmap bitmap = getBitmap();
+        if (bitmap != null)
+            outState.putParcelable("back_image", bitmap);
+        outState.putParcelable("event", mCurrentEvent);
 
+    }
+
+    private Bitmap getBitmap() {
+        Bitmap bitmap = null;
+        BitmapDrawable bitmapDrawable = ((BitmapDrawable) mToolbarBackgroundImage.getDrawable());
+        if (bitmapDrawable != null)
+            bitmap = ((BitmapDrawable) mToolbarBackgroundImage.getDrawable()).getBitmap();
+        return bitmap;
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        String title = savedInstanceState.getString("title");
-        Bitmap bitmap = savedInstanceState.getParcelable("back_image");
 
-        if (title!=null)
-        collapsingToolbar.setTitle(title);
-        if (bitmap!=null)
-        collapsingToolbar.setBackground(new BitmapDrawable(getResources(), bitmap));
+        mCurrentEvent = savedInstanceState.getParcelable("event");
+
+        if (mCurrentEvent != null) {
+            collapsingToolbar.setTitle(mCurrentEvent.getTitle());
+            try {
+                mToolbarBackgroundImage.setImageBitmap(BitmapUtil.decodeFromFirebaseBase64(mCurrentEvent.getImage()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        mEventDetails.setText(mCurrentEvent.getDetails());
+        initMap(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude(), "");
 
     }
 
@@ -289,10 +311,12 @@ public class CreateEventActivity extends AppCompatActivity
     public void DialogResults(String title, Bitmap bitmap) {
         mBackgroundImage = bitmap;
         collapsingToolbar.setTitle(title);
-        collapsingToolbar.setBackground(new BitmapDrawable(getResources(), bitmap));
+        mToolbarBackgroundImage.setImageBitmap(bitmap);
 
         mCurrentEvent.setTitle(title);
         mCurrentEvent.setImage(BitmapUtil.encodeBitmapAndSaveToFirebase(bitmap));
     }
+
+
 }
 

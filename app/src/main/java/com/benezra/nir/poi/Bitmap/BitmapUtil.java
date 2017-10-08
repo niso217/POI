@@ -1,6 +1,7 @@
 package com.benezra.nir.poi.Bitmap;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
@@ -22,6 +23,10 @@ public class BitmapUtil {
 
     }
 
+    public static Bitmap decodeFromFirebaseBase64(String image) throws IOException {
+        byte[] decodedByteArray = android.util.Base64.decode(image, Base64.DEFAULT);
+        return BitmapFactory.decodeByteArray(decodedByteArray, 0, decodedByteArray.length);
+    }
 
     private static Bitmap rotateImageIfRequired(Bitmap img, Uri selectedImage) throws IOException {
 

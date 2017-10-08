@@ -142,10 +142,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
         return rootView;
     }
 
-    public static Bitmap decodeFromFirebaseBase64(String image) throws IOException {
-        byte[] decodedByteArray = android.util.Base64.decode(image, Base64.DEFAULT);
-        return BitmapFactory.decodeByteArray(decodedByteArray, 0, decodedByteArray.length);
-    }
+
 
 
     @Override

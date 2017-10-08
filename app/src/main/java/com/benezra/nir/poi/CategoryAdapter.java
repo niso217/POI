@@ -105,7 +105,7 @@ public class CategoryAdapter extends BaseAdapter {
         TextView timeTextView = (TextView) listItemView.findViewById(R.id.tv_start_txt);
         // Get the category name from the current Category object and
         // set this text on the nameTextView
-        timeTextView.setText(currentEvent.getStart());
+        //timeTextView.setText(currentEvent.getStart());
 
         // Find the TextView in the category_list_item.xml layout with the ID category_name
         TextView distanceTextView = (TextView) listItemView.findViewById(R.id.tv_distance_txt);
