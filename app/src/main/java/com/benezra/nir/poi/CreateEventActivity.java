@@ -218,6 +218,9 @@ public class CreateEventActivity extends AppCompatActivity
 
     public void setmMap(GoogleMap map) {
         mMap = map;
+        if (mCurrentEvent.getLatitude()>0)
+            initMap(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude(), "");
+
     }
 
     public void onPlaceSelected(Place place) {
@@ -273,14 +276,20 @@ public class CreateEventActivity extends AppCompatActivity
 
         if (mCurrentEvent != null) {
             collapsingToolbar.setTitle(mCurrentEvent.getTitle());
-            try {
-                mToolbarBackgroundImage.setImageBitmap(BitmapUtil.decodeFromFirebaseBase64(mCurrentEvent.getImage()));
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (mCurrentEvent.getImage()!=null) {
+                try {
+                    mToolbarBackgroundImage.setImageBitmap(BitmapUtil.decodeFromFirebaseBase64(mCurrentEvent.getImage()));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
         mEventDetails.setText(mCurrentEvent.getDetails());
-        initMap(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude(), "");
+        //initMap(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude(), "");
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(mCurrentEvent.getStart());
+        tvDatePicker.setText(DateUtil.CalendartoDate(calendar.getTime()));
+
 
     }
 
