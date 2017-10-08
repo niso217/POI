@@ -252,21 +252,11 @@ public class CreateEventActivity extends AppCompatActivity
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString("title", collapsingToolbar.getTitle().toString());
-        Bitmap bitmap = getBitmap();
-        if (bitmap != null)
-            outState.putParcelable("back_image", bitmap);
         outState.putParcelable("event", mCurrentEvent);
 
     }
 
-    private Bitmap getBitmap() {
-        Bitmap bitmap = null;
-        BitmapDrawable bitmapDrawable = ((BitmapDrawable) mToolbarBackgroundImage.getDrawable());
-        if (bitmapDrawable != null)
-            bitmap = ((BitmapDrawable) mToolbarBackgroundImage.getDrawable()).getBitmap();
-        return bitmap;
-    }
+
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
@@ -276,20 +266,20 @@ public class CreateEventActivity extends AppCompatActivity
 
         if (mCurrentEvent != null) {
             collapsingToolbar.setTitle(mCurrentEvent.getTitle());
-            if (mCurrentEvent.getImage()!=null) {
+            if (mCurrentEvent.getImage() != null) {
                 try {
                     mToolbarBackgroundImage.setImageBitmap(BitmapUtil.decodeFromFirebaseBase64(mCurrentEvent.getImage()));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-        }
-        mEventDetails.setText(mCurrentEvent.getDetails());
-        //initMap(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude(), "");
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(mCurrentEvent.getStart());
-        tvDatePicker.setText(DateUtil.CalendartoDate(calendar.getTime()));
 
+            mEventDetails.setText(mCurrentEvent.getDetails());
+            //initMap(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude(), "");
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(mCurrentEvent.getStart());
+            tvDatePicker.setText(DateUtil.CalendartoDate(calendar.getTime()));
+        }
 
     }
 

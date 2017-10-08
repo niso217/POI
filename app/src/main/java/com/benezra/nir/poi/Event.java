@@ -5,10 +5,12 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
+import com.benezra.nir.poi.Bitmap.DateUtil;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +51,7 @@ public class Event implements Parcelable {
         this.id = uuid;
         this.owner = userid;
         this.interest = "Dance";
+        this.start = Calendar.getInstance().getTimeInMillis();
     }
 
 
