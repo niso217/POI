@@ -24,6 +24,7 @@ import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -47,7 +48,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,8 +60,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_IMAGE;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_INTEREST;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_LATITUDE;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_LONGITUDE;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_OWNER;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_START;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
 
-public class CreateEventActivity extends AppCompatActivity
+
+public class CreateEventActivity extends BaseActivity
         implements View.OnClickListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
         DatePickerDialog.OnDateSetListener,
@@ -75,6 +90,8 @@ public class CreateEventActivity extends AppCompatActivity
     private CollapsingToolbarLayout collapsingToolbar;
     private ImageView mToolbarBackgroundImage;
     private Calendar mEventTime;
+    private FirebaseDatabase mFirebaseInstance;
+
 
     //event fields
     private Bitmap mBackgroundImage;
@@ -168,7 +185,7 @@ public class CreateEventActivity extends AppCompatActivity
 
 
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
+        mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventTime = Calendar.getInstance();
 
 
@@ -184,7 +201,6 @@ public class CreateEventActivity extends AppCompatActivity
 
         //Setting the category title onto collapsing toolbar
         collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
-        collapsingToolbar.setOnClickListener(this);
 
 
         //Setting the styles to expanded and collapsed toolbar
@@ -212,13 +228,67 @@ public class CreateEventActivity extends AppCompatActivity
         tvDatePicker.setOnClickListener(this);
         tvTimePicker.setOnClickListener(this);
         mSwitch.setOnCheckedChangeListener(this);
+        collapsingToolbar.setOnClickListener(this);
+
+
+
+        if (getIntent().getStringExtra(EVENT_ID) != null && savedInstanceState==null)
+            getEventIntent(getIntent());
+        else
+            mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
 
 
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void getEventIntent(Intent intent) {
+        showDialog();
+        mCurrentEvent = new Event();
+        mCurrentEvent.setId(intent.getStringExtra(EVENT_ID));
+        mCurrentEvent.setDetails(intent.getStringExtra(EVENT_DETAILS));
+        mCurrentEvent.setInterest(intent.getStringExtra(EVENT_INTEREST));
+        mCurrentEvent.setOwner(intent.getStringExtra(EVENT_OWNER));
+        mCurrentEvent.setTitle(intent.getStringExtra(EVENT_TITLE));
+        mCurrentEvent.setStart(intent.getLongExtra(EVENT_START, 0));
+        mCurrentEvent.setLatitude(intent.getDoubleExtra(EVENT_LATITUDE, 0));
+        mCurrentEvent.setLongitude(intent.getDoubleExtra(EVENT_LONGITUDE, 0));
+        getImageFromFireBase(intent.getStringExtra(EVENT_ID));
+
+
+    }
+
+    private void getImageFromFireBase(String eventId) {
+        Query query = mFirebaseInstance.getReference("events").child(eventId).child("image");
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                String image = snapshot.getValue(String.class);
+                if (image != null) {
+                    mCurrentEvent.setImage(image);
+                    setEventFields();
+                    hideDialog();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError firebaseError) {
+                Log.e("The read failed: ", firebaseError.getMessage());
+            }
+        });
+    }
+
     public void setmMap(GoogleMap map) {
         mMap = map;
-        if (mCurrentEvent.getLatitude()>0)
+        if (mCurrentEvent.getLatitude() > 0)
             initMap(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude(), "");
 
     }
@@ -256,14 +326,17 @@ public class CreateEventActivity extends AppCompatActivity
 
     }
 
-
-
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
 
         mCurrentEvent = savedInstanceState.getParcelable("event");
 
+        setEventFields();
+
+    }
+
+    private void setEventFields() {
         if (mCurrentEvent != null) {
             collapsingToolbar.setTitle(mCurrentEvent.getTitle());
             if (mCurrentEvent.getImage() != null) {
@@ -280,9 +353,7 @@ public class CreateEventActivity extends AppCompatActivity
             calendar.setTimeInMillis(mCurrentEvent.getStart());
             tvDatePicker.setText(DateUtil.CalendartoDate(calendar.getTime()));
         }
-
     }
-
 
     @Override
     public void navigateToCaptureFragment() {
@@ -300,11 +371,9 @@ public class CreateEventActivity extends AppCompatActivity
         }
     }
 
-
     private boolean isPermissionGranted() {
         return ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
     }
-
 
     @Override
     public void DialogResults(String title, Bitmap bitmap) {

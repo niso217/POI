@@ -164,7 +164,7 @@ public class Event implements Parcelable {
         dest.writeString(owner);
         dest.writeString(details);
         dest.writeString(title);
-        dest.writeString(image);
+        //dest.writeString(image);
 
         dest.writeDouble(latitude);
         dest.writeDouble(longitude);
@@ -179,7 +179,7 @@ public class Event implements Parcelable {
         this.owner = in.readString();
         this.details = in.readString();
         this.title = in.readString();
-        this.image = in.readString();
+        //this.image = in.readString();
         this.latitude = in.readDouble();
         this.longitude = in.readDouble();
         this.distance = in.readDouble();

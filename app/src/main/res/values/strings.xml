@@ -70,4 +70,25 @@
     <string name="all_day">All-day</string>
     <string name="not_repeat">Does not repeat</string>
 
+    <!--AlertDialogFragment-->
+    <string name="retry">RETRY</string>
+    <string name="leave">LEAVE</string>
+
+    <!--MainActivity-->
+    <string name="no_network_title">No Network Found</string>
+    <string name="no_network_message">No Network Found</string>
+    <string name="loading_data_title">Loading Data</string>
+    <string name="please_wait_message">Please wait...</string>
+    <string name="retrieving_data_title">Retrieving Data</string>
+    <string name="retrieving_data_message">failed retrieve data from the server</string>
+    <string name="id">Id:</string>
+    <string name="name">Name:</string>
+    <string name="year">Year:</string>
+    <string name="category">Category:</string>
+    <string name="description">Description:</string>
+    <string name="imageurl">ImageUrl:</string>
+    <string name="promourl">PromoUrl:</string>
+    <string name="rate">Rate:</string>
+    <string name="hour">Hour:</string>
+
 </resources>

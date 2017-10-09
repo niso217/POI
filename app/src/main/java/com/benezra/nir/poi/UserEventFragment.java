@@ -1,6 +1,7 @@
 package com.benezra.nir.poi;
 
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -18,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.benezra.nir.poi.Helper.PermissionsDialogFragment;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -32,6 +34,16 @@ import com.google.firebase.database.ValueEventListener;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_IMAGE;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_INTEREST;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_LATITUDE;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_LONGITUDE;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_OWNER;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_START;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
+
 /**
  * A simple {@link Fragment} subclass.
  */
@@ -45,8 +57,25 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
     private FusedLocationProviderClient mFusedLocationClient;
     private Location mLastLocation;
     private FirebaseUser mFirebaseUser;
+    private UserEventFragmentCallback mListener;
+    private Context mContext;
 
 
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        this.mContext = context;
+        if (context instanceof UserEventFragmentCallback) {
+            mListener = (UserEventFragmentCallback) context;
+        }
+    }
+
+    public interface UserEventFragmentCallback {
+        void showDialog();
+        void hideDialog();
+
+    }
 
 
     @Override
@@ -63,6 +92,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
     private void addEventChangeListener() {
             Query query = mFirebaseInstance.getReference("events").orderByChild("owner").equalTo(mFirebaseUser.getUid());
             query.addValueEventListener(this);
+             mListener.showDialog();
     }
 
 
@@ -95,43 +125,21 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
                 // Get the Category object at the given position the user clicked on
                 Event event = mEventList.get(position);
 
-                //Getting the category name
-                String title = event.getTitle();
-                // Getting the image resource id for the category
-//                Bitmap imageResourceUrl = null;
-//                try {
-//                    if (event.getImage()!=null)
-//                    imageResourceUrl = decodeFromFirebaseBase64(event.getImage());
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-                // Getting the first paragraph text
-                String firstParagraph = event.getDetails();
-                // Getting the longitude
-                Double longitude = event.getLongitude();
-                // Getting the latitude
-                Double latitude = event.getLatitude();
-                // Getting the map location title
-                String locationTitle = event.getTitle();
 
-                Intent categoryDetail = new Intent(getActivity(), CategoryDeatailActivity.class);
-                //Passing the category title to the CategoryDetailActivity
-                categoryDetail.putExtra("eventId", event.getId());
-                //Passing the category title to the CategoryDetailActivity
-                categoryDetail.putExtra("categoryTitle", title);
-                //Passing the image id to the CategoryDetailActivity
-               // categoryDetail.putExtra("imageResourceId", imageResourceUrl);
-                //Passing the first paragraph text to the CategoryDetailActivity
-                categoryDetail.putExtra("firstParagraphText", firstParagraph);
-                //Passing the longitude google coordinate to the CategoryDetailActivity
-                categoryDetail.putExtra("longitude", longitude);
-                //Passing the latitude google coordinate to the CategoryDetailActivity
-                categoryDetail.putExtra("latitude", latitude);
-                //Passing the map location title to the CategoryDetailActivity
-                categoryDetail.putExtra("locationTitle", locationTitle);
+                Intent userEvent = new Intent(getActivity(), CreateEventActivity.class);
+                userEvent.putExtra(EVENT_ID, event.getId());
+                userEvent.putExtra(EVENT_TITLE, event.getTitle());
+                userEvent.putExtra(EVENT_OWNER, event.getOwner());
+                //userEvent.putExtra(EVENT_IMAGE, event.getImage());
+                userEvent.putExtra(EVENT_DETAILS, event.getDetails());
+                userEvent.putExtra(EVENT_LATITUDE, event.getLatitude());
+                userEvent.putExtra(EVENT_LONGITUDE, event.getLongitude());
+                userEvent.putExtra(EVENT_INTEREST, event.getInterest());
+                userEvent.putExtra(EVENT_START, event.getStart());
+
 
                 try{
-                    startActivity(categoryDetail);
+                    startActivity(userEvent);
                 }
                 catch (Exception e){
                     Log.d("",e.getMessage());
@@ -157,6 +165,8 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
             mCategoryAdapter.setItems(mEventList);
 
         }
+        mListener.hideDialog();
+
     }
 
     @Override
