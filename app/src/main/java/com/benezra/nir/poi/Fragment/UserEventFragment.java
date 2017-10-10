@@ -1,4 +1,4 @@
-package com.benezra.nir.poi;
+package com.benezra.nir.poi.Fragment;
 
 
 import android.content.Context;
@@ -19,8 +19,13 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.benezra.nir.poi.CategoryAdapter;
+import com.benezra.nir.poi.CreateEventActivity;
+import com.benezra.nir.poi.Event;
+import com.benezra.nir.poi.EventModel;
 import com.benezra.nir.poi.Helper.PermissionsDialogFragment;
 import com.benezra.nir.poi.Helper.SharePref;
+import com.benezra.nir.poi.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;

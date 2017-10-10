@@ -18,6 +18,7 @@ public class User {
     private String name;
     private String avatar;
     private String email;
+    private String id;
     private List<String> interests;
     private List<String> events;
 
@@ -33,6 +34,11 @@ public class User {
         this.email = email;
         this.interests = interests;
         this.events = events;
+    }
+
+    public User(String id, String avatar){
+        this.id = id;
+        this.avatar = avatar;
     }
 
     public String getName() {

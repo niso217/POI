@@ -32,6 +32,7 @@ import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -40,6 +41,7 @@ import android.widget.Toast;
 
 import java.util.Calendar;
 
+import com.benezra.nir.poi.Adapter.ParticipatesAdapter;
 import com.benezra.nir.poi.Bitmap.BitmapUtil;
 import com.benezra.nir.poi.Bitmap.DateUtil;
 import com.benezra.nir.poi.Helper.PermissionsDialogFragment;
@@ -63,6 +65,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
@@ -84,7 +87,8 @@ public class CreateEventActivity extends BaseActivity
         CompoundButton.OnCheckedChangeListener,
         ImageCameraDialogFragment.ImageCameraDialogCallback,
         TextWatcher,
-        AdapterView.OnItemSelectedListener {
+        AdapterView.OnItemSelectedListener,
+        ValueEventListener{
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -100,10 +104,10 @@ public class CreateEventActivity extends BaseActivity
     private Spinner mspinnerCustom;
     private ArrayList<String> mInterestsList;
     private CustomSpinnerAdapter mCustomSpinnerAdapter;
-
-
-    //event fields
     private EditText mEventDetails;
+    private ParticipatesAdapter mParticipatesAdapterAdapter;
+    private ListView mListView;
+    private ArrayList<User> mParticipates;
 
 
     @Override
@@ -197,7 +201,6 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -208,7 +211,10 @@ public class CreateEventActivity extends BaseActivity
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventTime = Calendar.getInstance();
         mInterestsList = new ArrayList<>();
+        mParticipates = new ArrayList<>();
 
+       // User X = new User("J3g6vOYEcQSmjSwAgUwxtf28uSH2","https://lh3.googleusercontent.com/-z3J5PxqRcks/AAAAAAAAAAI/AAAAAAAAADY/T1h0DeO1g64/s96-c/photo.jpg");
+       // mParticipates.add(X);
 
         //Using the ToolBar as ActionBar
         //Find the toolbar view inside the activity layout
@@ -242,9 +248,14 @@ public class CreateEventActivity extends BaseActivity
         tvTimePicker = (TextView) findViewById(R.id.tv_time);
 
         mspinnerCustom = (Spinner) findViewById(R.id.spinnerCustom);
-        mspinnerCustom.setOnItemSelectedListener(this);
         mCustomSpinnerAdapter = new CustomSpinnerAdapter(this, mInterestsList);
         mspinnerCustom.setAdapter(mCustomSpinnerAdapter);
+
+        mParticipatesAdapterAdapter = new ParticipatesAdapter(this, mParticipates);
+
+        // Get a reference to the ListView, and attach the adapter to the listView.
+        mListView = (ListView) findViewById(R.id.list_view_par);
+        mListView.setAdapter(mParticipatesAdapterAdapter);
 
 
         mSwitch = (Switch) findViewById(R.id.tgl_allday);
@@ -256,6 +267,7 @@ public class CreateEventActivity extends BaseActivity
         tvTimePicker.setOnClickListener(this);
         mSwitch.setOnCheckedChangeListener(this);
         collapsingToolbar.setOnClickListener(this);
+        mspinnerCustom.setOnItemSelectedListener(this);
 
 
         if (savedInstanceState == null)
@@ -267,6 +279,34 @@ public class CreateEventActivity extends BaseActivity
         else
             mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
 
+        addUserChangeListener();
+
+    }
+
+    private void addUserChangeListener() {
+        Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
+        query.addValueEventListener(this);
+    }
+
+    @Override
+    public void DialogResults(String title, Bitmap bitmap) {
+        collapsingToolbar.setTitle(title);
+        mToolbarBackgroundImage.setImageBitmap(bitmap);
+
+        mCurrentEvent.setTitle(title);
+        mCurrentEvent.setImage(BitmapUtil.encodeBitmapAndSaveToFirebase(bitmap));
+    }
+
+
+    @Override
+    public void onDataChange(DataSnapshot dataSnapshot) {
+        if (dataSnapshot.exists()) {
+            ArrayList<User> users = new ArrayList<>();
+            for (DataSnapshot data : dataSnapshot.getChildren()) {
+                users.add(new User(data.getKey(),data.getValue(String.class)));
+            }
+            mParticipatesAdapterAdapter.setItems(users);
+        }
 
     }
 
@@ -364,6 +404,7 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
+
     private void addInterestsChangeListener() {
         mFirebaseInstance.getReference("interests").addValueEventListener(new ValueEventListener() {
             @Override
@@ -410,6 +451,7 @@ public class CreateEventActivity extends BaseActivity
         initCustomSpinner();
 
 
+
     }
 
     private void setEventFields() {
@@ -433,8 +475,6 @@ public class CreateEventActivity extends BaseActivity
         }
     }
 
-
-
     @Override
     public void navigateToCaptureFragment() {
         if (isPermissionGranted()) {
@@ -455,15 +495,11 @@ public class CreateEventActivity extends BaseActivity
         return ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
     }
 
+
+
     @Override
-    public void DialogResults(String title, Bitmap bitmap) {
-        collapsingToolbar.setTitle(title);
-        mToolbarBackgroundImage.setImageBitmap(bitmap);
+    public void onCancelled(DatabaseError databaseError) {
 
-        mCurrentEvent.setTitle(title);
-        mCurrentEvent.setImage(BitmapUtil.encodeBitmapAndSaveToFirebase(bitmap));
     }
-
-
 }
 

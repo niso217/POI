@@ -33,7 +33,7 @@ public class Event implements Parcelable {
     private double distance;
     private String title;
     private String image;
-    private Map<String,Boolean> participates;
+    private Map<String,String> participates;
 
 
     public String getImage() {
@@ -54,11 +54,11 @@ public class Event implements Parcelable {
     }
 
 
-    public Map<String, Boolean> getParticipates() {
+    public Map<String, String> getParticipates() {
         return participates;
     }
 
-    public void setParticipates(Map<String, Boolean> participates) {
+    public void setParticipates(Map<String, String> participates) {
         this.participates = participates;
     }
 

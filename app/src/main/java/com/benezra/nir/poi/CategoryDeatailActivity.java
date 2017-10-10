@@ -111,7 +111,7 @@ public class CategoryDeatailActivity extends AppCompatActivity implements OnMapR
         ButtonJoin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FirebaseDatabase.getInstance().getReference("events").child(eventId).child("participates").child(mFirebaseUser.getUid()).setValue(true);
+                FirebaseDatabase.getInstance().getReference("events").child(eventId).child("participates").child(mFirebaseUser.getUid()).setValue(mFirebaseUser.getPhotoUrl());
 
             }
         });

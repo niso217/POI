@@ -1,4 +1,4 @@
-package com.benezra.nir.poi;
+package com.benezra.nir.poi.Fragment;
 
 
 import android.content.Intent;
@@ -10,13 +10,21 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.benezra.nir.poi.CategoryAdapter;
+import com.benezra.nir.poi.CategoryDeatailActivity;
+import com.benezra.nir.poi.Event;
+import com.benezra.nir.poi.EventModel;
+import com.benezra.nir.poi.Helper.PermissionsDialogFragment;
+import com.benezra.nir.poi.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -35,7 +43,9 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class EventByInterestFragment extends Fragment implements ValueEventListener {
+public class EventByInterestFragment extends Fragment
+        implements ValueEventListener,
+        PermissionsDialogFragment.PermissionsGrantedCallback{
 
     private EventModel mEventModel;
     private ArrayList<Event> mEventList;
@@ -45,6 +55,7 @@ public class EventByInterestFragment extends Fragment implements ValueEventListe
     private FusedLocationProviderClient mFusedLocationClient;
     private Location mLastLocation;
     private FirebaseUser mFirebaseUser;
+    final static String TAG = EventByInterestFragment.class.getSimpleName();
 
 
 
@@ -86,7 +97,7 @@ public class EventByInterestFragment extends Fragment implements ValueEventListe
 
 
     private void addEventChangeListener() {
-        String[] temp = new String[]{"Dance", "Swim"};
+        String[] temp = new String[]{"Dance", "Swim","Geocaching"};
 
         for (int i = 0; i < temp.length; i++) {
             Query query = mFirebaseInstance.getReference("events").orderByChild("interest").equalTo(temp[i]);
@@ -164,7 +175,8 @@ public class EventByInterestFragment extends Fragment implements ValueEventListe
             }
         });
 
-        initFusedLocation();
+        //initFusedLocation();
+        navigateToCaptureFragment();
 
         return rootView;
     }
@@ -195,5 +207,25 @@ public class EventByInterestFragment extends Fragment implements ValueEventListe
     @Override
     public void onCancelled(DatabaseError databaseError) {
 
+    }
+
+    @Override
+    public void navigateToCaptureFragment() {
+        if (isPermissionGranted()) {
+            initFusedLocation();
+        } else {
+            PermissionsDialogFragment permissionsDialogFragment = (PermissionsDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
+            if (permissionsDialogFragment == null) {
+                Log.d(TAG, "opening dialog");
+                permissionsDialogFragment = PermissionsDialogFragment.newInstance();
+                permissionsDialogFragment.setPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,android.Manifest.permission.ACCESS_COARSE_LOCATION});
+                permissionsDialogFragment.show(getActivity().getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
+
+            }
+        }
+    }
+
+    private boolean isPermissionGranted() {
+        return ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 }

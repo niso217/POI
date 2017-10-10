@@ -5,6 +5,9 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
+import com.benezra.nir.poi.Fragment.EventByInterestFragment;
+import com.benezra.nir.poi.Fragment.UserEventFragment;
+
 /**
  * Created by justynagolawska on 12/03/2017.
  */
