@@ -20,6 +20,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.benezra.nir.poi.Helper.PermissionsDialogFragment;
+import com.benezra.nir.poi.Helper.SharePref;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -130,7 +131,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
                 userEvent.putExtra(EVENT_ID, event.getId());
                 userEvent.putExtra(EVENT_TITLE, event.getTitle());
                 userEvent.putExtra(EVENT_OWNER, event.getOwner());
-                //userEvent.putExtra(EVENT_IMAGE, event.getImage());
+                SharePref.getInstance(getContext()).saveImage(event.getImage());
                 userEvent.putExtra(EVENT_DETAILS, event.getDetails());
                 userEvent.putExtra(EVENT_LATITUDE, event.getLatitude());
                 userEvent.putExtra(EVENT_LONGITUDE, event.getLongitude());

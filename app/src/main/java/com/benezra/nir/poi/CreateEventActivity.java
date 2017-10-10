@@ -26,11 +26,13 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -41,6 +43,8 @@ import java.util.Calendar;
 import com.benezra.nir.poi.Bitmap.BitmapUtil;
 import com.benezra.nir.poi.Bitmap.DateUtil;
 import com.benezra.nir.poi.Helper.PermissionsDialogFragment;
+import com.benezra.nir.poi.Helper.SharePref;
+import com.benezra.nir.poi.View.CustomSpinnerAdapter;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -51,6 +55,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
@@ -78,7 +83,8 @@ public class CreateEventActivity extends BaseActivity
         TimePickerDialog.OnTimeSetListener,
         CompoundButton.OnCheckedChangeListener,
         ImageCameraDialogFragment.ImageCameraDialogCallback,
-        TextWatcher {
+        TextWatcher,
+        AdapterView.OnItemSelectedListener {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -91,10 +97,12 @@ public class CreateEventActivity extends BaseActivity
     private ImageView mToolbarBackgroundImage;
     private Calendar mEventTime;
     private FirebaseDatabase mFirebaseInstance;
+    private Spinner mspinnerCustom;
+    private ArrayList<String> mInterestsList;
+    private CustomSpinnerAdapter mCustomSpinnerAdapter;
 
 
     //event fields
-    private Bitmap mBackgroundImage;
     private EditText mEventDetails;
 
 
@@ -177,6 +185,18 @@ public class CreateEventActivity extends BaseActivity
         mCurrentEvent.setDetails(s.toString());
     }
 
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+        String interest = parent.getItemAtPosition(position).toString();
+        mCurrentEvent.setInterest(interest);
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -187,6 +207,7 @@ public class CreateEventActivity extends BaseActivity
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventTime = Calendar.getInstance();
+        mInterestsList = new ArrayList<>();
 
 
         //Using the ToolBar as ActionBar
@@ -220,6 +241,12 @@ public class CreateEventActivity extends BaseActivity
         tvDatePicker.setText(DateUtil.CalendartoDate(Calendar.getInstance().getTime()));
         tvTimePicker = (TextView) findViewById(R.id.tv_time);
 
+        mspinnerCustom = (Spinner) findViewById(R.id.spinnerCustom);
+        mspinnerCustom.setOnItemSelectedListener(this);
+        mCustomSpinnerAdapter = new CustomSpinnerAdapter(this, mInterestsList);
+        mspinnerCustom.setAdapter(mCustomSpinnerAdapter);
+
+
         mSwitch = (Switch) findViewById(R.id.tgl_allday);
         btnSave = (Button) findViewById(R.id.btn_save);
 
@@ -231,8 +258,11 @@ public class CreateEventActivity extends BaseActivity
         collapsingToolbar.setOnClickListener(this);
 
 
+        if (savedInstanceState == null)
+            addInterestsChangeListener();
 
-        if (getIntent().getStringExtra(EVENT_ID) != null && savedInstanceState==null)
+
+        if (getIntent().getStringExtra(EVENT_ID) != null && savedInstanceState == null)
             getEventIntent(getIntent());
         else
             mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
@@ -242,7 +272,7 @@ public class CreateEventActivity extends BaseActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case android.R.id.home:
                 onBackPressed();
                 return true;
@@ -251,7 +281,7 @@ public class CreateEventActivity extends BaseActivity
     }
 
     private void getEventIntent(Intent intent) {
-        showDialog();
+        //showDialog();
         mCurrentEvent = new Event();
         mCurrentEvent.setId(intent.getStringExtra(EVENT_ID));
         mCurrentEvent.setDetails(intent.getStringExtra(EVENT_DETAILS));
@@ -261,7 +291,9 @@ public class CreateEventActivity extends BaseActivity
         mCurrentEvent.setStart(intent.getLongExtra(EVENT_START, 0));
         mCurrentEvent.setLatitude(intent.getDoubleExtra(EVENT_LATITUDE, 0));
         mCurrentEvent.setLongitude(intent.getDoubleExtra(EVENT_LONGITUDE, 0));
-        getImageFromFireBase(intent.getStringExtra(EVENT_ID));
+        //getImageFromFireBase(intent.getStringExtra(EVENT_ID));
+        mCurrentEvent.setImage(SharePref.getInstance(this).getImage());
+        setEventFields();
 
 
     }
@@ -286,6 +318,7 @@ public class CreateEventActivity extends BaseActivity
         });
     }
 
+
     public void setmMap(GoogleMap map) {
         mMap = map;
         if (mCurrentEvent.getLatitude() > 0)
@@ -304,11 +337,51 @@ public class CreateEventActivity extends BaseActivity
 
     private void buildImageAndTitleChooser() {
 
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        ImageCameraDialogFragment imageCameraDialogFragment = new ImageCameraDialogFragment();
-        imageCameraDialogFragment.show(fragmentManager, "dialog");
+        ImageCameraDialogFragment ImageCameraFragment = (ImageCameraDialogFragment) getSupportFragmentManager().findFragmentByTag(ImageCameraDialogFragment.class.getName());
+
+        if (ImageCameraFragment == null) {
+            Log.d(TAG, "opening image camera dialog");
+            ImageCameraFragment = ImageCameraDialogFragment.newInstance();
+            try {
+                if (mCurrentEvent.getImage() != null)
+                    ImageCameraFragment.setImage(BitmapUtil.decodeFromFirebaseBase64(mCurrentEvent.getImage()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (mCurrentEvent.getTitle() != null)
+                ImageCameraFragment.setTitle(mCurrentEvent.getTitle());
+
+            ImageCameraFragment.show(getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
+
+        }
 
     }
+
+    private void initCustomSpinner() {
+
+        mCustomSpinnerAdapter.updateInterestList(mInterestsList);
+        mspinnerCustom.setSelection(mCustomSpinnerAdapter.getPosition(mCurrentEvent.getInterest()));
+    }
+
+
+    private void addInterestsChangeListener() {
+        mFirebaseInstance.getReference("interests").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                GenericTypeIndicator<ArrayList<String>> t = new GenericTypeIndicator<ArrayList<String>>() {
+                };
+                mInterestsList = snapshot.getValue(t);
+                if (mInterestsList != null)
+                    initCustomSpinner();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError firebaseError) {
+                Log.e("The read failed: ", firebaseError.getMessage());
+            }
+        });
+    }
+
 
     public void initMap(double latitude, double longitude, String address) {
 
@@ -323,6 +396,7 @@ public class CreateEventActivity extends BaseActivity
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable("event", mCurrentEvent);
+        outState.putStringArrayList("interests",mInterestsList);
 
     }
 
@@ -331,8 +405,10 @@ public class CreateEventActivity extends BaseActivity
         super.onRestoreInstanceState(savedInstanceState);
 
         mCurrentEvent = savedInstanceState.getParcelable("event");
-
+         mInterestsList = savedInstanceState.getStringArrayList("interests");
         setEventFields();
+        initCustomSpinner();
+
 
     }
 
@@ -352,8 +428,12 @@ public class CreateEventActivity extends BaseActivity
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(mCurrentEvent.getStart());
             tvDatePicker.setText(DateUtil.CalendartoDate(calendar.getTime()));
+            mspinnerCustom.setSelection(mCustomSpinnerAdapter.getPosition(mCurrentEvent.getInterest()));
+
         }
     }
+
+
 
     @Override
     public void navigateToCaptureFragment() {
@@ -377,7 +457,6 @@ public class CreateEventActivity extends BaseActivity
 
     @Override
     public void DialogResults(String title, Bitmap bitmap) {
-        mBackgroundImage = bitmap;
         collapsingToolbar.setTitle(title);
         mToolbarBackgroundImage.setImageBitmap(bitmap);
 

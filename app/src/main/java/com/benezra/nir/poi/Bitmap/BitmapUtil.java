@@ -3,12 +3,15 @@ package com.benezra.nir.poi.Bitmap;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.util.Base64;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+
+import javax.microedition.khronos.opengles.GL10;
 
 /**
  * Created by nir on 08/10/2017.
@@ -21,6 +24,21 @@ public class BitmapUtil {
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
         return Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
 
+    }
+
+    public static Bitmap getResizedBitmap(Bitmap bitmap) {
+        if (bitmap.getHeight() > GL10.GL_MAX_TEXTURE_SIZE) {
+
+            // this is the case when the bitmap fails to load
+            float aspect_ratio = ((float) bitmap.getHeight()) / ((float) bitmap.getWidth());
+            Bitmap scaledBitmap = Bitmap.createBitmap(bitmap, 0, 0,
+                    (int) ((GL10.GL_MAX_TEXTURE_SIZE * 0.9) * aspect_ratio),
+                    (int) (GL10.GL_MAX_TEXTURE_SIZE * 0.9));
+            return scaledBitmap;
+        } else {
+
+            return bitmap;
+        }
     }
 
     public static Bitmap decodeFromFirebaseBase64(String image) throws IOException {

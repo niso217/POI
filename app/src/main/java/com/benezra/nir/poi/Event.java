@@ -50,7 +50,6 @@ public class Event implements Parcelable {
     public Event(String uuid,String userid) {
         this.id = uuid;
         this.owner = userid;
-        this.interest = "Dance";
         this.start = Calendar.getInstance().getTimeInMillis();
     }
 

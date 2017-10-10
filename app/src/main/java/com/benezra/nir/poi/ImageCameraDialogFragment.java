@@ -18,6 +18,7 @@ import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,7 +41,18 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
     private Button mDialogFinish;
     private ImageView mDialogImageView;
     private Context mContext;
+    private Bitmap mImage;
+    private String mTitle;
+    private final static String TAG = ImageCameraDialogFragment.class.getSimpleName();
 
+
+
+    public static ImageCameraDialogFragment newInstance() {
+        return new ImageCameraDialogFragment();
+    }
+
+    public ImageCameraDialogFragment() {
+    }
 
     @Override
     public void onAttach(Context context) {
@@ -49,6 +61,14 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
         if (context instanceof ImageCameraDialogFragment.ImageCameraDialogCallback) {
             mListener = (ImageCameraDialogFragment.ImageCameraDialogCallback) context;
         }
+    }
+
+    public void setImage(Bitmap image){
+        mImage = image;
+    }
+
+    public void setTitle(String title){
+        mTitle = title;
     }
 
     @Override
@@ -82,6 +102,13 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
             if (bitmap != null) {
                 mDialogImageView.setImageBitmap(bitmap);
             }
+
+        }
+        else{
+            if (mTitle!=null)
+            mDialogTitle.setText(mTitle);
+            if (mImage!=null)
+            mDialogImageView.setImageBitmap(mImage);
 
         }
 
@@ -203,6 +230,7 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
                     bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), PicUri);
                     //mDialogBitmap = rotateImageIfRequired(mDialogBitmap, mPicUri);
                     bitmap = BitmapUtil.getResizedBitmap(bitmap, 500);
+                    Log.d(TAG,"getResizedBitmap");
 
                     mDialogImageView.setImageBitmap(bitmap);
 
@@ -215,7 +243,12 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
 
 
                 bitmap = (Bitmap) data.getExtras().get("data");
-                mDialogImageView.setImageBitmap(bitmap);
+                if (bitmap!=null){
+                    Log.d(TAG,"getResizedBitmap else");
+                    bitmap = BitmapUtil.getResizedBitmap(bitmap, 500);
+                    mDialogImageView.setImageBitmap(bitmap);
+
+                }
 
             }
 
