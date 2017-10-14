@@ -47,7 +47,7 @@ public class LogInActivity extends AppCompatActivity {
     public void showProgressDialog() {
         if (mProgressDialog == null) {
             mProgressDialog = new ProgressDialog(this);
-            //mProgressDialog.setMessage(getString(R.string.loading));
+            mProgressDialog.setMessage("loading");
             mProgressDialog.setIndeterminate(true);
         }
 
@@ -67,7 +67,7 @@ public class LogInActivity extends AppCompatActivity {
     }
 
     public void startActivity(){
-        Intent i = new Intent(this, MainActivityOld.class);
+        Intent i = new Intent(this, MainActivity.class);
         startActivity(i);
         finish();
     }

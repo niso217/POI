@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,7 +18,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-import com.benezra.nir.poi.CategoryAdapter;
+import com.benezra.nir.poi.Adapter.CategoryAdapter;
 import com.benezra.nir.poi.CategoryDeatailActivity;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.EventModel;
@@ -38,7 +37,6 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -67,6 +65,8 @@ public class EventByInterestFragment extends Fragment
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventList = new ArrayList<>();
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        mFirebaseInstance.getReference().keepSynced(true);
+
     }
 
     private void initFusedLocation() {

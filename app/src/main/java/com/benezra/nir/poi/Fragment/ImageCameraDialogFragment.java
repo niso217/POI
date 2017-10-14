@@ -1,4 +1,4 @@
-package com.benezra.nir.poi;
+package com.benezra.nir.poi.Fragment;
 
 /**
  * Created by nir on 08/10/2017.
@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -26,12 +27,19 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.android.volley.toolbox.ImageLoader;
 import com.benezra.nir.poi.Bitmap.BitmapUtil;
+import com.benezra.nir.poi.Helper.VolleyHelper;
+import com.benezra.nir.poi.R;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.benezra.nir.poi.R.id.imageView;
 
 
 public class ImageCameraDialogFragment extends DialogFragment implements View.OnClickListener {
@@ -41,10 +49,11 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
     private Button mDialogFinish;
     private ImageView mDialogImageView;
     private Context mContext;
-    private Bitmap mImage;
     private String mTitle;
-    private final static String TAG = ImageCameraDialogFragment.class.getSimpleName();
+    private Uri mPicUri;
+    private String mPicURL;
 
+    private final static String TAG = ImageCameraDialogFragment.class.getSimpleName();
 
 
     public static ImageCameraDialogFragment newInstance() {
@@ -63,11 +72,16 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
         }
     }
 
-    public void setImage(Bitmap image){
-        mImage = image;
+
+    public void setPicURL(String url) {
+        mPicURL = url;
     }
 
-    public void setTitle(String title){
+    public void setImageUri(Uri uri) {
+        mPicUri = uri;
+    }
+
+    public void setTitle(String title) {
         mTitle = title;
     }
 
@@ -75,8 +89,8 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString("title", mDialogTitle.getText().toString());
-        outState.putParcelable("image", getBitmap());
-
+        outState.putParcelable("uri", mPicUri);
+        outState.putString("url", mPicURL);
     }
 
     private Bitmap getBitmap() {
@@ -95,20 +109,36 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
         mDialogFinish.setOnClickListener(this);
 
         if (savedInstanceState != null) {
-            String title = savedInstanceState.getString("title");
-            Bitmap bitmap = savedInstanceState.getParcelable("image");
-            if (title != null)
-                mDialogTitle.setText(title);
-            if (bitmap != null) {
-                mDialogImageView.setImageBitmap(bitmap);
-            }
 
-        }
-        else{
-            if (mTitle!=null)
-            mDialogTitle.setText(mTitle);
-            if (mImage!=null)
-            mDialogImageView.setImageBitmap(mImage);
+            mPicURL = savedInstanceState.getString("url");
+            if (mPicURL != null) {
+                VolleyHelper.getInstance(getContext()).getImageLoader().get(mPicURL, ImageLoader.getImageListener(mDialogImageView,
+                        R.drawable.image_border, android.R.drawable.ic_dialog_alert));
+            } else {
+
+
+                mPicUri = savedInstanceState.getParcelable("uri");
+                if (mPicUri != null)
+                    setImageBack();
+            }
+            mTitle = savedInstanceState.getString("title");
+            if (mTitle != null)
+                mDialogTitle.setText(mTitle);
+
+
+        } else {
+
+            if (mPicURL != null) {
+                VolleyHelper.getInstance(getContext()).getImageLoader().get(mPicURL, ImageLoader.getImageListener(mDialogImageView,
+                        R.drawable.image_border, android.R.drawable.ic_dialog_alert));
+            } else {
+
+                if (mPicUri != null)
+                    setImageBack();
+            }
+            if (mTitle != null)
+                mDialogTitle.setText(mTitle);
+
 
         }
 
@@ -123,7 +153,7 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
                 startActivityForResult(getPickImageChooserIntent(), 200);
                 break;
             case R.id.btn_dialogfinish:
-                mListener.DialogResults(mDialogTitle.getText().toString(), getBitmap());
+                mListener.DialogResults(mDialogTitle.getText().toString(), mPicUri);
                 dismiss();
                 break;
 
@@ -131,7 +161,7 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
     }
 
     public interface ImageCameraDialogCallback {
-        void DialogResults(String title, Bitmap bitmap);
+        void DialogResults(String title, Uri picUri);
     }
 
     /**
@@ -220,41 +250,21 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        Bitmap bitmap;
         if (resultCode == Activity.RESULT_OK) {
 
             if (getPickImageResultUri(data) != null) {
-                Uri PicUri = getPickImageResultUri(data);
-
-                try {
-                    bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), PicUri);
-                    //mDialogBitmap = rotateImageIfRequired(mDialogBitmap, mPicUri);
-                    bitmap = BitmapUtil.getResizedBitmap(bitmap, 500);
-                    Log.d(TAG,"getResizedBitmap");
-
-                    mDialogImageView.setImageBitmap(bitmap);
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-
-            } else {
-
-
-                bitmap = (Bitmap) data.getExtras().get("data");
-                if (bitmap!=null){
-                    Log.d(TAG,"getResizedBitmap else");
-                    bitmap = BitmapUtil.getResizedBitmap(bitmap, 500);
-                    mDialogImageView.setImageBitmap(bitmap);
-
-                }
-
+                mPicUri = getPickImageResultUri(data);
+                mPicURL = null;
+                setImageBack();
             }
-
-
         }
 
+    }
+
+    private void setImageBack() {
+        Bitmap bitmap = BitmapUtil.UriToBitmap(getContext(), mPicUri);
+        if (bitmap != null)
+            mDialogImageView.setImageBitmap(bitmap);
     }
 
 }

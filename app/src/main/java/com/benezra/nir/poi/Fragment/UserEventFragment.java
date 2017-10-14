@@ -3,15 +3,10 @@ package com.benezra.nir.poi.Fragment;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,16 +14,13 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-import com.benezra.nir.poi.CategoryAdapter;
+import com.benezra.nir.poi.Adapter.CategoryAdapter;
 import com.benezra.nir.poi.CreateEventActivity;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.EventModel;
-import com.benezra.nir.poi.Helper.PermissionsDialogFragment;
 import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -37,7 +29,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
@@ -91,6 +82,8 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventList = new ArrayList<>();
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        mFirebaseInstance.getReference().keepSynced(true);
+
         addEventChangeListener();
     }
 
@@ -98,7 +91,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
     private void addEventChangeListener() {
             Query query = mFirebaseInstance.getReference("events").orderByChild("owner").equalTo(mFirebaseUser.getUid());
             query.addValueEventListener(this);
-             mListener.showDialog();
+             //mListener.showDialog();
     }
 
 
@@ -136,7 +129,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
                 userEvent.putExtra(EVENT_ID, event.getId());
                 userEvent.putExtra(EVENT_TITLE, event.getTitle());
                 userEvent.putExtra(EVENT_OWNER, event.getOwner());
-                SharePref.getInstance(getContext()).saveImage(event.getImage());
+                userEvent.putExtra(EVENT_IMAGE, event.getImage());
                 userEvent.putExtra(EVENT_DETAILS, event.getDetails());
                 userEvent.putExtra(EVENT_LATITUDE, event.getLatitude());
                 userEvent.putExtra(EVENT_LONGITUDE, event.getLongitude());
@@ -171,7 +164,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
             mCategoryAdapter.setItems(mEventList);
 
         }
-        mListener.hideDialog();
+        //mListener.hideDialog();
 
     }
 

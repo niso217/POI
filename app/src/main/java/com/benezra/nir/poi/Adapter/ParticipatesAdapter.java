@@ -2,6 +2,7 @@ package com.benezra.nir.poi.Adapter;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,6 +42,8 @@ public class ParticipatesAdapter extends BaseAdapter {
      * @param users A List of Users objects to display in a list
      */
     public ParticipatesAdapter(Activity context, ArrayList<User> users) {
+        Log.d("ParticipatesAdapter",users.size()+" ParticipatesAdapter");
+
         // Here, we initialize the ArrayAdapter's internal storage for the context and the list.
         // the second argument is used when the ArrayAdapter is populating a single TextView.
         // Because this is a custom adapter for one TextView and an ImageView, the adapter is not
@@ -50,16 +53,25 @@ public class ParticipatesAdapter extends BaseAdapter {
     }
 
     public void setItems(ArrayList<User> users) {
+        Log.d("ParticipatesAdapter",users.size()+" ArrayList<User> users  ");
         this.mUsers.clear();
+        Log.d("ParticipatesAdapter",mUsers.size()+" mUsers after clear");
+        Log.d("ParticipatesAdapter",System.identityHashCode(mUsers)+"   " +System.identityHashCode(users));
+
         this.mUsers = users;
+        Log.d("ParticipatesAdapter",mUsers.size()+" mUsers after initi");
         this.notifyDataSetChanged();
 
+    }
+
+    public ArrayList<User> getParticipateList(){
+        return mUsers;
     }
 
 
     @Override
     public int getCount() {
-        return mUsers.size();
+        return this.mUsers == null?0:this.mUsers.size();
     }
 
     @Override
@@ -83,6 +95,8 @@ public class ParticipatesAdapter extends BaseAdapter {
      */
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        Log.d("ParticipatesAdapter"," getView called");
+
         // Check if the existing view is being reused, otherwise inflate the view
         View listItemView = convertView;
         if (listItemView == null) {
@@ -97,7 +111,7 @@ public class ParticipatesAdapter extends BaseAdapter {
         TextView nameTextView = (TextView) listItemView.findViewById(R.id.tv_par_name);
         // Get the category name from the current Category object and
         // set this text on the nameTextView
-        nameTextView.setText("NIR");
+        nameTextView.setText(currentUser.getName());
 
 
         // Find the ImageView in the category_list_item.xml layout with the ID category_image

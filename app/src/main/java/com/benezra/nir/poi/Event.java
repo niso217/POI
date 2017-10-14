@@ -1,6 +1,7 @@
 package com.benezra.nir.poi;
 
 import android.location.Location;
+import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
@@ -31,10 +32,23 @@ public class Event implements Parcelable {
     private String details;
     @Exclude
     private double distance;
+    @Exclude
+    private Uri uri;
+
     private String title;
     private String image;
-    private Map<String,String> participates;
+    private Map<String,User> participates;
 
+
+
+    @Exclude
+    public Uri getUri() {
+        return uri;
+    }
+    @Exclude
+    public void setUri(Uri uri) {
+        this.uri = uri;
+    }
 
     public String getImage() {
         return image;
@@ -54,11 +68,11 @@ public class Event implements Parcelable {
     }
 
 
-    public Map<String, String> getParticipates() {
+    public Map<String, User> getParticipates() {
         return participates;
     }
 
-    public void setParticipates(Map<String, String> participates) {
+    public void setParticipates(Map<String, User> participates) {
         this.participates = participates;
     }
 

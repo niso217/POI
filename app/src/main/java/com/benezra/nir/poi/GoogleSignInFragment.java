@@ -147,6 +147,7 @@ public class GoogleSignInFragment extends Fragment implements
                         ((LogInActivity)getActivity()).hideProgressDialog();
                         // [END_EXCLUDE]
                     }
+
                 });
     }
     // [END auth_with_google]

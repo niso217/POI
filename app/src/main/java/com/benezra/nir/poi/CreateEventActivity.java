@@ -1,31 +1,26 @@
 package com.benezra.nir.poi;
 
-import android.app.Activity;
 import android.app.DatePickerDialog;
+import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
-import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcelable;
-import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -39,35 +34,45 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Calendar;
 
+import com.android.volley.toolbox.ImageLoader;
 import com.benezra.nir.poi.Adapter.ParticipatesAdapter;
 import com.benezra.nir.poi.Bitmap.BitmapUtil;
 import com.benezra.nir.poi.Bitmap.DateUtil;
+import com.benezra.nir.poi.Fragment.ImageCameraDialogFragment;
 import com.benezra.nir.poi.Helper.PermissionsDialogFragment;
 import com.benezra.nir.poi.Helper.SharePref;
+import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.benezra.nir.poi.View.CustomSpinnerAdapter;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnPausedListener;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
+import static android.R.attr.bitmap;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_IMAGE;
@@ -87,8 +92,7 @@ public class CreateEventActivity extends BaseActivity
         CompoundButton.OnCheckedChangeListener,
         ImageCameraDialogFragment.ImageCameraDialogCallback,
         TextWatcher,
-        AdapterView.OnItemSelectedListener,
-        ValueEventListener{
+        AdapterView.OnItemSelectedListener {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -108,6 +112,8 @@ public class CreateEventActivity extends BaseActivity
     private ParticipatesAdapter mParticipatesAdapterAdapter;
     private ListView mListView;
     private ArrayList<User> mParticipates;
+    private ProgressDialog progressDialog;
+    private boolean mMode; //true = new | false = edit
 
 
     @Override
@@ -132,14 +138,33 @@ public class CreateEventActivity extends BaseActivity
                 timePickerDialog.show();
                 break;
             case R.id.btn_save:
-                FirebaseDatabase.getInstance().getReference("events").child(mCurrentEvent.getId()).setValue(mCurrentEvent);
-                finish();
+                if (mCurrentEvent.getUri() != null)
+                    uploadBytes(mCurrentEvent.getUri());
+                else
+                    saveEventToFirebase();
+
                 break;
             case R.id.collapsing_toolbar:
                 navigateToCaptureFragment();
                 break;
 
         }
+    }
+
+    private Bitmap getBitmap() {
+        BitmapDrawable drawable = (BitmapDrawable) mToolbarBackgroundImage.getDrawable();
+        if (drawable != null)
+            return drawable.getBitmap();
+
+        return null;
+    }
+
+    private Uri getBitmapUri() {
+        BitmapDrawable drawable = (BitmapDrawable) mToolbarBackgroundImage.getDrawable();
+        if (drawable != null)
+            BitmapUtil.getImageUri(this, drawable.getBitmap());
+
+        return null;
     }
 
     @Override
@@ -210,11 +235,9 @@ public class CreateEventActivity extends BaseActivity
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventTime = Calendar.getInstance();
-        mInterestsList = new ArrayList<>();
-        mParticipates = new ArrayList<>();
 
-       // User X = new User("J3g6vOYEcQSmjSwAgUwxtf28uSH2","https://lh3.googleusercontent.com/-z3J5PxqRcks/AAAAAAAAAAI/AAAAAAAAADY/T1h0DeO1g64/s96-c/photo.jpg");
-       // mParticipates.add(X);
+
+        progressDialog = new ProgressDialog(this);
 
         //Using the ToolBar as ActionBar
         //Find the toolbar view inside the activity layout
@@ -248,14 +271,9 @@ public class CreateEventActivity extends BaseActivity
         tvTimePicker = (TextView) findViewById(R.id.tv_time);
 
         mspinnerCustom = (Spinner) findViewById(R.id.spinnerCustom);
-        mCustomSpinnerAdapter = new CustomSpinnerAdapter(this, mInterestsList);
-        mspinnerCustom.setAdapter(mCustomSpinnerAdapter);
 
-        mParticipatesAdapterAdapter = new ParticipatesAdapter(this, mParticipates);
 
-        // Get a reference to the ListView, and attach the adapter to the listView.
         mListView = (ListView) findViewById(R.id.list_view_par);
-        mListView.setAdapter(mParticipatesAdapterAdapter);
 
 
         mSwitch = (Switch) findViewById(R.id.tgl_allday);
@@ -270,45 +288,111 @@ public class CreateEventActivity extends BaseActivity
         mspinnerCustom.setOnItemSelectedListener(this);
 
 
-        if (savedInstanceState == null)
-            addInterestsChangeListener();
+        if (savedInstanceState != null) {
+            mCurrentEvent = savedInstanceState.getParcelable("event");
+            mInterestsList = savedInstanceState.getStringArrayList("interests");
+            mParticipates = savedInstanceState.getParcelableArrayList("participates");
+            mMode = savedInstanceState.getBoolean("mode");
+            initCustomSpinner();
+            initParticipates();
+            setEventFields();
 
 
-        if (getIntent().getStringExtra(EVENT_ID) != null && savedInstanceState == null)
-            getEventIntent(getIntent());
-        else
-            mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
+        } else {
+            mInterestsList = new ArrayList<>();
+            initCustomSpinner();
+            mParticipates = new ArrayList<>();
+            initParticipates();
 
-        addUserChangeListener();
+            if (getIntent().getStringExtra(EVENT_ID) != null) {
+                mMode = false; //edit  existing event
+                getEventIntent(getIntent());
+            } else {
+                mMode = true; //new event
+                mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
 
-    }
-
-    private void addUserChangeListener() {
-        Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
-        query.addValueEventListener(this);
-    }
-
-    @Override
-    public void DialogResults(String title, Bitmap bitmap) {
-        collapsingToolbar.setTitle(title);
-        mToolbarBackgroundImage.setImageBitmap(bitmap);
-
-        mCurrentEvent.setTitle(title);
-        mCurrentEvent.setImage(BitmapUtil.encodeBitmapAndSaveToFirebase(bitmap));
-    }
-
-
-    @Override
-    public void onDataChange(DataSnapshot dataSnapshot) {
-        if (dataSnapshot.exists()) {
-            ArrayList<User> users = new ArrayList<>();
-            for (DataSnapshot data : dataSnapshot.getChildren()) {
-                users.add(new User(data.getKey(),data.getValue(String.class)));
             }
-            mParticipatesAdapterAdapter.setItems(users);
+
+            mspinnerCustom.setSelection(mCustomSpinnerAdapter.getPosition(mCurrentEvent.getInterest()));
+
+            addParticipateChangeListener();
+            addInterestsChangeListener();
         }
 
+
     }
+
+    private void addParticipateChangeListener() {
+        Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
+        query.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                Log.d(TAG, "onChildAdded");
+
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                Log.d(TAG, "onChildChanged");
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                Log.d(TAG, "onChildRemoved");
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                Log.d(TAG, "onChildMoved");
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    mParticipates.clear();
+                    for (DataSnapshot data : dataSnapshot.getChildren()) {
+                        User user = data.getValue(User.class);
+                        mParticipates.add(user);
+                    }
+                    User owner = new User();
+                    owner.setName(mFirebaseUser.getDisplayName());
+                    owner.setAvatar(mFirebaseUser.getPhotoUrl().toString());
+                    mParticipates.add(owner);
+                    for (int i = 0; i < mParticipates.size(); i++) {
+                        Log.d(TAG, mParticipates.get(i).getName());
+                    }
+
+                    mParticipatesAdapterAdapter.setItems(new ArrayList<User>(mParticipates));
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    @Override
+    public void DialogResults(String title, Uri picuri) {
+        collapsingToolbar.setTitle(title);
+        mCurrentEvent.setTitle(title);
+        mCurrentEvent.setUri(picuri);
+        if (picuri != null)
+            mCurrentEvent.setImage(null);
+        setImageBack();
+
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -331,31 +415,10 @@ public class CreateEventActivity extends BaseActivity
         mCurrentEvent.setStart(intent.getLongExtra(EVENT_START, 0));
         mCurrentEvent.setLatitude(intent.getDoubleExtra(EVENT_LATITUDE, 0));
         mCurrentEvent.setLongitude(intent.getDoubleExtra(EVENT_LONGITUDE, 0));
-        //getImageFromFireBase(intent.getStringExtra(EVENT_ID));
-        mCurrentEvent.setImage(SharePref.getInstance(this).getImage());
+        mCurrentEvent.setImage(intent.getStringExtra(EVENT_IMAGE));
         setEventFields();
 
 
-    }
-
-    private void getImageFromFireBase(String eventId) {
-        Query query = mFirebaseInstance.getReference("events").child(eventId).child("image");
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                String image = snapshot.getValue(String.class);
-                if (image != null) {
-                    mCurrentEvent.setImage(image);
-                    setEventFields();
-                    hideDialog();
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError firebaseError) {
-                Log.e("The read failed: ", firebaseError.getMessage());
-            }
-        });
     }
 
 
@@ -382,12 +445,10 @@ public class CreateEventActivity extends BaseActivity
         if (ImageCameraFragment == null) {
             Log.d(TAG, "opening image camera dialog");
             ImageCameraFragment = ImageCameraDialogFragment.newInstance();
-            try {
-                if (mCurrentEvent.getImage() != null)
-                    ImageCameraFragment.setImage(BitmapUtil.decodeFromFirebaseBase64(mCurrentEvent.getImage()));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            if (mCurrentEvent.getImage() != null)
+                ImageCameraFragment.setPicURL(mCurrentEvent.getImage());
+            else if (mCurrentEvent.getUri() != null)
+                ImageCameraFragment.setImageUri(mCurrentEvent.getUri());
             if (mCurrentEvent.getTitle() != null)
                 ImageCameraFragment.setTitle(mCurrentEvent.getTitle());
 
@@ -398,11 +459,15 @@ public class CreateEventActivity extends BaseActivity
     }
 
     private void initCustomSpinner() {
-
+        mCustomSpinnerAdapter = new CustomSpinnerAdapter(this, mInterestsList);
         mCustomSpinnerAdapter.updateInterestList(mInterestsList);
-        mspinnerCustom.setSelection(mCustomSpinnerAdapter.getPosition(mCurrentEvent.getInterest()));
     }
 
+    private void initParticipates() {
+        Log.d(TAG, mParticipates.size() + "");
+        mParticipatesAdapterAdapter = new ParticipatesAdapter(this, new ArrayList<User>(mParticipates));
+        mListView.setAdapter(mParticipatesAdapterAdapter);
+    }
 
 
     private void addInterestsChangeListener() {
@@ -437,43 +502,29 @@ public class CreateEventActivity extends BaseActivity
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable("event", mCurrentEvent);
-        outState.putStringArrayList("interests",mInterestsList);
+        outState.putStringArrayList("interests", mInterestsList);
+        outState.putParcelableArrayList("participates", mParticipates);
+        outState.putBoolean("mode", mMode);
 
     }
 
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-
-        mCurrentEvent = savedInstanceState.getParcelable("event");
-         mInterestsList = savedInstanceState.getStringArrayList("interests");
-        setEventFields();
-        initCustomSpinner();
-
-
-
-    }
 
     private void setEventFields() {
+
+
         if (mCurrentEvent != null) {
             collapsingToolbar.setTitle(mCurrentEvent.getTitle());
-            if (mCurrentEvent.getImage() != null) {
-                try {
-                    mToolbarBackgroundImage.setImageBitmap(BitmapUtil.decodeFromFirebaseBase64(mCurrentEvent.getImage()));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
+            setImageBack();
             mEventDetails.setText(mCurrentEvent.getDetails());
-            //initMap(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude(), "");
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(mCurrentEvent.getStart());
             tvDatePicker.setText(DateUtil.CalendartoDate(calendar.getTime()));
             mspinnerCustom.setSelection(mCustomSpinnerAdapter.getPosition(mCurrentEvent.getInterest()));
 
         }
+
     }
+
 
     @Override
     public void navigateToCaptureFragment() {
@@ -495,11 +546,104 @@ public class CreateEventActivity extends BaseActivity
         return ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
     }
 
+    private void uploadBytes(Uri picUri) {
+
+        if (picUri != null) {
+            String fileName = mCurrentEvent.getTitle();
+
+            if (!validateInputFileName(fileName)) {
+                return;
+            }
 
 
-    @Override
-    public void onCancelled(DatabaseError databaseError) {
+            progressDialog.setTitle("Uploading...");
+            progressDialog.show();
+
+            Bitmap bitmap = BitmapUtil.UriToBitmap(this, picUri);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
+            byte[] data = baos.toByteArray();
+
+            StorageReference fileRef = FirebaseStorage.getInstance().getReference().child("images").child(mCurrentEvent.getId() );
+            fileRef.putBytes(data)
+                    .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            progressDialog.dismiss();
+
+                            Log.e(TAG, "Uri: " + taskSnapshot.getDownloadUrl());
+                            Log.e(TAG, "Name: " + taskSnapshot.getMetadata().getName());
+                            mCurrentEvent.setImage(taskSnapshot.getDownloadUrl().toString());
+                            saveEventToFirebase();
+
+
+//                            tvFileName.setText(taskSnapshot.getMetadata().getPath() + " - "
+//                                    + taskSnapshot.getMetadata().getSizeBytes() / 1024 + " KBs");
+                            Toast.makeText(CreateEventActivity.this, "File Uploaded ", Toast.LENGTH_LONG).show();
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            progressDialog.dismiss();
+
+                            Toast.makeText(CreateEventActivity.this, exception.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    })
+                    .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                            // progress percentage
+                            double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+                            Log.d(TAG, "addOnProgressListener " + progress + "");
+                            // percentage in progress dialog
+                            progressDialog.setMessage("Uploaded " + ((int) progress) + "%...");
+                        }
+                    })
+                    .addOnPausedListener(new OnPausedListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onPaused(UploadTask.TaskSnapshot taskSnapshot) {
+                            System.out.println("Upload is paused!");
+                        }
+                    });
+        } else {
+            Toast.makeText(CreateEventActivity.this, "No File!", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void saveEventToFirebase() {
+        FirebaseDatabase.getInstance().getReference("events").child(mCurrentEvent.getId()).setValue(mCurrentEvent);
+        finish();
+    }
+
+    private boolean validateInputFileName(String fileName) {
+
+        if (TextUtils.isEmpty(fileName)) {
+            Toast.makeText(this, "Enter file name!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        return true;
+    }
+
+    private String getFileExtension(Uri uri) {
+        ContentResolver contentResolver = getContentResolver();
+        MimeTypeMap mime = MimeTypeMap.getSingleton();
+
+        return mime.getExtensionFromMimeType(contentResolver.getType(uri));
+    }
+
+    private void setImageBack() {
+        if (mCurrentEvent.getImage() != null) {
+            VolleyHelper.getInstance(this).getImageLoader().get(mCurrentEvent.getImage(), ImageLoader.getImageListener(mToolbarBackgroundImage,
+                    R.drawable.image_border, android.R.drawable.ic_dialog_alert));
+        } else {
+            Bitmap bitmap = BitmapUtil.UriToBitmap(this, mCurrentEvent.getUri());
+            if (bitmap != null)
+                mToolbarBackgroundImage.setImageBitmap(bitmap);
+        }
 
     }
+
 }
 

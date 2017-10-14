@@ -1,4 +1,4 @@
-package com.benezra.nir.poi;
+package com.benezra.nir.poi.Adapter;
 
 import android.app.Activity;
 import android.content.Context;
@@ -11,7 +11,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.android.volley.toolbox.ImageLoader;
+import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Helper.VolleyHelper;
+import com.benezra.nir.poi.R;
 import com.google.android.gms.maps.GoogleMap;
 
 import java.util.ArrayList;
