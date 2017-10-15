@@ -31,6 +31,7 @@ import com.android.volley.toolbox.ImageLoader;
 import com.benezra.nir.poi.Bitmap.BitmapUtil;
 import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.benezra.nir.poi.R;
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -112,11 +113,8 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
 
             mPicURL = savedInstanceState.getString("url");
             if (mPicURL != null) {
-                VolleyHelper.getInstance(getContext()).getImageLoader().get(mPicURL, ImageLoader.getImageListener(mDialogImageView,
-                        R.drawable.image_border, android.R.drawable.ic_dialog_alert));
+                Picasso.with(getContext()).load(mPicURL).into(mDialogImageView);
             } else {
-
-
                 mPicUri = savedInstanceState.getParcelable("uri");
                 if (mPicUri != null)
                     setImageBack();

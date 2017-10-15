@@ -34,6 +34,7 @@ public class ProgressDialogFragment extends DialogFragment implements DialogInte
 
     private ProgressDialog mProgressDialog;
     private Handler mHandler;
+    private static final int MAX = 100;
 
 
 
@@ -41,12 +42,12 @@ public class ProgressDialogFragment extends DialogFragment implements DialogInte
         // Empty constructor required for DialogFragment
     }
 
-    public static ProgressDialogFragment newInstance(String title, String message, int option) {
+    public static ProgressDialogFragment newInstance(String title, String message, int type) {
         ProgressDialogFragment frag = new ProgressDialogFragment();
         Bundle args = new Bundle();
         args.putString(TITLE, title);
         args.putString(MESSAGE, message);
-        args.putInt(OPTIONS, option);
+        args.putInt(OPTIONS, type);
         frag.setArguments(args);
         return frag;
     }
@@ -61,14 +62,14 @@ public class ProgressDialogFragment extends DialogFragment implements DialogInte
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         String title = getArguments().getString(TITLE);
         String message = getArguments().getString(MESSAGE);
-        int option = getArguments().getInt(OPTIONS);
+        int type = getArguments().getInt(OPTIONS);
         setCancelable(false);
 
         mProgressDialog = new ProgressDialog(getActivity(), getTheme());
-        mProgressDialog.setTitle("loading");
-        mProgressDialog.setMessage("please wait");
+        mProgressDialog.setTitle(title);
+        mProgressDialog.setMessage(message);
 
-        switch (option) {
+        switch (type) {
             case ProgressDialog.STYLE_SPINNER:
                 mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER); // Progress Dialog Style Spinner
 
@@ -76,7 +77,7 @@ public class ProgressDialogFragment extends DialogFragment implements DialogInte
 
             case ProgressDialog.STYLE_HORIZONTAL:
                 mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL); // Progress Dialog Style Spinner
-                mProgressDialog.setMax(100); // Progress Dialog Max Value
+                mProgressDialog.setMax(MAX); // Progress Dialog Max Value
                 initHandler();
                 initProgressUpdate();
                 break;
@@ -117,7 +118,7 @@ public class ProgressDialogFragment extends DialogFragment implements DialogInte
         }).start();
     }
 
-    public void setProgressIncreasement(Message msg) {
+    public void setProgress(Message msg) {
         mHandler.sendMessage(msg);
     }
 

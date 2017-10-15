@@ -3,6 +3,7 @@ package com.benezra.nir.poi;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import com.benezra.nir.poi.Fragment.AlertDialogFragment;
 import com.benezra.nir.poi.Fragment.UserEventFragment;
 
 /**

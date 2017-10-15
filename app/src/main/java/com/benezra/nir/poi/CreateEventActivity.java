@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.content.ContextCompat;
@@ -28,6 +29,7 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -37,15 +39,14 @@ import android.widget.Toast;
 import java.io.ByteArrayOutputStream;
 import java.util.Calendar;
 
-import com.android.volley.toolbox.ImageLoader;
 import com.benezra.nir.poi.Adapter.ParticipatesAdapter;
 import com.benezra.nir.poi.Bitmap.BitmapUtil;
 import com.benezra.nir.poi.Bitmap.DateUtil;
+import com.benezra.nir.poi.Fragment.AlertDialogFragment;
 import com.benezra.nir.poi.Fragment.ImageCameraDialogFragment;
+import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.Helper.PermissionsDialogFragment;
-import com.benezra.nir.poi.Helper.SharePref;
-import com.benezra.nir.poi.Helper.VolleyHelper;
-import com.benezra.nir.poi.View.CustomSpinnerAdapter;
+import com.benezra.nir.poi.Adapter.CustomSpinnerAdapter;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -58,6 +59,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.Query;
@@ -67,12 +69,17 @@ import com.google.firebase.storage.OnPausedListener;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.squareup.picasso.Picasso;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
-import static android.R.attr.bitmap;
+import static android.content.DialogInterface.BUTTON_NEUTRAL;
+import static android.content.DialogInterface.BUTTON_POSITIVE;
+import static com.benezra.nir.poi.Helper.Constants.DETAILS;
+import static com.benezra.nir.poi.Helper.Constants.END;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_IMAGE;
@@ -82,6 +89,12 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_LONGITUDE;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_OWNER;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_START;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
+import static com.benezra.nir.poi.Helper.Constants.IMAGE;
+import static com.benezra.nir.poi.Helper.Constants.INTEREST;
+import static com.benezra.nir.poi.Helper.Constants.LATITUDE;
+import static com.benezra.nir.poi.Helper.Constants.LONGITUDE;
+import static com.benezra.nir.poi.Helper.Constants.START;
+import static com.benezra.nir.poi.Helper.Constants.TITLE;
 
 
 public class CreateEventActivity extends BaseActivity
@@ -92,7 +105,8 @@ public class CreateEventActivity extends BaseActivity
         CompoundButton.OnCheckedChangeListener,
         ImageCameraDialogFragment.ImageCameraDialogCallback,
         TextWatcher,
-        AdapterView.OnItemSelectedListener {
+        AdapterView.OnItemSelectedListener,
+        AlertDialogFragment.DialogListenerCallback {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -110,10 +124,11 @@ public class CreateEventActivity extends BaseActivity
     private CustomSpinnerAdapter mCustomSpinnerAdapter;
     private EditText mEventDetails;
     private ParticipatesAdapter mParticipatesAdapterAdapter;
-    private ListView mListView;
     private ArrayList<User> mParticipates;
-    private ProgressDialog progressDialog;
+    private ProgressBar mProgressBar;
+    private ProgressDialogFragment mProgressDialogFragment;
     private boolean mMode; //true = new | false = edit
+
 
 
     @Override
@@ -138,17 +153,72 @@ public class CreateEventActivity extends BaseActivity
                 timePickerDialog.show();
                 break;
             case R.id.btn_save:
-                if (mCurrentEvent.getUri() != null)
-                    uploadBytes(mCurrentEvent.getUri());
-                else
-                    saveEventToFirebase();
-
+                checkEvent();
                 break;
             case R.id.collapsing_toolbar:
                 navigateToCaptureFragment();
                 break;
 
         }
+    }
+
+    private void checkEvent() {
+        if (mCurrentEvent != null) {
+            if (mCurrentEvent.getDetails() == null || mCurrentEvent.getDetails().equals("")) {
+                Toast.makeText(this, getString(R.string.missing_details), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (mCurrentEvent.getInterest() == null || mCurrentEvent.getInterest().equals("")) {
+                Toast.makeText(this, getString(R.string.missing_interest), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (mCurrentEvent.getLatitude() == 0 || mCurrentEvent.getLongitude() == 0) {
+                Toast.makeText(this, getString(R.string.missing_location), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (mCurrentEvent.getTitle() == null || mCurrentEvent.getTitle().equals(getString(R.string.collapsingtoolbar_title))) {
+                Toast.makeText(this, getString(R.string.missing_title), Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        if (mCurrentEvent.getImage() == null && mCurrentEvent.getUri()==null)
+            BuildDialogFragment();
+        else
+            saveEvent();
+
+    }
+
+    private void BuildDialogFragment() {
+        AlertDialogFragment alertDialog = (AlertDialogFragment) getSupportFragmentManager().findFragmentByTag(AlertDialogFragment.class.getName());
+        if (alertDialog == null) {
+            Log.d(TAG, "opening alert dialog");
+            HashMap<Integer, String> map = new HashMap<>();
+            map.put(BUTTON_POSITIVE, getString(R.string.sure));
+            map.put(BUTTON_NEUTRAL, getString(R.string.return_to_event));
+            alertDialog = AlertDialogFragment.newInstance(
+                    getString(R.string.no_image_title), getString(R.string.no_image_message), map);
+            alertDialog.show(getSupportFragmentManager(), AlertDialogFragment.class.getName());
+
+        }
+    }
+
+
+
+    @Override
+    public void onFinishDialog(int state) {
+        switch (state) {
+            case BUTTON_POSITIVE:
+                saveEvent();
+                break;
+        }
+    }
+
+    private void saveEvent() {
+        if (mCurrentEvent.getUri() != null)
+            uploadBytes(mCurrentEvent.getUri());
+        else
+            saveEventToFirebase();
     }
 
     private Bitmap getBitmap() {
@@ -237,8 +307,6 @@ public class CreateEventActivity extends BaseActivity
         mEventTime = Calendar.getInstance();
 
 
-        progressDialog = new ProgressDialog(this);
-
         //Using the ToolBar as ActionBar
         //Find the toolbar view inside the activity layout
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -256,7 +324,7 @@ public class CreateEventActivity extends BaseActivity
         //Setting the styles to expanded and collapsed toolbar
         collapsingToolbar.setExpandedTitleTextAppearance(R.style.ExpandedAppBar);
         collapsingToolbar.setCollapsedTitleTextAppearance(R.style.CollapsedAppBar);
-
+        collapsingToolbar.setTitle(getString(R.string.collapsingtoolbar_title));
 
         //Setting the category mDialogImageView onto collapsing toolbar
         mToolbarBackgroundImage = (ImageView) findViewById(R.id.backdrop);
@@ -271,9 +339,7 @@ public class CreateEventActivity extends BaseActivity
         tvTimePicker = (TextView) findViewById(R.id.tv_time);
 
         mspinnerCustom = (Spinner) findViewById(R.id.spinnerCustom);
-
-
-        mListView = (ListView) findViewById(R.id.list_view_par);
+        mProgressBar = (ProgressBar) findViewById(R.id.pb_loading);
 
 
         mSwitch = (Switch) findViewById(R.id.tgl_allday);
@@ -293,8 +359,9 @@ public class CreateEventActivity extends BaseActivity
             mInterestsList = savedInstanceState.getStringArrayList("interests");
             mParticipates = savedInstanceState.getParcelableArrayList("participates");
             mMode = savedInstanceState.getBoolean("mode");
+
             initCustomSpinner();
-            initParticipates();
+           // initParticipates();
             setEventFields();
 
 
@@ -302,7 +369,7 @@ public class CreateEventActivity extends BaseActivity
             mInterestsList = new ArrayList<>();
             initCustomSpinner();
             mParticipates = new ArrayList<>();
-            initParticipates();
+           // initParticipates();
 
             if (getIntent().getStringExtra(EVENT_ID) != null) {
                 mMode = false; //edit  existing event
@@ -312,8 +379,6 @@ public class CreateEventActivity extends BaseActivity
                 mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
 
             }
-
-            mspinnerCustom.setSelection(mCustomSpinnerAdapter.getPosition(mCurrentEvent.getInterest()));
 
             addParticipateChangeListener();
             addInterestsChangeListener();
@@ -371,7 +436,7 @@ public class CreateEventActivity extends BaseActivity
                         Log.d(TAG, mParticipates.get(i).getName());
                     }
 
-                    mParticipatesAdapterAdapter.setItems(new ArrayList<User>(mParticipates));
+                    //mParticipatesAdapterAdapter.setItems(new ArrayList<User>(mParticipates));
                 }
             }
 
@@ -406,6 +471,7 @@ public class CreateEventActivity extends BaseActivity
 
     private void getEventIntent(Intent intent) {
         //showDialog();
+
         mCurrentEvent = new Event();
         mCurrentEvent.setId(intent.getStringExtra(EVENT_ID));
         mCurrentEvent.setDetails(intent.getStringExtra(EVENT_DETAILS));
@@ -459,14 +525,14 @@ public class CreateEventActivity extends BaseActivity
     }
 
     private void initCustomSpinner() {
-        mCustomSpinnerAdapter = new CustomSpinnerAdapter(this, mInterestsList);
-        mCustomSpinnerAdapter.updateInterestList(mInterestsList);
+        mCustomSpinnerAdapter = new CustomSpinnerAdapter(this, new ArrayList<String>(mInterestsList));
+        mspinnerCustom.setAdapter(mCustomSpinnerAdapter);
     }
 
     private void initParticipates() {
         Log.d(TAG, mParticipates.size() + "");
         mParticipatesAdapterAdapter = new ParticipatesAdapter(this, new ArrayList<User>(mParticipates));
-        mListView.setAdapter(mParticipatesAdapterAdapter);
+       // mListView.setAdapter(mParticipatesAdapterAdapter);
     }
 
 
@@ -477,8 +543,12 @@ public class CreateEventActivity extends BaseActivity
                 GenericTypeIndicator<ArrayList<String>> t = new GenericTypeIndicator<ArrayList<String>>() {
                 };
                 mInterestsList = snapshot.getValue(t);
-                if (mInterestsList != null)
-                    initCustomSpinner();
+                if (mInterestsList != null) {
+                    mCustomSpinnerAdapter.updateInterestList(new ArrayList<String>(mInterestsList));
+                    mspinnerCustom.setSelection(mCustomSpinnerAdapter.getPosition(mCurrentEvent.getInterest()));
+                }
+
+
             }
 
             @Override
@@ -519,7 +589,6 @@ public class CreateEventActivity extends BaseActivity
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(mCurrentEvent.getStart());
             tvDatePicker.setText(DateUtil.CalendartoDate(calendar.getTime()));
-            mspinnerCustom.setSelection(mCustomSpinnerAdapter.getPosition(mCurrentEvent.getInterest()));
 
         }
 
@@ -546,6 +615,18 @@ public class CreateEventActivity extends BaseActivity
         return ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
     }
 
+
+    private void BuildProgressDialogFragment() {
+        ProgressDialogFragment progressDialog = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
+        if (progressDialog == null) {
+            Log.d(TAG, "opening origress dialog");
+            progressDialog = ProgressDialogFragment.newInstance(
+                    getString(R.string.creating_event), getString(R.string.please_wait), ProgressDialog.STYLE_HORIZONTAL);
+            progressDialog.show(getSupportFragmentManager(), ProgressDialogFragment.class.getName());
+
+        }
+    }
+
     private void uploadBytes(Uri picUri) {
 
         if (picUri != null) {
@@ -556,23 +637,28 @@ public class CreateEventActivity extends BaseActivity
             }
 
 
-            progressDialog.setTitle("Uploading...");
-            progressDialog.show();
+            mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
+            if (mProgressDialogFragment == null) {
+                Log.d(TAG, "opening origress dialog");
+                mProgressDialogFragment = ProgressDialogFragment.newInstance(
+                        getString(R.string.creating_event), getString(R.string.please_wait), ProgressDialog.STYLE_HORIZONTAL);
+                mProgressDialogFragment.show(getSupportFragmentManager(), ProgressDialogFragment.class.getName());
+            }
 
             Bitmap bitmap = BitmapUtil.UriToBitmap(this, picUri);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
             byte[] data = baos.toByteArray();
 
-            StorageReference fileRef = FirebaseStorage.getInstance().getReference().child("images").child(mCurrentEvent.getId() );
+            StorageReference fileRef = FirebaseStorage.getInstance().getReference().child("images").child(mCurrentEvent.getId());
             fileRef.putBytes(data)
                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            progressDialog.dismiss();
+                            //mProgressDialogFragment.dismiss();
 
-                            Log.e(TAG, "Uri: " + taskSnapshot.getDownloadUrl());
-                            Log.e(TAG, "Name: " + taskSnapshot.getMetadata().getName());
+                            Log.i(TAG, "Uri: " + taskSnapshot.getDownloadUrl());
+                            Log.i(TAG, "Name: " + taskSnapshot.getMetadata().getName());
                             mCurrentEvent.setImage(taskSnapshot.getDownloadUrl().toString());
                             saveEventToFirebase();
 
@@ -585,7 +671,7 @@ public class CreateEventActivity extends BaseActivity
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception exception) {
-                            progressDialog.dismiss();
+                            mProgressDialogFragment.dismiss();
 
                             Toast.makeText(CreateEventActivity.this, exception.getMessage(), Toast.LENGTH_LONG).show();
                         }
@@ -597,7 +683,11 @@ public class CreateEventActivity extends BaseActivity
                             double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
                             Log.d(TAG, "addOnProgressListener " + progress + "");
                             // percentage in progress dialog
-                            progressDialog.setMessage("Uploaded " + ((int) progress) + "%...");
+                            Message message = new Message();
+                            Bundle bundle = new Bundle();
+                            bundle.putInt("prg",(int)progress);
+                            message.setData(bundle);
+                            mProgressDialogFragment.setProgress(message);
                         }
                     })
                     .addOnPausedListener(new OnPausedListener<UploadTask.TaskSnapshot>() {
@@ -612,7 +702,20 @@ public class CreateEventActivity extends BaseActivity
     }
 
     private void saveEventToFirebase() {
-        FirebaseDatabase.getInstance().getReference("events").child(mCurrentEvent.getId()).setValue(mCurrentEvent);
+        DatabaseReference eventReference = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId());
+        if (mMode)
+            eventReference.setValue(mCurrentEvent);
+        else{
+            eventReference.child(DETAILS).setValue(mCurrentEvent.getDetails());
+            eventReference.child(START).setValue(mCurrentEvent.getStart());
+            eventReference.child(END).setValue(mCurrentEvent.getEnd());
+            eventReference.child(IMAGE).setValue(mCurrentEvent.getImage());
+            eventReference.child(LATITUDE).setValue(mCurrentEvent.getLatitude());
+            eventReference.child(LONGITUDE).setValue(mCurrentEvent.getLongitude());
+            eventReference.child(TITLE).setValue(mCurrentEvent.getTitle());
+            eventReference.child(INTEREST).setValue(mCurrentEvent.getInterest());
+
+        }
         finish();
     }
 
@@ -635,8 +738,23 @@ public class CreateEventActivity extends BaseActivity
 
     private void setImageBack() {
         if (mCurrentEvent.getImage() != null) {
-            VolleyHelper.getInstance(this).getImageLoader().get(mCurrentEvent.getImage(), ImageLoader.getImageListener(mToolbarBackgroundImage,
-                    R.drawable.image_border, android.R.drawable.ic_dialog_alert));
+            mProgressBar.setVisibility(View.VISIBLE);
+            //VolleyHelper.getInstance(this).getImageLoader().get(mCurrentEvent.getImage(), ImageLoader.getImageListener(mToolbarBackgroundImage,
+            //R.drawable.image_border, android.R.drawable.ic_dialog_alert));
+            Picasso.with(this)
+                    .load(mCurrentEvent.getImage())
+                    .into(mToolbarBackgroundImage, new com.squareup.picasso.Callback() {
+                        @Override
+                        public void onSuccess() {
+                            mProgressBar.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onError() {
+                            mProgressBar.setVisibility(View.GONE);
+
+                        }
+                    });
         } else {
             Bitmap bitmap = BitmapUtil.UriToBitmap(this, mCurrentEvent.getUri());
             if (bitmap != null)
@@ -644,6 +762,7 @@ public class CreateEventActivity extends BaseActivity
         }
 
     }
+
 
 }
 

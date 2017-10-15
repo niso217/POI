@@ -124,6 +124,7 @@ public class Event implements Parcelable {
         return interest;
     }
 
+
     public void setInterest(String interest) {
         this.interest = interest;
     }

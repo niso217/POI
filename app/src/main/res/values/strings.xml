@@ -91,4 +91,24 @@
     <string name="rate">Rate:</string>
     <string name="hour">Hour:</string>
 
+
+    <!--Event Alert-->
+    <string name="missing_location">Please tell us the location of the event</string>
+    <string name="missing_interest">Please fill the theme of the event</string>
+    <string name="missing_details">Please give us details about the event</string>
+    <string name="missing_title">Please add a tittle to the event</string>
+    <string name="collapsingtoolbar_title">Click to add title and image</string>
+
+
+    <!--Alert Dialog Titles-->
+    <string name="no_image_title">No image</string>
+    <string name="sure">Sure</string>
+    <string name="return_to_event">Return</string>
+    <string name="no_image_message">No image add, are you sure you want to continue?</string>
+
+    <!--Progress Dialog Titles-->
+    <string name="creating_event">Creating event</string>
+    <string name="please_wait">Please wait...</string>
+
+
 </resources>

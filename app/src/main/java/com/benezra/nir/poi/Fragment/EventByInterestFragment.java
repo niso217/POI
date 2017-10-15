@@ -19,7 +19,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.benezra.nir.poi.Adapter.CategoryAdapter;
-import com.benezra.nir.poi.CategoryDeatailActivity;
+import com.benezra.nir.poi.CategoryDetailActivity;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.EventModel;
 import com.benezra.nir.poi.Helper.PermissionsDialogFragment;
@@ -155,7 +155,7 @@ public class EventByInterestFragment extends Fragment
                 // Getting the map location title
                 String locationTitle = event.getTitle();
 
-                Intent categoryDetail = new Intent(getActivity(), CategoryDeatailActivity.class);
+                Intent categoryDetail = new Intent(getActivity(), CategoryDetailActivity.class);
                 //Passing the category title to the CategoryDetailActivity
                 categoryDetail.putExtra("eventId", event.getId());
                 //Passing the category title to the CategoryDetailActivity
