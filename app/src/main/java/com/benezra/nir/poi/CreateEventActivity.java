@@ -3,11 +3,9 @@ package com.benezra.nir.poi;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
@@ -21,14 +19,12 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Switch;
@@ -44,9 +40,11 @@ import com.benezra.nir.poi.Bitmap.BitmapUtil;
 import com.benezra.nir.poi.Bitmap.DateUtil;
 import com.benezra.nir.poi.Fragment.AlertDialogFragment;
 import com.benezra.nir.poi.Fragment.ImageCameraDialogFragment;
+import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
-import com.benezra.nir.poi.Helper.PermissionsDialogFragment;
+import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Adapter.CustomSpinnerAdapter;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -73,7 +71,6 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import static android.content.DialogInterface.BUTTON_NEUTRAL;
@@ -106,7 +103,8 @@ public class CreateEventActivity extends BaseActivity
         ImageCameraDialogFragment.ImageCameraDialogCallback,
         TextWatcher,
         AdapterView.OnItemSelectedListener,
-        AlertDialogFragment.DialogListenerCallback {
+        AlertDialogFragment.DialogListenerCallback,
+        MapFragment.MapFragmentCallback {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -156,7 +154,7 @@ public class CreateEventActivity extends BaseActivity
                 checkEvent();
                 break;
             case R.id.collapsing_toolbar:
-                navigateToCaptureFragment();
+                //navigateToCaptureFragment();
                 break;
 
         }
@@ -221,21 +219,6 @@ public class CreateEventActivity extends BaseActivity
             saveEventToFirebase();
     }
 
-    private Bitmap getBitmap() {
-        BitmapDrawable drawable = (BitmapDrawable) mToolbarBackgroundImage.getDrawable();
-        if (drawable != null)
-            return drawable.getBitmap();
-
-        return null;
-    }
-
-    private Uri getBitmapUri() {
-        BitmapDrawable drawable = (BitmapDrawable) mToolbarBackgroundImage.getDrawable();
-        if (drawable != null)
-            BitmapUtil.getImageUri(this, drawable.getBitmap());
-
-        return null;
-    }
 
     @Override
     public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
@@ -488,21 +471,24 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
-    public void setmMap(GoogleMap map) {
-        mMap = map;
-        if (mCurrentEvent.getLatitude() > 0)
-            initMap(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude(), "");
-
-    }
-
     public void onPlaceSelected(Place place) {
         Log.d(TAG, place.getName().toString());
-
         mCurrentEvent.setLatitude(place.getLatLng().latitude);
         mCurrentEvent.setLongitude(place.getLatLng().longitude);
-        initMap(place.getLatLng().latitude, place.getLatLng().longitude, place.getAddress().toString());
+        initMap(new LatLng(place.getLatLng().latitude, place.getLatLng().longitude), place.getAddress().toString());
 
     }
+
+    @Override
+    public void onError(Status status) {
+
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+    }
+
 
     private void buildImageAndTitleChooser() {
 
@@ -559,12 +545,10 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
-    public void initMap(double latitude, double longitude, String address) {
+    public void initMap(LatLng latLang, String address) {
 
-        // Add a marker in the respective location and move the camera and set the zoom level to 15
-        LatLng location = new LatLng(latitude, longitude);
-        mMap.addMarker(new MarkerOptions().position(location).title(address));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15.0f));
+        mMap.addMarker(new MarkerOptions().position(latLang).title(address));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLang, 15.0f));
 
     }
 
@@ -662,9 +646,6 @@ public class CreateEventActivity extends BaseActivity
                             mCurrentEvent.setImage(taskSnapshot.getDownloadUrl().toString());
                             saveEventToFirebase();
 
-
-//                            tvFileName.setText(taskSnapshot.getMetadata().getPath() + " - "
-//                                    + taskSnapshot.getMetadata().getSizeBytes() / 1024 + " KBs");
                             Toast.makeText(CreateEventActivity.this, "File Uploaded ", Toast.LENGTH_LONG).show();
                         }
                     })
@@ -729,18 +710,11 @@ public class CreateEventActivity extends BaseActivity
         return true;
     }
 
-    private String getFileExtension(Uri uri) {
-        ContentResolver contentResolver = getContentResolver();
-        MimeTypeMap mime = MimeTypeMap.getSingleton();
 
-        return mime.getExtensionFromMimeType(contentResolver.getType(uri));
-    }
 
     private void setImageBack() {
         if (mCurrentEvent.getImage() != null) {
             mProgressBar.setVisibility(View.VISIBLE);
-            //VolleyHelper.getInstance(this).getImageLoader().get(mCurrentEvent.getImage(), ImageLoader.getImageListener(mToolbarBackgroundImage,
-            //R.drawable.image_border, android.R.drawable.ic_dialog_alert));
             Picasso.with(this)
                     .load(mCurrentEvent.getImage())
                     .into(mToolbarBackgroundImage, new com.squareup.picasso.Callback() {

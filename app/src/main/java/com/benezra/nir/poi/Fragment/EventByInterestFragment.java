@@ -1,6 +1,7 @@
 package com.benezra.nir.poi.Fragment;
 
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -22,7 +23,6 @@ import com.benezra.nir.poi.Adapter.CategoryAdapter;
 import com.benezra.nir.poi.CategoryDetailActivity;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.EventModel;
-import com.benezra.nir.poi.Helper.PermissionsDialogFragment;
 import com.benezra.nir.poi.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -218,11 +218,29 @@ public class EventByInterestFragment extends Fragment
             if (permissionsDialogFragment == null) {
                 Log.d(TAG, "opening dialog");
                 permissionsDialogFragment = PermissionsDialogFragment.newInstance();
+                permissionsDialogFragment.setTargetFragment(this,11);
                 permissionsDialogFragment.setPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,android.Manifest.permission.ACCESS_COARSE_LOCATION});
                 permissionsDialogFragment.show(getActivity().getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
 
             }
         }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case 11:
+
+                if (resultCode == Activity.RESULT_OK) {
+                    // After Ok code.
+                } else if (resultCode == Activity.RESULT_CANCELED) {
+                    // After Cancel code.
+                }
+
+                break;
+        }
+
+
     }
 
     private boolean isPermissionGranted() {
