@@ -31,7 +31,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 
 public class MapFragment extends Fragment implements
         OnMapReadyCallback, PlaceSelectionListener,
-        View.OnClickListener, PermissionsDialogFragment.PermissionsGrantedCallback {
+        View.OnClickListener {
 
     private GoogleMap mMap;
     private MapView mMapView;
@@ -39,7 +39,6 @@ public class MapFragment extends Fragment implements
     private Context mContext;
     private MapFragmentCallback mListener;
     private static final String TAG = MapFragment.class.getSimpleName();
-    private FusedLocationProviderClient mFusedLocationClient;
 
 
     @Override
@@ -109,73 +108,8 @@ public class MapFragment extends Fragment implements
 
         void onCurrentLocationClicked();
 
-
-    }
-
-    @Override
-    public void navigateToCaptureFragment() {
-        if (isPermissionGranted()) {
-            initFusedLocation();
-        } else {
-            PermissionsDialogFragment permissionsDialogFragment = (PermissionsDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
-            if (permissionsDialogFragment == null) {
-                Log.d(TAG, "opening dialog");
-                permissionsDialogFragment = PermissionsDialogFragment.newInstance();
-                permissionsDialogFragment.setTargetFragment(this, 11);
-                permissionsDialogFragment.setPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
-                permissionsDialogFragment.show(getActivity().getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
-
-            }
-        }
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case 11:
-
-                if (resultCode == Activity.RESULT_OK) {
-                    // After Ok code.
-                } else if (resultCode == Activity.RESULT_CANCELED) {
-                    // After Cancel code.
-                }
-
-                break;
-        }
-
-
-    }
-
-    private void initFusedLocation() {
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
-
-        if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        mFusedLocationClient.getLastLocation()
-                .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            LatLng loc = new LatLng(location.getLatitude(), location.getLongitude());
-                            mMap.addMarker(new MarkerOptions().position(loc));
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(loc, 15.0f));
-                        }
-                    }
-                });
     }
 
 
-    private boolean isPermissionGranted() {
-        return ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-    }
+
 }

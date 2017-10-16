@@ -30,4 +30,8 @@ public interface Constants {
     public static final String OPTIONS = "options";
 
 
+    //permissions type
+    public static final String LOCATION = "location";
+    public static final String CAMERA = "camera";
+
 }

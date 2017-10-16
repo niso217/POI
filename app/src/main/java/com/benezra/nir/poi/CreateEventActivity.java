@@ -1,16 +1,20 @@
 package com.benezra.nir.poi;
 
+import android.*;
+import android.Manifest;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
@@ -33,6 +37,7 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 import java.util.Calendar;
 
 import com.benezra.nir.poi.Adapter.ParticipatesAdapter;
@@ -45,6 +50,8 @@ import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Adapter.CustomSpinnerAdapter;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -73,8 +80,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.DialogInterface.BUTTON_NEUTRAL;
 import static android.content.DialogInterface.BUTTON_POSITIVE;
+import static com.benezra.nir.poi.Helper.Constants.CAMERA;
 import static com.benezra.nir.poi.Helper.Constants.DETAILS;
 import static com.benezra.nir.poi.Helper.Constants.END;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
@@ -89,6 +98,7 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
 import static com.benezra.nir.poi.Helper.Constants.IMAGE;
 import static com.benezra.nir.poi.Helper.Constants.INTEREST;
 import static com.benezra.nir.poi.Helper.Constants.LATITUDE;
+import static com.benezra.nir.poi.Helper.Constants.LOCATION;
 import static com.benezra.nir.poi.Helper.Constants.LONGITUDE;
 import static com.benezra.nir.poi.Helper.Constants.START;
 import static com.benezra.nir.poi.Helper.Constants.TITLE;
@@ -126,6 +136,8 @@ public class CreateEventActivity extends BaseActivity
     private ProgressBar mProgressBar;
     private ProgressDialogFragment mProgressDialogFragment;
     private boolean mMode; //true = new | false = edit
+    private FusedLocationProviderClient mFusedLocationClient;
+
 
 
 
@@ -154,7 +166,7 @@ public class CreateEventActivity extends BaseActivity
                 checkEvent();
                 break;
             case R.id.collapsing_toolbar:
-                navigateToCaptureFragment();
+                navigateToCaptureFragment(new String[]{Manifest.permission.CAMERA});
                 break;
 
         }
@@ -487,11 +499,12 @@ public class CreateEventActivity extends BaseActivity
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        initMap(new LatLng(mCurrentEvent.getLatitude(),mCurrentEvent.getLongitude()),"");
     }
 
     @Override
     public void onCurrentLocationClicked() {
-
+        navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
     }
 
 
@@ -555,6 +568,7 @@ public class CreateEventActivity extends BaseActivity
         mMap.addMarker(new MarkerOptions().position(latLang).title(address));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLang, 15.0f));
 
+
     }
 
     @Override
@@ -585,23 +599,65 @@ public class CreateEventActivity extends BaseActivity
 
 
     @Override
-    public void navigateToCaptureFragment() {
-        if (isPermissionGranted()) {
-            buildImageAndTitleChooser();
+    public void navigateToCaptureFragment(String [] permissions) {
+
+        if (isPermissionGranted(permissions)) {
+
+
+            if (Arrays.asList(permissions).contains(ACCESS_FINE_LOCATION))
+            {
+                initFusedLocation();
+            }
+            if (Arrays.asList(permissions).contains(Manifest.permission.CAMERA))
+            {
+                buildImageAndTitleChooser();
+            }
         } else {
             PermissionsDialogFragment dialogFragment = (PermissionsDialogFragment) getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
             if (dialogFragment == null) {
                 Log.d(TAG, "opening dialog");
                 PermissionsDialogFragment permissionsDialogFragment = PermissionsDialogFragment.newInstance();
-                permissionsDialogFragment.setPermissions(new String[]{android.Manifest.permission.CAMERA});
+                permissionsDialogFragment.setPermissions(permissions);
                 permissionsDialogFragment.show(getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
 
             }
         }
     }
 
-    private boolean isPermissionGranted() {
-        return ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+    private boolean isPermissionGranted(String [] permissions) {
+        for (int i = 0; i < permissions.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, permissions[i]) == PackageManager.PERMISSION_DENIED)
+                return false;
+        }
+        return true;
+    }
+
+    private void initFusedLocation() {
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        mFusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        // Got last known location. In some rare situations this can be null.
+                        if (location != null) {
+                            LatLng latLang = new LatLng(location.getLatitude(), location.getLongitude());
+                            mCurrentEvent.setLatitude(latLang.latitude);
+                            mCurrentEvent.setLongitude(latLang.longitude);
+                            initMap(latLang,"");
+                        }
+                    }
+                });
     }
 
 

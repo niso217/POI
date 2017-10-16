@@ -42,8 +42,8 @@ import java.util.ArrayList;
  * A simple {@link Fragment} subclass.
  */
 public class EventByInterestFragment extends Fragment
-        implements ValueEventListener,
-        PermissionsDialogFragment.PermissionsGrantedCallback{
+        implements ValueEventListener
+        {
 
     private EventModel mEventModel;
     private ArrayList<Event> mEventList;
@@ -176,7 +176,7 @@ public class EventByInterestFragment extends Fragment
         });
 
         //initFusedLocation();
-        navigateToCaptureFragment();
+        //navigateToCaptureFragment();
 
         return rootView;
     }
@@ -209,41 +209,22 @@ public class EventByInterestFragment extends Fragment
 
     }
 
-    @Override
-    public void navigateToCaptureFragment() {
-        if (isPermissionGranted()) {
-            initFusedLocation();
-        } else {
-            PermissionsDialogFragment permissionsDialogFragment = (PermissionsDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
-            if (permissionsDialogFragment == null) {
-                Log.d(TAG, "opening dialog");
-                permissionsDialogFragment = PermissionsDialogFragment.newInstance();
-                permissionsDialogFragment.setTargetFragment(this,11);
-                permissionsDialogFragment.setPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,android.Manifest.permission.ACCESS_COARSE_LOCATION});
-                permissionsDialogFragment.show(getActivity().getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
-
-            }
-        }
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case 11:
-
-                if (resultCode == Activity.RESULT_OK) {
-                    // After Ok code.
-                } else if (resultCode == Activity.RESULT_CANCELED) {
-                    // After Cancel code.
-                }
-
-                break;
-        }
+//    @Override
+//    public void navigateToCaptureFragment() {
+//        if (isPermissionGranted()) {
+//            initFusedLocation();
+//        } else {
+//            PermissionsDialogFragment permissionsDialogFragment = (PermissionsDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
+//            if (permissionsDialogFragment == null) {
+//                Log.d(TAG, "opening dialog");
+//                permissionsDialogFragment = PermissionsDialogFragment.newInstance();
+//                permissionsDialogFragment.setTargetFragment(this,11);
+//                permissionsDialogFragment.setPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,android.Manifest.permission.ACCESS_COARSE_LOCATION});
+//                permissionsDialogFragment.show(getActivity().getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
+//
+//            }
+//        }
+//    }
 
 
-    }
-
-    private boolean isPermissionGranted() {
-        return ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-    }
 }

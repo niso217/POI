@@ -4,6 +4,7 @@ package com.benezra.nir.poi.Fragment;
  * Created by nir on 07/10/2017.
  */
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -17,7 +18,14 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
+import com.benezra.nir.poi.Helper.Constants;
 import com.benezra.nir.poi.R;
+
+import java.util.Arrays;
+
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.CAMERA;
+import static com.benezra.nir.poi.Helper.Constants.LOCATION;
 
 /**
  * Created by tylerjroach on 8/31/16.
@@ -82,7 +90,7 @@ public class PermissionsDialogFragment extends DialogFragment {
         }
         setStyle(STYLE_NO_TITLE, R.style.PermissionsDialogFragmentStyle);
         if (!shouldResolve)
-        requestNecessaryPermissions();
+            requestNecessaryPermissions();
         setCancelable(false);
 
 
@@ -106,11 +114,7 @@ public class PermissionsDialogFragment extends DialogFragment {
             } else {
                 //permissions have been accepted
                 if (listener != null && isPermissionGranted()) {
-                    //if(getTargetFragment()!=null)
-                        //getTargetFragment().onActivityResult(getTargetRequestCode(), Activity.RESULT_OK, getActivity().getIntent());
-                    //else
-                        listener.navigateToCaptureFragment();
-
+                    listener.navigateToCaptureFragment(permissions);
                     dismiss();
                 }
             }
@@ -137,8 +141,8 @@ public class PermissionsDialogFragment extends DialogFragment {
             int grantResult = grantResults[i];
 
             if (!shouldShowRequestPermissionRationale(permission) && grantResult != PackageManager.PERMISSION_GRANTED) {
-                    externalGrantNeeded = true;
-                    return;
+                externalGrantNeeded = true;
+                return;
             } else if (grantResult != PackageManager.PERMISSION_GRANTED) {
                 shouldRetry = true;
                 return;
@@ -196,7 +200,7 @@ public class PermissionsDialogFragment extends DialogFragment {
     }
 
     public interface PermissionsGrantedCallback {
-        void navigateToCaptureFragment();
+        void navigateToCaptureFragment(String[] permissions);
     }
 
     private boolean isPermissionGranted() {
