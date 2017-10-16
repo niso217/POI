@@ -141,7 +141,7 @@ public class CreateEventActivity extends BaseActivity
     private FusedLocationProviderClient mFusedLocationClient;
     private RecyclerView mRecyclerView;
     private ParticipateAdapter mParticipateAdapter;
-    private List<User> mParticipates;
+    private ArrayList<User> mParticipates;
 
 
 
@@ -588,7 +588,7 @@ public class CreateEventActivity extends BaseActivity
         super.onSaveInstanceState(outState);
         outState.putParcelable("event", mCurrentEvent);
         outState.putStringArrayList("interests", mInterestsList);
-        //outState.putParcelableArrayList("participates", mParticipates);
+        outState.putParcelableArrayList("participates", mParticipates);
         outState.putBoolean("mode", mMode);
 
     }
