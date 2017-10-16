@@ -154,7 +154,7 @@ public class CreateEventActivity extends BaseActivity
                 checkEvent();
                 break;
             case R.id.collapsing_toolbar:
-                //navigateToCaptureFragment();
+                navigateToCaptureFragment();
                 break;
 
         }
@@ -489,6 +489,11 @@ public class CreateEventActivity extends BaseActivity
         mMap = googleMap;
     }
 
+    @Override
+    public void onCurrentLocationClicked() {
+
+    }
+
 
     private void buildImageAndTitleChooser() {
 
@@ -504,7 +509,7 @@ public class CreateEventActivity extends BaseActivity
             if (mCurrentEvent.getTitle() != null)
                 ImageCameraFragment.setTitle(mCurrentEvent.getTitle());
 
-            ImageCameraFragment.show(getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
+            ImageCameraFragment.show(getSupportFragmentManager(), ImageCameraDialogFragment.class.getName());
 
         }
 

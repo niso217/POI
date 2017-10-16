@@ -97,7 +97,7 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onClick(View v) {
-        navigateToCaptureFragment();
+        mListener.onCurrentLocationClicked();
     }
 
     public interface MapFragmentCallback {
@@ -106,6 +106,8 @@ public class MapFragment extends Fragment implements
         void onError(Status status);
 
         void onMapReady(GoogleMap googleMap);
+
+        void onCurrentLocationClicked();
 
 
     }
