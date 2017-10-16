@@ -152,13 +152,13 @@ public class EventByInterestFragment extends Fragment
                 Double longitude = event.getLongitude();
                 // Getting the latitude
                 Double latitude = event.getLatitude();
-                // Getting the map location title
+                // Getting the map location name
                 String locationTitle = event.getTitle();
 
                 Intent categoryDetail = new Intent(getActivity(), CategoryDetailActivity.class);
-                //Passing the category title to the CategoryDetailActivity
+                //Passing the category name to the CategoryDetailActivity
                 categoryDetail.putExtra("eventId", event.getId());
-                //Passing the category title to the CategoryDetailActivity
+                //Passing the category name to the CategoryDetailActivity
                 categoryDetail.putExtra("categoryTitle", title);
                 //Passing the image id to the CategoryDetailActivity
                // categoryDetail.putExtra("imageResourceId", imageResourceUrl);
@@ -168,7 +168,7 @@ public class EventByInterestFragment extends Fragment
                 categoryDetail.putExtra("longitude", longitude);
                 //Passing the latitude google coordinate to the CategoryDetailActivity
                 categoryDetail.putExtra("latitude", latitude);
-                //Passing the map location title to the CategoryDetailActivity
+                //Passing the map location name to the CategoryDetailActivity
                 categoryDetail.putExtra("locationTitle", locationTitle);
 
                 startActivity(categoryDetail);

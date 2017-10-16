@@ -25,7 +25,7 @@ public class Category {
     // Google Map latitude coordinate
     private double mLatitude;
 
-    // Google map location title
+    // Google map location name
     private String mLocationTitle;
 
     /**
@@ -36,7 +36,7 @@ public class Category {
     * @param fParagraph is the first paragraph in the activity_category_detail.xml
      * @param longitude is the longitude Google Map coordinate
      * @param latitude is the latitude Google Map coordinate
-     * @param locationTitle is the google map location title displaying when clicked on a marker
+     * @param locationTitle is the google map location name displaying when clicked on a marker
      *
      *
     */
@@ -89,7 +89,7 @@ public class Category {
     }
 
     /**
-     * Get the google map location title
+     * Get the google map location name
      */
     public String getLocationTitle() {
 

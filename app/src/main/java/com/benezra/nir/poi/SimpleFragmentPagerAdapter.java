@@ -46,10 +46,10 @@ public class SimpleFragmentPagerAdapter extends FragmentPagerAdapter {
         return 4;
     }
 
-    // This determines the title for each tab
+    // This determines the name for each tab
     @Override
     public CharSequence getPageTitle(int position) {
-        // Generate title based on item position
+        // Generate name based on item position
         switch (position) {
             case 0:
                 return mContext.getString(R.string.event_by_interests);

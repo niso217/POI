@@ -25,7 +25,7 @@ public interface Constants {
     public static final String INTEREST = "interest";
 
 
-    public static final String TITLE = "title";
+    public static final String TITLE = "name";
     public static final String MESSAGE = "message";
     public static final String OPTIONS = "options";
 

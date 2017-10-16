@@ -89,7 +89,7 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString("title", mDialogTitle.getText().toString());
+        outState.putString("name", mDialogTitle.getText().toString());
         outState.putParcelable("uri", mPicUri);
         outState.putString("url", mPicURL);
     }
@@ -119,7 +119,7 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
                 if (mPicUri != null)
                     setImageBack();
             }
-            mTitle = savedInstanceState.getString("title");
+            mTitle = savedInstanceState.getString("name");
             if (mTitle != null)
                 mDialogTitle.setText(mTitle);
 

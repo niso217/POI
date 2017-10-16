@@ -1,6 +1,5 @@
 package com.benezra.nir.poi;
 
-import android.*;
 import android.Manifest;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
@@ -16,6 +15,9 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -40,7 +42,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Calendar;
 
-import com.benezra.nir.poi.Adapter.ParticipatesAdapter;
+import com.benezra.nir.poi.Adapter.ParticipateAdapter;
 import com.benezra.nir.poi.Bitmap.BitmapUtil;
 import com.benezra.nir.poi.Bitmap.DateUtil;
 import com.benezra.nir.poi.Fragment.AlertDialogFragment;
@@ -49,6 +51,7 @@ import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Adapter.CustomSpinnerAdapter;
+import com.benezra.nir.poi.View.DividerItemDecoration;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -78,13 +81,13 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.DialogInterface.BUTTON_NEUTRAL;
 import static android.content.DialogInterface.BUTTON_POSITIVE;
-import static com.benezra.nir.poi.Helper.Constants.CAMERA;
 import static com.benezra.nir.poi.Helper.Constants.DETAILS;
 import static com.benezra.nir.poi.Helper.Constants.END;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
@@ -99,7 +102,6 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
 import static com.benezra.nir.poi.Helper.Constants.IMAGE;
 import static com.benezra.nir.poi.Helper.Constants.INTEREST;
 import static com.benezra.nir.poi.Helper.Constants.LATITUDE;
-import static com.benezra.nir.poi.Helper.Constants.LOCATION;
 import static com.benezra.nir.poi.Helper.Constants.LONGITUDE;
 import static com.benezra.nir.poi.Helper.Constants.START;
 import static com.benezra.nir.poi.Helper.Constants.TITLE;
@@ -132,12 +134,16 @@ public class CreateEventActivity extends BaseActivity
     private ArrayList<String> mInterestsList;
     private CustomSpinnerAdapter mCustomSpinnerAdapter;
     private EditText mEventDetails;
-    private ParticipatesAdapter mParticipatesAdapterAdapter;
-    private ArrayList<User> mParticipates;
+   //private ParticipatesAdapter mParticipatesAdapterAdapter;
     private ProgressBar mProgressBar;
     private ProgressDialogFragment mProgressDialogFragment;
     private boolean mMode; //true = new | false = edit
     private FusedLocationProviderClient mFusedLocationClient;
+    private RecyclerView mRecyclerView;
+    private ParticipateAdapter mParticipateAdapter;
+    private List<User> mParticipates;
+
+
 
 
 
@@ -313,7 +319,7 @@ public class CreateEventActivity extends BaseActivity
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 
-        //Setting the category title onto collapsing toolbar
+        //Setting the category name onto collapsing toolbar
         collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
 
 
@@ -337,9 +343,20 @@ public class CreateEventActivity extends BaseActivity
         mspinnerCustom = (Spinner) findViewById(R.id.spinnerCustom);
         mProgressBar = (ProgressBar) findViewById(R.id.pb_loading);
 
-
         mSwitch = (Switch) findViewById(R.id.tgl_allday);
         btnSave = (Button) findViewById(R.id.btn_save);
+
+
+        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+
+        mRecyclerView.setHasFixedSize(true);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
+        mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
+        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+
+
 
 
         btnSave.setOnClickListener(this);
@@ -357,7 +374,7 @@ public class CreateEventActivity extends BaseActivity
             mMode = savedInstanceState.getBoolean("mode");
 
             initCustomSpinner();
-           // initParticipates();
+            initParticipates();
             setEventFields();
 
 
@@ -365,7 +382,7 @@ public class CreateEventActivity extends BaseActivity
             mInterestsList = new ArrayList<>();
             initCustomSpinner();
             mParticipates = new ArrayList<>();
-           // initParticipates();
+            initParticipates();
 
             if (getIntent().getStringExtra(EVENT_ID) != null) {
                 mMode = false; //edit  existing event
@@ -382,6 +399,7 @@ public class CreateEventActivity extends BaseActivity
 
 
     }
+
 
     private void addParticipateChangeListener() {
         Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
@@ -424,15 +442,10 @@ public class CreateEventActivity extends BaseActivity
                         User user = data.getValue(User.class);
                         mParticipates.add(user);
                     }
-                    User owner = new User();
-                    owner.setName(mFirebaseUser.getDisplayName());
-                    owner.setAvatar(mFirebaseUser.getPhotoUrl().toString());
-                    mParticipates.add(owner);
-                    for (int i = 0; i < mParticipates.size(); i++) {
-                        Log.d(TAG, mParticipates.get(i).getName());
-                    }
 
                     //mParticipatesAdapterAdapter.setItems(new ArrayList<User>(mParticipates));
+                    mParticipateAdapter.notifyDataSetChanged();
+
                 }
             }
 
@@ -535,9 +548,8 @@ public class CreateEventActivity extends BaseActivity
     }
 
     private void initParticipates() {
-        Log.d(TAG, mParticipates.size() + "");
-        mParticipatesAdapterAdapter = new ParticipatesAdapter(this, new ArrayList<User>(mParticipates));
-       // mListView.setAdapter(mParticipatesAdapterAdapter);
+        mParticipateAdapter = new ParticipateAdapter(this,mParticipates);
+        mRecyclerView.setAdapter(mParticipateAdapter);
     }
 
 
@@ -552,7 +564,6 @@ public class CreateEventActivity extends BaseActivity
                     mCustomSpinnerAdapter.updateInterestList(new ArrayList<String>(mInterestsList));
                     mspinnerCustom.setSelection(mCustomSpinnerAdapter.getPosition(mCurrentEvent.getInterest()));
                 }
-
 
             }
 
@@ -577,7 +588,7 @@ public class CreateEventActivity extends BaseActivity
         super.onSaveInstanceState(outState);
         outState.putParcelable("event", mCurrentEvent);
         outState.putStringArrayList("interests", mInterestsList);
-        outState.putParcelableArrayList("participates", mParticipates);
+        //outState.putParcelableArrayList("participates", mParticipates);
         outState.putBoolean("mode", mMode);
 
     }

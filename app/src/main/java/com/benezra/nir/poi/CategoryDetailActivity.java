@@ -67,7 +67,7 @@ public class CategoryDetailActivity extends AppCompatActivity implements OnMapRe
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        //Getting the intent with the category title, image resource ID and first paragraph text for this category
+        //Getting the intent with the category name, image resource ID and first paragraph text for this category
         Intent categoryDetail = getIntent();
         String title = categoryDetail.getStringExtra("categoryTitle");
         //Bitmap image = categoryDetail.getParcelableExtra("imageResourceId");
@@ -93,7 +93,7 @@ public class CategoryDetailActivity extends AppCompatActivity implements OnMapRe
             }
         });
 
-        //Setting the category title onto collapsing toolbar
+        //Setting the category name onto collapsing toolbar
         CollapsingToolbarLayout collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
         collapsingToolbar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -155,7 +155,7 @@ public class CategoryDetailActivity extends AppCompatActivity implements OnMapRe
             }
         });
 
-        Log.v("my_tag", "category passed title is " + title);
+        Log.v("my_tag", "category passed name is " + title);
         //Log.v("my_tag", "category passed image is " + image);
         Log.v("my_tag", "category passed paragraph text is " + firstParagraph);
 
@@ -165,7 +165,7 @@ public class CategoryDetailActivity extends AppCompatActivity implements OnMapRe
 
         // Sharing the content to facebook
         ShareLinkContent content = new ShareLinkContent.Builder()
-                // Setting the title that will be shared
+                // Setting the name that will be shared
                 .setContentTitle("Planning a trip to Dubai?")
                 // Setting the description that will be shared
                 .setContentDescription("Make sure you visit unique attractions recommended by the local people!")
@@ -204,7 +204,7 @@ public class CategoryDetailActivity extends AppCompatActivity implements OnMapRe
 
         Log.v("my_tag", "category passed longitude is " + longitude);
         Log.v("my_tag", "category passed latitude is " + latitude);
-        Log.v("my_tag", "location map title is " + locationTitle);
+        Log.v("my_tag", "location map name is " + locationTitle);
 
         // Add a marker in the respective location and move the camera and set the zoom level to 15
         LatLng location = new LatLng(latitude, longitude);
