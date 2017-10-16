@@ -78,6 +78,7 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
@@ -746,7 +747,13 @@ public class CreateEventActivity extends BaseActivity
     private void saveEventToFirebase() {
         DatabaseReference eventReference = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId());
         if (mMode)
+
+        {
+
+            mCurrentEvent.setParticipates(setOwnerAsParticipate());
             eventReference.setValue(mCurrentEvent);
+
+        }
         else{
             eventReference.child(DETAILS).setValue(mCurrentEvent.getDetails());
             eventReference.child(START).setValue(mCurrentEvent.getStart());
@@ -759,6 +766,16 @@ public class CreateEventActivity extends BaseActivity
 
         }
         finish();
+    }
+
+    private Map<String,User> setOwnerAsParticipate(){
+        User owner = new User();
+        owner.setName(mFirebaseUser.getDisplayName());
+        owner.setEmail(mFirebaseUser.getEmail());
+        owner.setAvatar(mFirebaseUser.getPhotoUrl().toString());
+        HashMap<String, User> map = new HashMap<>();
+        map.put(mFirebaseUser.getUid(),owner);
+        return map;
     }
 
     private boolean validateInputFileName(String fileName) {

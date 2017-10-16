@@ -127,8 +127,7 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
         } else {
 
             if (mPicURL != null) {
-                VolleyHelper.getInstance(getContext()).getImageLoader().get(mPicURL, ImageLoader.getImageListener(mDialogImageView,
-                        R.drawable.image_border, android.R.drawable.ic_dialog_alert));
+                Picasso.with(getContext()).load(mPicURL).into(mDialogImageView);
             } else {
 
                 if (mPicUri != null)
