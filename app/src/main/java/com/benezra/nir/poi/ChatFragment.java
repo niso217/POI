@@ -38,14 +38,14 @@ public class ChatFragment extends Fragment {
 
                 // Read the input field and push a new instance
                 // of ChatMessage to the Firebase database
-                FirebaseDatabase.getInstance()
-                        .getReference().child("events").child("9408a488-7c29-43b6-bb9a-de4e15561579").child("chat")
-                        .push()
-                        .setValue(new ChatMessage(input.getText().toString(),
-                                FirebaseAuth.getInstance()
-                                        .getCurrentUser()
-                                        .getDisplayName())
-                        );
+//                FirebaseDatabase.getInstance()
+//                        .getReference().child("events").child("9408a488-7c29-43b6-bb9a-de4e15561579").child("chat")
+//                        .push()
+//                        .setValue(new ChatMessage(input.getText().toString(),
+//                                FirebaseAuth.getInstance()
+//                                        .getCurrentUser()
+//                                        .getDisplayName())
+//                        );
 
                 // Clear the input
                 input.setText("");

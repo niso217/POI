@@ -7,7 +7,6 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,10 +14,9 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.benezra.nir.poi.Adapter.CategoryAdapter;
-import com.benezra.nir.poi.CreateEventActivity;
+import com.benezra.nir.poi.Activity.CreateEventActivity;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.EventModel;
-import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.firebase.auth.FirebaseAuth;
@@ -137,12 +135,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
                 userEvent.putExtra(EVENT_START, event.getStart());
 
 
-                try{
-                    startActivity(userEvent);
-                }
-                catch (Exception e){
-                    Log.d("",e.getMessage());
-                }
+                startActivity(userEvent);
             }
         });
 

@@ -1,4 +1,4 @@
-package com.benezra.nir.poi;
+package com.benezra.nir.poi.Activity;
 
 import android.Manifest;
 import android.app.DatePickerDialog;
@@ -23,6 +23,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -43,14 +44,20 @@ import java.util.Arrays;
 import java.util.Calendar;
 
 import com.benezra.nir.poi.Adapter.ParticipateAdapter;
+import com.benezra.nir.poi.BaseActivity;
 import com.benezra.nir.poi.Bitmap.BitmapUtil;
 import com.benezra.nir.poi.Bitmap.DateUtil;
+import com.benezra.nir.poi.ChatActivity;
+import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Fragment.AlertDialogFragment;
 import com.benezra.nir.poi.Fragment.ImageCameraDialogFragment;
 import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Adapter.CustomSpinnerAdapter;
+import com.benezra.nir.poi.R;
+import com.benezra.nir.poi.RecyclerTouchListener;
+import com.benezra.nir.poi.User;
 import com.benezra.nir.poi.View.DividerItemDecoration;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -81,7 +88,6 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -123,7 +129,6 @@ public class CreateEventActivity extends BaseActivity
     private FirebaseUser mFirebaseUser;
     TextView tvDatePicker, tvTimePicker;
     private Switch mSwitch;
-    private Button btnSave;
     private Event mCurrentEvent;
     final static String TAG = CreateEventActivity.class.getSimpleName();
     private CollapsingToolbarLayout collapsingToolbar;
@@ -142,7 +147,6 @@ public class CreateEventActivity extends BaseActivity
     private RecyclerView mRecyclerView;
     private ParticipateAdapter mParticipateAdapter;
     private ArrayList<User> mParticipates;
-
 
 
 
@@ -168,12 +172,6 @@ public class CreateEventActivity extends BaseActivity
                 // Launch Time Picker Dialog
                 TimePickerDialog timePickerDialog = new TimePickerDialog(this, this, hour, minute, false);
                 timePickerDialog.show();
-                break;
-            case R.id.btn_save:
-                checkEvent();
-                break;
-            case R.id.collapsing_toolbar:
-                navigateToCaptureFragment(new String[]{Manifest.permission.CAMERA});
                 break;
 
         }
@@ -344,7 +342,6 @@ public class CreateEventActivity extends BaseActivity
         mProgressBar = (ProgressBar) findViewById(R.id.pb_loading);
 
         mSwitch = (Switch) findViewById(R.id.tgl_allday);
-        btnSave = (Button) findViewById(R.id.btn_save);
 
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
@@ -372,7 +369,6 @@ public class CreateEventActivity extends BaseActivity
 
 
 
-        btnSave.setOnClickListener(this);
         tvDatePicker.setOnClickListener(this);
         tvTimePicker.setOnClickListener(this);
         mSwitch.setOnCheckedChangeListener(this);
@@ -480,6 +476,11 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.edit_event_menu, menu);
+        return true;
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -487,6 +488,12 @@ public class CreateEventActivity extends BaseActivity
             case android.R.id.home:
                 onBackPressed();
                 return true;
+            case R.id.save:
+                checkEvent();
+                break;
+            case R.id.upload:
+                navigateToCaptureFragment(new String[]{Manifest.permission.CAMERA});
+                break;
         }
         return super.onOptionsItemSelected(item);
     }

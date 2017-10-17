@@ -46,9 +46,9 @@
     <string name="menu_night_mode_auto">Auto</string>
     <!-- TODO DELETE ME -->
 
-    <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean euismod bibendum laoreet. Proin gravida dolor sit amet lacus accumsan et viverra justo commodo. Proin sodales pulvinar tempor. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nam fermentum, nulla luctus pharetra vulputate, felis tellus mollis orci, sed rhoncus sapien nunc eget.</string>
+    <string name="event_details">event details</string>
     <string name="title_activity_maps">Map</string>
-    <string name="first_p">First p Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean euismod bibendum laoreet. Proin gravida dolor sit amet lacus accumsan et viverra justo commodo. Proin sodales pulvinar tempor. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nam fermentum, nulla luctus pharetra vulputate, felis tellus mollis orci, sed rhoncus sapien nunc eget.</string>
+    <string name="first_p"></string>
     <string name="map_location_title">Jumeirah Beach Hotel</string>
     <string name="map_location_title2">Burj Al Arab</string>
 

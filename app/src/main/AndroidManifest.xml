@@ -62,12 +62,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".CategoryDetailActivity"
-            android:parentActivityName=".MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
-        </activity>
 
         <activity android:name="com.facebook.FacebookActivity"
             android:configChanges=
@@ -88,7 +82,9 @@
 
         <activity android:name=".ChatActivity"></activity>
         <activity android:name=".MainActivity"></activity>
-        <activity android:name=".CreateEventActivity"></activity>
+        <activity android:name=".Activity.CreateEventActivity"></activity>
+        <activity android:name=".Activity.ViewEventActivity"></activity>
+
 
     </application>
 

@@ -1,17 +1,14 @@
 package com.benezra.nir.poi.Fragment;
 
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.util.Base64;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,8 +16,8 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.benezra.nir.poi.Activity.ViewEventActivity;
 import com.benezra.nir.poi.Adapter.CategoryAdapter;
-import com.benezra.nir.poi.CategoryDetailActivity;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.EventModel;
 import com.benezra.nir.poi.R;
@@ -35,15 +32,25 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import java.io.IOException;
 import java.util.ArrayList;
+
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_IMAGE;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_INTEREST;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_LATITUDE;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_LONGITUDE;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_OWNER;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_START;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
+
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class EventByInterestFragment extends Fragment
-        implements ValueEventListener
-        {
+        implements ValueEventListener, PermissionsDialogFragment.PermissionsGrantedCallback {
 
     private EventModel mEventModel;
     private ArrayList<Event> mEventList;
@@ -54,8 +61,6 @@ public class EventByInterestFragment extends Fragment
     private Location mLastLocation;
     private FirebaseUser mFirebaseUser;
     final static String TAG = EventByInterestFragment.class.getSimpleName();
-
-
 
 
     @Override
@@ -72,7 +77,7 @@ public class EventByInterestFragment extends Fragment
     private void initFusedLocation() {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
-        if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
@@ -97,7 +102,7 @@ public class EventByInterestFragment extends Fragment
 
 
     private void addEventChangeListener() {
-        String[] temp = new String[]{"Dance", "Swim","Geocaching"};
+        String[] temp = new String[]{"Dance", "Swim", "Geocaching"};
 
         for (int i = 0; i < temp.length; i++) {
             Query query = mFirebaseInstance.getReference("events").orderByChild("interest").equalTo(temp[i]);
@@ -137,54 +142,29 @@ public class EventByInterestFragment extends Fragment
                 // Get the Category object at the given position the user clicked on
                 Event event = mEventList.get(position);
 
-                //Getting the category name
-                String title = event.getTitle();
-                // Getting the image resource id for the category
-//                Bitmap imageResourceUrl = null;
-//                try {
-//                    imageResourceUrl = decodeFromFirebaseBase64(event.getImage());
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-                // Getting the first paragraph text
-                String firstParagraph = event.getDetails();
-                // Getting the longitude
-                Double longitude = event.getLongitude();
-                // Getting the latitude
-                Double latitude = event.getLatitude();
-                // Getting the map location name
-                String locationTitle = event.getTitle();
 
-                Intent categoryDetail = new Intent(getActivity(), CategoryDetailActivity.class);
-                //Passing the category name to the CategoryDetailActivity
-                categoryDetail.putExtra("eventId", event.getId());
-                //Passing the category name to the CategoryDetailActivity
-                categoryDetail.putExtra("categoryTitle", title);
-                //Passing the image id to the CategoryDetailActivity
-               // categoryDetail.putExtra("imageResourceId", imageResourceUrl);
-                //Passing the first paragraph text to the CategoryDetailActivity
-                categoryDetail.putExtra("firstParagraphText", firstParagraph);
-                //Passing the longitude google coordinate to the CategoryDetailActivity
-                categoryDetail.putExtra("longitude", longitude);
-                //Passing the latitude google coordinate to the CategoryDetailActivity
-                categoryDetail.putExtra("latitude", latitude);
-                //Passing the map location name to the CategoryDetailActivity
-                categoryDetail.putExtra("locationTitle", locationTitle);
+                Intent userEvent = new Intent(getActivity(), ViewEventActivity.class);
+                userEvent.putExtra(EVENT_ID, event.getId());
+                userEvent.putExtra(EVENT_TITLE, event.getTitle());
+                userEvent.putExtra(EVENT_OWNER, event.getOwner());
+                userEvent.putExtra(EVENT_IMAGE, event.getImage());
+                userEvent.putExtra(EVENT_DETAILS, event.getDetails());
+                userEvent.putExtra(EVENT_LATITUDE, event.getLatitude());
+                userEvent.putExtra(EVENT_LONGITUDE, event.getLongitude());
+                userEvent.putExtra(EVENT_INTEREST, event.getInterest());
+                userEvent.putExtra(EVENT_START, event.getStart());
 
-                startActivity(categoryDetail);
+
+                startActivity(userEvent);
             }
         });
 
-        //initFusedLocation();
-        //navigateToCaptureFragment();
+        initFusedLocation();
+        navigateToCaptureFragment(new String[]{ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
 
         return rootView;
     }
 
-    public static Bitmap decodeFromFirebaseBase64(String image) throws IOException {
-        byte[] decodedByteArray = android.util.Base64.decode(image, Base64.DEFAULT);
-        return BitmapFactory.decodeByteArray(decodedByteArray, 0, decodedByteArray.length);
-    }
 
 
     @Override
@@ -192,13 +172,13 @@ public class EventByInterestFragment extends Fragment
         if (dataSnapshot.exists()) {
             for (DataSnapshot data : dataSnapshot.getChildren()) {
                 Event event = data.getValue(Event.class);
-                if (!mFirebaseUser.getUid().equals(event.getOwner())){  //skip events from owner
+                if (!mFirebaseUser.getUid().equals(event.getOwner())) {  //skip events from owner
                     event.setDistance(mLastLocation);
                     event.setId(data.getKey());
-                    mEventModel.addEvent(data.getKey(),event);
+                    mEventModel.addEvent(data.getKey(), event);
                 }
             }
-            mEventList =new ArrayList<>(mEventModel.getEvents().values());
+            mEventList = new ArrayList<>(mEventModel.getEvents().values());
             mCategoryAdapter.setItems(mEventList);
 
         }
@@ -209,22 +189,28 @@ public class EventByInterestFragment extends Fragment
 
     }
 
-//    @Override
-//    public void navigateToCaptureFragment() {
-//        if (isPermissionGranted()) {
-//            initFusedLocation();
-//        } else {
-//            PermissionsDialogFragment permissionsDialogFragment = (PermissionsDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
-//            if (permissionsDialogFragment == null) {
-//                Log.d(TAG, "opening dialog");
-//                permissionsDialogFragment = PermissionsDialogFragment.newInstance();
-//                permissionsDialogFragment.setTargetFragment(this,11);
-//                permissionsDialogFragment.setPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,android.Manifest.permission.ACCESS_COARSE_LOCATION});
-//                permissionsDialogFragment.show(getActivity().getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
-//
-//            }
-//        }
-//    }
 
+    @Override
+    public void navigateToCaptureFragment(String[] permissions) {
+        if (isPermissionGranted(permissions)) {
+            initFusedLocation();
+        } else {
+            PermissionsDialogFragment permissionsDialogFragment = (PermissionsDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
+            if (permissionsDialogFragment == null) {
+                Log.d(TAG, "opening dialog");
+                permissionsDialogFragment = PermissionsDialogFragment.newInstance();
+                permissionsDialogFragment.setPermissions(permissions);
+                permissionsDialogFragment.show(getActivity().getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
 
+            }
+        }
+    }
+
+    private boolean isPermissionGranted(String[] permissions) {
+        for (int i = 0; i < permissions.length; i++) {
+            if (ContextCompat.checkSelfPermission(getContext(), permissions[i]) == PackageManager.PERMISSION_DENIED)
+                return false;
+        }
+        return true;
+    }
 }

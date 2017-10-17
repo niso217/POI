@@ -10,15 +10,27 @@ public class ChatMessage {
     private String messageText;
     private String messageUser;
     private long messageTime;
+    private String messageImage;
 
-    public ChatMessage(String messageText, String messageUser) {
+
+    public ChatMessage(String messageText, String messageUser, String messageImage) {
         this.messageText = messageText;
         this.messageUser = messageUser;
         messageTime = new Date().getTime();
+        this.messageImage = messageImage;
     }
 
     public ChatMessage(){
 
+    }
+
+
+    public String getMessageImage() {
+        return messageImage;
+    }
+
+    public void setMessageImage(String messageImage) {
+        this.messageImage = messageImage;
     }
 
     public String getMessageText() {

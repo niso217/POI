@@ -28,4 +28,11 @@ public class DateUtil {
         String formattedNow = simpleDateFormat.format(date);
         return formattedNow;
     }
+
+    public static String CalendartoTime(Date date) {
+        String format = "hh:mm a";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format, Locale.US);
+        String formattedNow = simpleDateFormat.format(date);
+        return formattedNow;
+    }
 }
