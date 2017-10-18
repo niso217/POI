@@ -7,6 +7,7 @@ import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -55,10 +56,13 @@ import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Adapter.CustomSpinnerAdapter;
+import com.benezra.nir.poi.Helper.AsyncGeocoder;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.benezra.nir.poi.User;
 import com.benezra.nir.poi.View.DividerItemDecoration;
+import com.firebase.geofire.GeoFire;
+import com.firebase.geofire.GeoLocation;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -94,8 +98,10 @@ import java.util.UUID;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.DialogInterface.BUTTON_NEUTRAL;
 import static android.content.DialogInterface.BUTTON_POSITIVE;
+import static com.benezra.nir.poi.Helper.Constants.ADDRESS;
 import static com.benezra.nir.poi.Helper.Constants.DETAILS;
 import static com.benezra.nir.poi.Helper.Constants.END;
+import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_IMAGE;
@@ -147,6 +153,7 @@ public class CreateEventActivity extends BaseActivity
     private RecyclerView mRecyclerView;
     private ParticipateAdapter mParticipateAdapter;
     private ArrayList<User> mParticipates;
+    private Menu mMenu;
 
 
 
@@ -355,8 +362,8 @@ public class CreateEventActivity extends BaseActivity
         mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, new RecyclerTouchListener.ClickListener() {
             @Override
             public void onClick(View view, int position) {
-                Intent i = new Intent(CreateEventActivity.this, ChatActivity.class);
-                startActivity(i);
+                //Intent i = new Intent(CreateEventActivity.this, ChatActivity.class);
+                //startActivity(i);
                 //finish();
             }
 
@@ -479,6 +486,7 @@ public class CreateEventActivity extends BaseActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.edit_event_menu, menu);
+        setMenuItemChecked(menu.findItem(R.id.chat));
         return true;
     }
 
@@ -493,6 +501,11 @@ public class CreateEventActivity extends BaseActivity
                 break;
             case R.id.upload:
                 navigateToCaptureFragment(new String[]{Manifest.permission.CAMERA});
+                break;
+            case R.id.chat:
+                Intent i = new Intent(this, ChatActivity.class);
+                i.putExtra(EVENT_ID, mCurrentEvent.getId());
+                startActivity(i);
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -511,6 +524,8 @@ public class CreateEventActivity extends BaseActivity
         mCurrentEvent.setLatitude(intent.getDoubleExtra(EVENT_LATITUDE, 0));
         mCurrentEvent.setLongitude(intent.getDoubleExtra(EVENT_LONGITUDE, 0));
         mCurrentEvent.setImage(intent.getStringExtra(EVENT_IMAGE));
+        mCurrentEvent.setAddress(intent.getStringExtra(EVENT_ADDRESS));
+
         setEventFields();
 
 
@@ -521,7 +536,8 @@ public class CreateEventActivity extends BaseActivity
         Log.d(TAG, place.getName().toString());
         mCurrentEvent.setLatitude(place.getLatLng().latitude);
         mCurrentEvent.setLongitude(place.getLatLng().longitude);
-        initMap(new LatLng(place.getLatLng().latitude, place.getLatLng().longitude), place.getAddress().toString());
+        mCurrentEvent.setAddress(place.getName().toString());
+        initMap();
 
     }
 
@@ -533,7 +549,7 @@ public class CreateEventActivity extends BaseActivity
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        initMap(new LatLng(mCurrentEvent.getLatitude(),mCurrentEvent.getLongitude()),"");
+        initMap();
     }
 
     @Override
@@ -595,10 +611,17 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
-    public void initMap(LatLng latLang, String address) {
+    public void initMap() {
 
-        mMap.addMarker(new MarkerOptions().position(latLang).title(address));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLang, 15.0f));
+        if (mCurrentEvent.getAddress()!=null)
+            mMap.addMarker(new MarkerOptions().position(mCurrentEvent.getLatlng()).title(mCurrentEvent.getAddress()));
+        else
+            mMap.addMarker(new MarkerOptions().position(mCurrentEvent.getLatlng()).title(""));
+
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mCurrentEvent.getLatlng(), 15.0f));
+
+
+
 
 
     }
@@ -686,10 +709,24 @@ public class CreateEventActivity extends BaseActivity
                             LatLng latLang = new LatLng(location.getLatitude(), location.getLongitude());
                             mCurrentEvent.setLatitude(latLang.latitude);
                             mCurrentEvent.setLongitude(latLang.longitude);
-                            initMap(latLang,"");
+                            getAddress();
                         }
                     }
                 });
+    }
+
+    private void getAddress(){
+        new AsyncGeocoder(new AsyncGeocoder.onAddressFoundListener() {
+            @Override
+            public void onAddressFound(String result) {
+                mCurrentEvent.setAddress(result);
+                Log.d(TAG,"the address is: " +result);
+                initMap();
+
+            }
+        }).execute(new AsyncGeocoder.AsyncGeocoderObject(
+                new Geocoder(this),
+                mCurrentEvent.getLocation()));
     }
 
 
@@ -794,8 +831,23 @@ public class CreateEventActivity extends BaseActivity
             eventReference.child(LONGITUDE).setValue(mCurrentEvent.getLongitude());
             eventReference.child(TITLE).setValue(mCurrentEvent.getTitle());
             eventReference.child(INTEREST).setValue(mCurrentEvent.getInterest());
+            eventReference.child(ADDRESS).setValue(mCurrentEvent.getAddress());
 
         }
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("events").child("geofire");
+        GeoFire geoFire = new GeoFire(ref);
+        geoFire.setLocation(mCurrentEvent.getInterest()+"|"+mCurrentEvent.getId(), new GeoLocation(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude()), new GeoFire.CompletionListener() {
+            @Override
+            public void onComplete(String key, DatabaseError error) {
+                if (error != null) {
+                    Log.d(TAG,"There was an error saving the location to GeoFire: " + error);
+
+                } else {
+                    Log.d(TAG,"Location saved on server successfully!");
+                }
+            }
+
+        });
         finish();
     }
 
@@ -844,6 +896,15 @@ public class CreateEventActivity extends BaseActivity
                 mToolbarBackgroundImage.setImageBitmap(bitmap);
         }
 
+    }
+
+    private void setMenuItemChecked(MenuItem chatMenuItem) {
+
+        if (!mMode) {
+            chatMenuItem.setVisible(true);
+        } else {
+            chatMenuItem.setVisible(false);
+        }
     }
 
 

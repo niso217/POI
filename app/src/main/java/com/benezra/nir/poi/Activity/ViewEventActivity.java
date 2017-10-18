@@ -50,6 +50,7 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_IMAGE;
@@ -339,6 +340,7 @@ public class ViewEventActivity extends BaseActivity
         mCurrentEvent.setLatitude(intent.getDoubleExtra(EVENT_LATITUDE, 0));
         mCurrentEvent.setLongitude(intent.getDoubleExtra(EVENT_LONGITUDE, 0));
         mCurrentEvent.setImage(intent.getStringExtra(EVENT_IMAGE));
+        mCurrentEvent.setAddress(intent.getStringExtra(EVENT_ADDRESS));
         setEventFields();
 
 

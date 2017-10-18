@@ -29,6 +29,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
+import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_IMAGE;
@@ -133,6 +134,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener {
                 userEvent.putExtra(EVENT_LONGITUDE, event.getLongitude());
                 userEvent.putExtra(EVENT_INTEREST, event.getInterest());
                 userEvent.putExtra(EVENT_START, event.getStart());
+                userEvent.putExtra(EVENT_ADDRESS, event.getAddress());
 
 
                 startActivity(userEvent);

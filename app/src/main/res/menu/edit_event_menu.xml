@@ -3,6 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/chat"
+        android:actionProviderClass="android.widget.ShareActionProvider"
+        android:icon="@drawable/ic_chat_white_48dp"
+        android:title="Chat"
+        android:visible="false"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/upload"
         android:actionProviderClass="android.widget.ShareActionProvider"
         android:icon="@drawable/ic_add_a_photo_white_48dp"

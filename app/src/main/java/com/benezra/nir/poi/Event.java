@@ -34,12 +34,27 @@ public class Event implements Parcelable {
     private double distance;
     @Exclude
     private Uri uri;
+    private String address;
 
     private String title;
     private String image;
     private Map<String,User> participates;
 
+    @Exclude
+    private Location location = new Location("");;
 
+
+    public String getAddress() {
+        return address;
+    }
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    @Exclude
+    public Location getLocation() {
+        return location;
+    }
 
     @Exclude
     public Uri getUri() {
@@ -98,10 +113,9 @@ public class Event implements Parcelable {
 
     @Exclude
     public void setDistance(Location current) {
-        Location loc = new Location("");
-        loc.setLatitude(latitude);
-        loc.setLongitude(longitude);
-        this.distance =  Math.round((Math.ceil(current.distanceTo(loc)*4) / 4.0d) / 1000);
+        location.setLatitude(latitude);
+        location.setLongitude(longitude);
+        this.distance =  Math.round((Math.ceil(current.distanceTo(location)*4) / 4.0d) / 1000);
     }
 
     public String getOwner() {
@@ -135,6 +149,7 @@ public class Event implements Parcelable {
 
     public void setLatitude(double latitude) {
         this.latitude = latitude;
+        this.location.setLatitude(latitude);
     }
 
     public double getLongitude() {
@@ -143,6 +158,13 @@ public class Event implements Parcelable {
 
     public void setLongitude(double longitude) {
         this.longitude = longitude;
+        this.location.setLongitude(longitude);
+
+    }
+
+    @Exclude
+    public LatLng getLatlng(){
+        return new LatLng(latitude,longitude);
     }
 
 
@@ -169,20 +191,20 @@ public class Event implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+
         dest.writeString(interest);
-
-
         dest.writeLong(start);
         dest.writeLong(end);
         dest.writeString(id);
         dest.writeString(owner);
         dest.writeString(details);
         dest.writeString(title);
-        //dest.writeString(image);
-
+        dest.writeString(image);
         dest.writeDouble(latitude);
         dest.writeDouble(longitude);
         dest.writeDouble(distance);
+        dest.writeString(address);
+
     }
 
     private Event(Parcel in){
@@ -193,10 +215,11 @@ public class Event implements Parcelable {
         this.owner = in.readString();
         this.details = in.readString();
         this.title = in.readString();
-        //this.image = in.readString();
+        this.image = in.readString();
         this.latitude = in.readDouble();
         this.longitude = in.readDouble();
         this.distance = in.readDouble();
+        this.address = in.readString();
 
     }
 
