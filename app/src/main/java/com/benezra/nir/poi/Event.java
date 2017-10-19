@@ -7,7 +7,10 @@ import android.os.Parcelable;
 import android.util.Log;
 
 import com.benezra.nir.poi.Bitmap.DateUtil;
+import com.firebase.geofire.GeoLocation;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 
@@ -39,6 +42,14 @@ public class Event implements Parcelable {
     private String title;
     private String image;
     private Map<String,User> participates;
+
+    private Marker marker;
+
+
+    @Exclude
+    public Marker getMarker() {
+        return marker;
+    }
 
     @Exclude
     private Location location = new Location("");;
@@ -82,7 +93,15 @@ public class Event implements Parcelable {
         this.start = Calendar.getInstance().getTimeInMillis();
     }
 
+    public Event(String interest ,String uuid,String title,GeoLocation latLng,Marker marker) {
+        this.interest = interest;
+        this.id = uuid;
+        this.latitude = latLng.latitude;
+        this.longitude = latLng.longitude;
+        this.title = title;
+        this.marker = marker;
 
+    }
     public Map<String, User> getParticipates() {
         return participates;
     }

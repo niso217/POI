@@ -10,9 +10,14 @@
     android:id="@+id/list"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="272dp"
     android:drawSelectorOnTop="true"
     android:background="#ffffff"
     android:dividerHeight="3dp"
     android:divider="#ffffff"/>
+
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </LinearLayout>

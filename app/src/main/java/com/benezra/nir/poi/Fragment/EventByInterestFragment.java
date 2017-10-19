@@ -27,7 +27,12 @@ import com.firebase.geofire.GeoQuery;
 import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -64,7 +69,10 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
  * A simple {@link Fragment} subclass.
  */
 public class EventByInterestFragment extends Fragment
-        implements ValueEventListener, PermissionsDialogFragment.PermissionsGrantedCallback {
+        implements ValueEventListener,
+        PermissionsDialogFragment.PermissionsGrantedCallback,
+        OnMapReadyCallback,
+        GoogleMap.OnInfoWindowClickListener{
 
     private EventModel mEventModel;
     private ArrayList<Event> mEventList;
@@ -75,7 +83,10 @@ public class EventByInterestFragment extends Fragment
     private Location mLastLocation;
     private FirebaseUser mFirebaseUser;
     final static String TAG = EventByInterestFragment.class.getSimpleName();
-    private HashMap<String,HashMap<String,LatLng>> mEventHashMap;
+    private HashMap<String,Event> mEventHashMap;
+    private GoogleMap mMap;
+    private MapView mMapView;
+    List<MarkerOptions> markers = new ArrayList<MarkerOptions>();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -133,6 +144,40 @@ public class EventByInterestFragment extends Fragment
         // Required empty public constructor
     }
 
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        mMapView = (MapView) view.findViewById(R.id.map);
+        mMapView.onCreate(savedInstanceState);
+        mMapView.onResume();
+        mMapView.getMapAsync(this);//when you already implement OnMapReadyCallback in your fragment
+    }
+
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.setOnInfoWindowClickListener(this);
+    }
+
+    private void addEventsToMap(){
+
+        mMap.clear();
+        Iterator it = mEventHashMap.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            Event event = (Event) pair.getValue();
+        }
+    }
+
+
+    private void addSingeMarkerToMap(String title,String id,String interest, GeoLocation location){
+        MarkerOptions markerOptions = new MarkerOptions()
+                .position(new LatLng(location.latitude,location.longitude))
+                .title(title);
+        Marker marker = mMap.addMarker(markerOptions);
+        marker.setTag(id);
+        mEventHashMap.put(id,new Event(interest,id,title,location,marker));
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -177,6 +222,7 @@ public class EventByInterestFragment extends Fragment
         });
 
         //initFusedLocation();
+        if (savedInstanceState==null)
         navigateToCaptureFragment(new String[]{ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
 
         return rootView;
@@ -184,7 +230,7 @@ public class EventByInterestFragment extends Fragment
 
     private void initGeoFire() {
         HashSet setEvents = new HashSet();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("events").child("geofire");
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("events");
         GeoFire geoFire = new GeoFire(ref);
         // creates a new query around [37.7832, -122.4056] with a radius of 0.6 kilometers
         GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 55);
@@ -193,32 +239,27 @@ public class EventByInterestFragment extends Fragment
             @Override
             public void onKeyEntered(String key, GeoLocation location) {
                 Log.d(TAG,String.format("Key %s entered the search area at [%f,%f]", key, location.latitude, location.longitude));
-                //Query query = mFirebaseInstance.getReference("events").child(key);
-                //query.addValueEventListener(EventByInterestFragment.this);
-                String[] tokens = key.split("\\|");
+                String[] tokens = key.split("\\_");
+                String interest = tokens[0];
+                String id = tokens[1];
+                String title = tokens[2];
 
-                HashMap<String,LatLng> currentSet = mEventHashMap.get(tokens[0]);
-                if (currentSet==null)
-                    currentSet = new HashMap<String,LatLng>();
-
-                currentSet.put(tokens[1],new LatLng(location.latitude,location.longitude));
-                mEventHashMap.put(tokens[0],currentSet);
-
+                Event event = mEventHashMap.get(id);
+                if (event==null){
+                    addSingeMarkerToMap(title,key,interest,location);
+                }
             }
 
             @Override
             public void onKeyExited(String key) {
+                String[] tokens = key.split("\\_");
                 Log.d(TAG,String.format("Key %s is no longer in the search area", key));
-                Iterator it = mEventHashMap.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry pair = (Map.Entry)it.next();
-                    HashMap<String,LatLng> value = (HashMap<String,LatLng>)pair.getValue();
-                    List<String> l = new ArrayList<String>(value.keySet());
-                    if (l.contains(key))
-                        mEventHashMap.remove(pair.getKey()).remove(pair.getKey());
-                    else
-                        continue;
-                }
+                Event event = mEventHashMap.get(tokens[1]);
+                Marker marker = event.getMarker();
+                marker.remove();
+                mEventHashMap.remove(tokens[1]);
+                //addEventsToMap();
+
             }
 
             @Override
@@ -229,7 +270,9 @@ public class EventByInterestFragment extends Fragment
 
             @Override
             public void onGeoQueryReady() {
+                //addEventsToMap();
                 Log.d(TAG,"All initial data has been loaded and events have been fired!");
+                //addEventsToMap();
 
             }
 
@@ -240,6 +283,10 @@ public class EventByInterestFragment extends Fragment
         });
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
 
     @Override
     public void onDataChange(DataSnapshot dataSnapshot) {
@@ -286,13 +333,40 @@ public class EventByInterestFragment extends Fragment
         return true;
     }
 
-    class EventLite{
-        LatLng latLang;
-        String id;
+    @Override
+    public void onInfoWindowClick(final Marker marker) {
+        Query query = mFirebaseInstance.getReference("events").child(marker.getTag().toString());
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    Event event = dataSnapshot.getValue(Event.class);
 
-        public EventLite(LatLng latLang, String id) {
-            this.latLang = latLang;
-            this.id = id;
-        }
+                    Intent userEvent = new Intent(getActivity(), ViewEventActivity.class);
+                    userEvent.putExtra(EVENT_ID, marker.getTag().toString());
+                    userEvent.putExtra(EVENT_TITLE, event.getTitle());
+                    userEvent.putExtra(EVENT_OWNER, event.getOwner());
+                    userEvent.putExtra(EVENT_IMAGE, event.getImage());
+                    userEvent.putExtra(EVENT_DETAILS, event.getDetails());
+                    userEvent.putExtra(EVENT_LATITUDE, event.getLatitude());
+                    userEvent.putExtra(EVENT_LONGITUDE, event.getLongitude());
+                    userEvent.putExtra(EVENT_INTEREST, event.getInterest());
+                    userEvent.putExtra(EVENT_START, event.getStart());
+                    userEvent.putExtra(EVENT_ADDRESS, event.getAddress());
+
+
+                    startActivity(userEvent);
+                }
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+
     }
+
 }

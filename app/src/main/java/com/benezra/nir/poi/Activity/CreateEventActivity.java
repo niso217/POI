@@ -111,10 +111,13 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_LONGITUDE;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_OWNER;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_START;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
+import static com.benezra.nir.poi.Helper.Constants.ID;
 import static com.benezra.nir.poi.Helper.Constants.IMAGE;
 import static com.benezra.nir.poi.Helper.Constants.INTEREST;
 import static com.benezra.nir.poi.Helper.Constants.LATITUDE;
 import static com.benezra.nir.poi.Helper.Constants.LONGITUDE;
+import static com.benezra.nir.poi.Helper.Constants.OWNER;
+import static com.benezra.nir.poi.Helper.Constants.PARTICIPATES;
 import static com.benezra.nir.poi.Helper.Constants.START;
 import static com.benezra.nir.poi.Helper.Constants.TITLE;
 
@@ -145,7 +148,7 @@ public class CreateEventActivity extends BaseActivity
     private ArrayList<String> mInterestsList;
     private CustomSpinnerAdapter mCustomSpinnerAdapter;
     private EditText mEventDetails;
-   //private ParticipatesAdapter mParticipatesAdapterAdapter;
+    //private ParticipatesAdapter mParticipatesAdapterAdapter;
     private ProgressBar mProgressBar;
     private ProgressDialogFragment mProgressDialogFragment;
     private boolean mMode; //true = new | false = edit
@@ -154,9 +157,6 @@ public class CreateEventActivity extends BaseActivity
     private ParticipateAdapter mParticipateAdapter;
     private ArrayList<User> mParticipates;
     private Menu mMenu;
-
-
-
 
 
     @Override
@@ -204,7 +204,7 @@ public class CreateEventActivity extends BaseActivity
             }
         }
 
-        if (mCurrentEvent.getImage() == null && mCurrentEvent.getUri()==null)
+        if (mCurrentEvent.getImage() == null && mCurrentEvent.getUri() == null)
             BuildDialogFragment();
         else
             saveEvent();
@@ -224,7 +224,6 @@ public class CreateEventActivity extends BaseActivity
 
         }
     }
-
 
 
     @Override
@@ -372,8 +371,6 @@ public class CreateEventActivity extends BaseActivity
 
             }
         }));
-
-
 
 
         tvDatePicker.setOnClickListener(this);
@@ -584,7 +581,7 @@ public class CreateEventActivity extends BaseActivity
     }
 
     private void initParticipates() {
-        mParticipateAdapter = new ParticipateAdapter(this,mParticipates);
+        mParticipateAdapter = new ParticipateAdapter(this, mParticipates);
         mRecyclerView.setAdapter(mParticipateAdapter);
     }
 
@@ -613,15 +610,12 @@ public class CreateEventActivity extends BaseActivity
 
     public void initMap() {
 
-        if (mCurrentEvent.getAddress()!=null)
+        if (mCurrentEvent.getAddress() != null)
             mMap.addMarker(new MarkerOptions().position(mCurrentEvent.getLatlng()).title(mCurrentEvent.getAddress()));
         else
             mMap.addMarker(new MarkerOptions().position(mCurrentEvent.getLatlng()).title(""));
 
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mCurrentEvent.getLatlng(), 15.0f));
-
-
-
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mCurrentEvent.getLatlng(), 15.0f));
 
 
     }
@@ -654,17 +648,15 @@ public class CreateEventActivity extends BaseActivity
 
 
     @Override
-    public void navigateToCaptureFragment(String [] permissions) {
+    public void navigateToCaptureFragment(String[] permissions) {
 
         if (isPermissionGranted(permissions)) {
 
 
-            if (Arrays.asList(permissions).contains(ACCESS_FINE_LOCATION))
-            {
+            if (Arrays.asList(permissions).contains(ACCESS_FINE_LOCATION)) {
                 initFusedLocation();
             }
-            if (Arrays.asList(permissions).contains(Manifest.permission.CAMERA))
-            {
+            if (Arrays.asList(permissions).contains(Manifest.permission.CAMERA)) {
                 buildImageAndTitleChooser();
             }
         } else {
@@ -679,7 +671,7 @@ public class CreateEventActivity extends BaseActivity
         }
     }
 
-    private boolean isPermissionGranted(String [] permissions) {
+    private boolean isPermissionGranted(String[] permissions) {
         for (int i = 0; i < permissions.length; i++) {
             if (ContextCompat.checkSelfPermission(this, permissions[i]) == PackageManager.PERMISSION_DENIED)
                 return false;
@@ -715,12 +707,12 @@ public class CreateEventActivity extends BaseActivity
                 });
     }
 
-    private void getAddress(){
+    private void getAddress() {
         new AsyncGeocoder(new AsyncGeocoder.onAddressFoundListener() {
             @Override
             public void onAddressFound(String result) {
                 mCurrentEvent.setAddress(result);
-                Log.d(TAG,"the address is: " +result);
+                Log.d(TAG, "the address is: " + result);
                 initMap();
 
             }
@@ -796,7 +788,7 @@ public class CreateEventActivity extends BaseActivity
                             // percentage in progress dialog
                             Message message = new Message();
                             Bundle bundle = new Bundle();
-                            bundle.putInt("prg",(int)progress);
+                            bundle.putInt("prg", (int) progress);
                             message.setData(bundle);
                             mProgressDialogFragment.setProgress(message);
                         }
@@ -813,37 +805,39 @@ public class CreateEventActivity extends BaseActivity
     }
 
     private void saveEventToFirebase() {
-        DatabaseReference eventReference = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId());
-        if (mMode)
 
-        {
-
-            mCurrentEvent.setParticipates(setOwnerAsParticipate());
-            eventReference.setValue(mCurrentEvent);
-
-        }
-        else{
-            eventReference.child(DETAILS).setValue(mCurrentEvent.getDetails());
-            eventReference.child(START).setValue(mCurrentEvent.getStart());
-            eventReference.child(END).setValue(mCurrentEvent.getEnd());
-            eventReference.child(IMAGE).setValue(mCurrentEvent.getImage());
-            eventReference.child(LATITUDE).setValue(mCurrentEvent.getLatitude());
-            eventReference.child(LONGITUDE).setValue(mCurrentEvent.getLongitude());
-            eventReference.child(TITLE).setValue(mCurrentEvent.getTitle());
-            eventReference.child(INTEREST).setValue(mCurrentEvent.getInterest());
-            eventReference.child(ADDRESS).setValue(mCurrentEvent.getAddress());
-
-        }
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("events").child("geofire");
-        GeoFire geoFire = new GeoFire(ref);
-        geoFire.setLocation(mCurrentEvent.getInterest()+"|"+mCurrentEvent.getId(), new GeoLocation(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude()), new GeoFire.CompletionListener() {
+        GeoFire geoFire = new GeoFire(mFirebaseInstance.getReference("events"));
+        geoFire.setLocation(mCurrentEvent.getInterest()+"_"+mCurrentEvent.getId()+"_"+mCurrentEvent.getTitle(), new GeoLocation(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude()), new GeoFire.CompletionListener() {
             @Override
             public void onComplete(String key, DatabaseError error) {
                 if (error != null) {
-                    Log.d(TAG,"There was an error saving the location to GeoFire: " + error);
+                    Log.d(TAG, "There was an error saving the location to GeoFire: " + error);
 
                 } else {
-                    Log.d(TAG,"Location saved on server successfully!");
+                    Log.d(TAG, "Location saved on server successfully!");
+
+                     DatabaseReference eventReference = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId());
+
+                    if (mMode)
+                    {
+                        Map<String, User> map = setOwnerAsParticipate();
+                        mCurrentEvent.setParticipates(map);
+                        eventReference.child(PARTICIPATES).setValue(map);
+                    }
+
+
+
+                    eventReference.child(DETAILS).setValue(mCurrentEvent.getDetails());
+                    eventReference.child(START).setValue(mCurrentEvent.getStart());
+                    eventReference.child(END).setValue(mCurrentEvent.getEnd());
+                    eventReference.child(IMAGE).setValue(mCurrentEvent.getImage());
+                    eventReference.child(LATITUDE).setValue(mCurrentEvent.getLatitude());
+                    eventReference.child(LONGITUDE).setValue(mCurrentEvent.getLongitude());
+                    eventReference.child(TITLE).setValue(mCurrentEvent.getTitle());
+                    eventReference.child(INTEREST).setValue(mCurrentEvent.getInterest());
+                    eventReference.child(ADDRESS).setValue(mCurrentEvent.getAddress());
+                    eventReference.child(OWNER).setValue(mFirebaseUser.getUid());
+                    eventReference.child(ID).setValue(mCurrentEvent.getId());
                 }
             }
 
@@ -851,13 +845,13 @@ public class CreateEventActivity extends BaseActivity
         finish();
     }
 
-    private Map<String,User> setOwnerAsParticipate(){
+    private Map<String, User> setOwnerAsParticipate() {
         User owner = new User();
         owner.setName(mFirebaseUser.getDisplayName());
         owner.setEmail(mFirebaseUser.getEmail());
         owner.setAvatar(mFirebaseUser.getPhotoUrl().toString());
         HashMap<String, User> map = new HashMap<>();
-        map.put(mFirebaseUser.getUid(),owner);
+        map.put(mFirebaseUser.getUid(), owner);
         return map;
     }
 
@@ -870,7 +864,6 @@ public class CreateEventActivity extends BaseActivity
 
         return true;
     }
-
 
 
     private void setImageBack() {

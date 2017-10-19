@@ -25,9 +25,13 @@ public interface Constants {
     public static final String START = "start";
     public static final String INTEREST = "interest";
     public static final String ADDRESS = "address";
+    public static final String PARTICIPATES = "participates";
+    public static final String OWNER = "owner";
+    public static final String ID = "id";
 
 
-    public static final String TITLE = "name";
+
+    public static final String TITLE = "title";
     public static final String MESSAGE = "message";
     public static final String OPTIONS = "options";
 
