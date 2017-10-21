@@ -1,41 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.google.android.gms.maps.MapView
-        android:id="@+id/map"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
+        android:layout_height="0dp"
+        android:layout_weight="0.9"
         android:orientation="vertical">
 
-        <fragment
-            android:id="@+id/autocomplete_fragment"
-            android:name="com.benezra.nir.poi.CustomPlaceAutoCompleteFragment"
+
+        <com.google.android.gms.maps.MapView
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-
-        <ImageButton
-            android:id="@+id/current_location"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:layout_gravity="right|top"
-            android:layout_marginTop="5dp"
-            android:background="@drawable/mapbutton_background"
-            android:src="@android:drawable/ic_menu_myplaces"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
+            android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-           />
+            android:layout_alignParentTop="true"
+            android:orientation="vertical">
 
+            <fragment
+                android:id="@+id/autocomplete_fragment"
+                android:name="com.benezra.nir.poi.CustomPlaceAutoCompleteFragment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+
+            <ImageButton
+                android:id="@+id/current_location"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_gravity="right|top"
+                android:layout_marginTop="5dp"
+                android:background="@drawable/mapbutton_background"
+                android:src="@android:drawable/ic_menu_myplaces"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:id="@+id/tab_layout"
+        android:layout_weight="0.1"
+        android:elevation="1dp"
+        android:orientation="vertical">
+
+        <android.support.design.widget.TabLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <android.support.design.widget.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Left" />
+
+            <android.support.design.widget.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Center" />
+
+            <android.support.design.widget.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Right" />
+        </android.support.design.widget.TabLayout>
     </LinearLayout>
 
 
-</RelativeLayout>
+</LinearLayout>

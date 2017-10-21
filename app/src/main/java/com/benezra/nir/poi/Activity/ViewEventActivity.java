@@ -5,7 +5,10 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -26,12 +29,15 @@ import com.benezra.nir.poi.Bitmap.BitmapUtil;
 import com.benezra.nir.poi.Bitmap.DateUtil;
 import com.benezra.nir.poi.ChatActivity;
 import com.benezra.nir.poi.Event;
+import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.benezra.nir.poi.User;
 import com.benezra.nir.poi.View.DividerItemDecoration;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.places.Place;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -65,7 +71,8 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
 public class ViewEventActivity extends BaseActivity
         implements View.OnClickListener,
         OnMapReadyCallback,
-        RecyclerTouchListener.ClickListener {
+        RecyclerTouchListener.ClickListener,
+        MapFragment.MapFragmentCallback {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -86,6 +93,9 @@ public class ViewEventActivity extends BaseActivity
     private Menu mMenu;
     private LinearLayout mPrivateLinearLayout;
     private NestedScrollView mNestedScrollView;
+    private MapFragment mapFragment;
+    private CoordinatorLayout mCoordinatorLayout;
+    private AppBarLayout mAppBarLayout;
 
 
     @Override
@@ -136,6 +146,23 @@ public class ViewEventActivity extends BaseActivity
         //Setting the category mDialogImageView onto collapsing toolbar
         mToolbarBackgroundImage = (ImageView) findViewById(R.id.backdrop);
 
+        mAppBarLayout = (AppBarLayout) findViewById(R.id.appbar);
+        mAppBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+
+                if (verticalOffset > -2) {
+                    // Collapsed
+                    Log.d(TAG, "Collapsed " + verticalOffset);
+                    mapFragment.setTabVisibility(true);
+                } else {
+                    mapFragment.setTabVisibility(false);
+                    // Not collapsed
+                    Log.d(TAG, " NOT Collapsed " + verticalOffset);
+
+                }
+            }
+        });
 
         mProgressBar = (ProgressBar) findViewById(R.id.pb_loading);
 
@@ -144,6 +171,7 @@ public class ViewEventActivity extends BaseActivity
         mPrivateLinearLayout = (LinearLayout) findViewById(R.id.private_layout);
 
         mNestedScrollView = (NestedScrollView) findViewById(R.id.nested_scrollview);
+
 
         tvDatePicker = (TextView) findViewById(R.id.tv_date);
         tvTimePicker = (TextView) findViewById(R.id.tv_time);
@@ -167,6 +195,46 @@ public class ViewEventActivity extends BaseActivity
         collapsingToolbar.setOnClickListener(this);
 
 
+//        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) appbar.getLayoutParams();
+//        AppBarLayout.Behavior behavior = new AppBarLayout.Behavior();
+//        behavior.setDragCallback(new AppBarLayout.Behavior.DragCallback() {
+//            @Override
+//            public boolean canDrag(AppBarLayout appBarLayout) {
+//                return false;
+//            }
+//        });
+//        params.setBehavior(behavior);
+
+//        AppBarLayout.Behavior behavior;
+//        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) appbar.getLayoutParams();
+//         behavior = (AppBarLayout.Behavior) params.getBehavior();
+//        if (behavior != null) {
+//            behavior.onNestedFling(coordinatorLayout, appbar, null, 500, 500, true);
+//        }
+//        else
+//        {
+//            behavior = new AppBarLayout.Behavior();
+//            behavior.onNestedFling(coordinatorLayout, appbar, null, 500, 500, true);
+//            params.setBehavior(behavior);
+//        }
+
+        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.main_content);
+
+        mAppBarLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                int toolbarHeight = mAppBarLayout.getHeight();
+                setAppBarOffset(toolbarHeight/2);
+            }
+        });
+
+//        int toolbarHeight = findViewById(R.id.toolbar).getHeight();
+//
+//        mNestedScrollView.startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL);
+//        mNestedScrollView.dispatchNestedPreScroll(0, toolbarHeight, null, null);
+//        mNestedScrollView.dispatchNestedScroll(0, 0, 0, 0, new int[]{0, -toolbarHeight});
+//        mNestedScrollView.scrollTo(0, 600);
+
         if (savedInstanceState != null) {
             mCurrentEvent = savedInstanceState.getParcelable("event");
             mParticipates = savedInstanceState.getParcelableArrayList("participates");
@@ -186,10 +254,19 @@ public class ViewEventActivity extends BaseActivity
         }
 
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+//        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+//        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+//                .findFragmentById(R.id.map);
+//        mapFragment.getMapAsync(this);
+
+        mapFragment = (MapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+    }
+
+    private void setAppBarOffset(int offsetPx){
+        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
+        AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) params.getBehavior();
+        behavior.onNestedPreScroll(mCoordinatorLayout, mAppBarLayout, null, 0, offsetPx, new int[]{0, 0});
     }
 
     private void isJoined() {
@@ -297,7 +374,7 @@ public class ViewEventActivity extends BaseActivity
         MenuItem join = mMenu.findItem(R.id.join);
         join.setChecked(mJoinEvent);
         setIcon(join);
-        Log.d(TAG,"join.setChecked " + mJoinEvent);
+        Log.d(TAG, "join.setChecked " + mJoinEvent);
 
         if (mJoinEvent) {
             mPrivateLinearLayout.setVisibility(View.VISIBLE);
@@ -409,13 +486,31 @@ public class ViewEventActivity extends BaseActivity
 
 
     @Override
+    public void onPlaceSelected(Place place) {
+
+    }
+
+    @Override
+    public void onError(Status status) {
+
+    }
+
+    @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
+        mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+        mMap.getUiSettings().setZoomGesturesEnabled(true);
 
         // Add a marker in the respective location and move the camera and set the zoom level to 15
         LatLng location = new LatLng(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude());
         mMap.addMarker(new MarkerOptions().position(location).title(mCurrentEvent.getTitle()));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15.0f));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16.0f));
+    }
+
+    @Override
+    public void onCurrentLocationClicked() {
+
     }
 
     @Override
@@ -427,5 +522,7 @@ public class ViewEventActivity extends BaseActivity
     public void onLongClick(View view, int position) {
 
     }
+
+
 }
 

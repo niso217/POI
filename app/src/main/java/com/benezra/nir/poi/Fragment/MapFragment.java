@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import com.benezra.nir.poi.R;
 import com.google.android.gms.common.api.Status;
@@ -39,6 +40,7 @@ public class MapFragment extends Fragment implements
     private Context mContext;
     private MapFragmentCallback mListener;
     private static final String TAG = MapFragment.class.getSimpleName();
+    private LinearLayout linearLayout;
 
 
     @Override
@@ -54,6 +56,7 @@ public class MapFragment extends Fragment implements
 
             mPlaceAutocompleteFragment.setOnPlaceSelectedListener(this);
         }
+        linearLayout = (LinearLayout)view.findViewById(R.id.tab_layout);
         view.findViewById(R.id.current_location).setOnClickListener(this);
 
 
@@ -67,6 +70,15 @@ public class MapFragment extends Fragment implements
         if (context instanceof MapFragment.MapFragmentCallback) {
             mListener = (MapFragment.MapFragmentCallback) context;
         }
+    }
+
+    public void setTabVisibility(boolean visible){
+        if (visible)
+            linearLayout.setVisibility(View.VISIBLE);
+        else
+            linearLayout.setVisibility(View.GONE);
+
+
     }
 
     @Override
