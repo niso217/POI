@@ -56,22 +56,32 @@
 
         <android.support.design.widget.TabLayout
             android:layout_width="match_parent"
+            android:id="@+id/tab_layout_tab"
             android:layout_height="match_parent">
 
             <android.support.design.widget.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Left" />
+                android:icon="@drawable/ic_directions_car_black_24dp"
+                android:text="CAR" />
 
             <android.support.design.widget.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Center" />
+                android:icon="@drawable/ic_directions_walk_black_24dp"
+                android:text="WALK" />
 
             <android.support.design.widget.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Right" />
+                android:icon="@drawable/ic_directions_bike_black_24dp"
+                android:text="BIKE" />
+
+            <android.support.design.widget.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_my_location_black_24dp"
+                android:text="CURRENT" />
         </android.support.design.widget.TabLayout>
     </LinearLayout>
 

@@ -544,6 +544,12 @@ public class CreateEventActivity extends BaseActivity
     }
 
     @Override
+    public void onTabVisible(boolean visible) {
+
+    }
+
+
+    @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         initMap();

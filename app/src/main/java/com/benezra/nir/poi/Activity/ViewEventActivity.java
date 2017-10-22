@@ -33,6 +33,7 @@ import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
+import com.benezra.nir.poi.RelativeLayoutTouchListener;
 import com.benezra.nir.poi.User;
 import com.benezra.nir.poi.View.DividerItemDecoration;
 import com.google.android.gms.common.api.Status;
@@ -72,7 +73,7 @@ public class ViewEventActivity extends BaseActivity
         implements View.OnClickListener,
         OnMapReadyCallback,
         RecyclerTouchListener.ClickListener,
-        MapFragment.MapFragmentCallback {
+        MapFragment.MapFragmentCallback, RelativeLayoutTouchListener.LayoutTouchListenerCallback {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -96,7 +97,7 @@ public class ViewEventActivity extends BaseActivity
     private MapFragment mapFragment;
     private CoordinatorLayout mCoordinatorLayout;
     private AppBarLayout mAppBarLayout;
-
+    private boolean mCanDrag = true;
 
     @Override
     public void onClick(View v) {
@@ -154,9 +155,12 @@ public class ViewEventActivity extends BaseActivity
                 if (verticalOffset > -2) {
                     // Collapsed
                     Log.d(TAG, "Collapsed " + verticalOffset);
-                    mapFragment.setTabVisibility(true);
+                    // mCanDrag = false;
+                    if (!mapFragment.isTabVisible())
+                        mapFragment.setTabVisibility(true);
                 } else {
-                    mapFragment.setTabVisibility(false);
+                    if (mapFragment.isTabVisible())
+                        mapFragment.setTabVisibility(false);
                     // Not collapsed
                     Log.d(TAG, " NOT Collapsed " + verticalOffset);
 
@@ -195,45 +199,19 @@ public class ViewEventActivity extends BaseActivity
         collapsingToolbar.setOnClickListener(this);
 
 
-//        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) appbar.getLayoutParams();
-//        AppBarLayout.Behavior behavior = new AppBarLayout.Behavior();
-//        behavior.setDragCallback(new AppBarLayout.Behavior.DragCallback() {
-//            @Override
-//            public boolean canDrag(AppBarLayout appBarLayout) {
-//                return false;
-//            }
-//        });
-//        params.setBehavior(behavior);
+        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
+        AppBarLayout.Behavior behavior = new AppBarLayout.Behavior();
+        behavior.setDragCallback(new AppBarLayout.Behavior.DragCallback() {
+            @Override
+            public boolean canDrag(AppBarLayout appBarLayout) {
+                return mCanDrag;
+            }
+        });
+        params.setBehavior(behavior);
 
-//        AppBarLayout.Behavior behavior;
-//        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) appbar.getLayoutParams();
-//         behavior = (AppBarLayout.Behavior) params.getBehavior();
-//        if (behavior != null) {
-//            behavior.onNestedFling(coordinatorLayout, appbar, null, 500, 500, true);
-//        }
-//        else
-//        {
-//            behavior = new AppBarLayout.Behavior();
-//            behavior.onNestedFling(coordinatorLayout, appbar, null, 500, 500, true);
-//            params.setBehavior(behavior);
-//        }
 
         mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.main_content);
 
-        mAppBarLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                int toolbarHeight = mAppBarLayout.getHeight();
-                setAppBarOffset(toolbarHeight/2);
-            }
-        });
-
-//        int toolbarHeight = findViewById(R.id.toolbar).getHeight();
-//
-//        mNestedScrollView.startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL);
-//        mNestedScrollView.dispatchNestedPreScroll(0, toolbarHeight, null, null);
-//        mNestedScrollView.dispatchNestedScroll(0, 0, 0, 0, new int[]{0, -toolbarHeight});
-//        mNestedScrollView.scrollTo(0, 600);
 
         if (savedInstanceState != null) {
             mCurrentEvent = savedInstanceState.getParcelable("event");
@@ -250,6 +228,7 @@ public class ViewEventActivity extends BaseActivity
             initParticipates();
             getEventIntent(getIntent());
             addParticipateChangeListener();
+            setAppBarOffset(2);
 
         }
 
@@ -263,10 +242,19 @@ public class ViewEventActivity extends BaseActivity
                 .findFragmentById(R.id.map);
     }
 
-    private void setAppBarOffset(int offsetPx){
-        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
-        AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) params.getBehavior();
-        behavior.onNestedPreScroll(mCoordinatorLayout, mAppBarLayout, null, 0, offsetPx, new int[]{0, 0});
+    private void setAppBarOffset(final int dev) {
+
+        mAppBarLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                int totalScrollRange = mAppBarLayout.getTotalScrollRange();
+                Log.d(TAG, "total scroll range:" + totalScrollRange);
+                CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
+                AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) params.getBehavior();
+                behavior.onNestedPreScroll(mCoordinatorLayout, mAppBarLayout, null, 0, totalScrollRange / dev, new int[]{0, 0});
+            }
+        });
+
     }
 
     private void isJoined() {
@@ -496,6 +484,29 @@ public class ViewEventActivity extends BaseActivity
     }
 
     @Override
+    public void onTabVisible(boolean visible) {
+        mCanDrag = !visible;
+        if (!visible) {
+            // Add a marker in the respective location and move the camera and set the zoom level to 15
+            if (mMap!=null){
+                LatLng location = new LatLng(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude());
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16.0f));
+                Log.d(TAG, "map camera moved");
+            }
+
+        }
+
+    }
+
+    @Override
+    public void onSwipe() {
+        if (!mCanDrag)
+            setAppBarOffset(2);
+        mCanDrag = true;
+
+    }
+
+    @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
@@ -504,6 +515,7 @@ public class ViewEventActivity extends BaseActivity
 
         // Add a marker in the respective location and move the camera and set the zoom level to 15
         LatLng location = new LatLng(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude());
+        mapFragment.setDestination(location);
         mMap.addMarker(new MarkerOptions().position(location).title(mCurrentEvent.getTitle()));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16.0f));
     }
