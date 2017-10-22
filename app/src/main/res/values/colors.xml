@@ -9,5 +9,8 @@
     <color name="chat_message_background_outcoming">#EB6CAF</color>
     <color name="soft_gray">#d3d3d3</color>
 
+    <color name="aliceblue">#F0F8FF</color>
+    <color name="deepskyblue">#00BFFF</color>
+
 
 </resources>

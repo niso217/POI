@@ -36,6 +36,13 @@ public class DirectionsJSONParser {
                 /** Traversing all legs */
                 for(int j=0;j<jLegs.length();j++){
                     jSteps = ( (JSONObject)jLegs.get(j)).getJSONArray("steps");
+                    HashMap<String, String> d_d = new HashMap<String, String>();
+                    String distance = jLegs.getJSONObject(j).getJSONObject("distance").getString("text");
+                    String duration = jLegs.getJSONObject(j).getJSONObject("duration").getString("text");
+                    d_d.put("distance", distance);
+                    d_d.put("duration", duration);
+
+                    path.add(d_d);
 
                     /** Traversing all steps */
                     for(int k=0;k<jSteps.length();k++){

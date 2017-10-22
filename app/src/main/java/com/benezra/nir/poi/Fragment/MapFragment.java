@@ -2,6 +2,7 @@ package com.benezra.nir.poi.Fragment;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -17,6 +18,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -73,6 +76,8 @@ public class MapFragment extends Fragment implements
     private Polyline mPolyline;
     private Marker mMarker;
     private CameraUpdate mCameraUpdate;
+    private ProgressBar mProgressBar;
+    private TextView mTextViewDistance;
 
 
     public void setDestination(LatLng mDestination) {
@@ -92,6 +97,11 @@ public class MapFragment extends Fragment implements
 
             mPlaceAutocompleteFragment.setOnPlaceSelectedListener(this);
         }
+
+        mProgressBar = (ProgressBar) view.findViewById(R.id.pb_loading);
+
+        mTextViewDistance = (TextView) view.findViewById(R.id.tv_distance);
+
         linearLayout = (LinearLayout) view.findViewById(R.id.tab_layout);
         TabLayout tabs = (TabLayout) view.findViewById(R.id.tab_layout_tab);
         tabs.setOnTouchListener(new RelativeLayoutTouchListener(getContext()));
@@ -109,7 +119,7 @@ public class MapFragment extends Fragment implements
                         initFusedLocation("cycling");
                         break;
                     case 3:
-                        initFusedLocation("current_location");
+                        setPinOnCurrentEvent();
                         break;
                 }
             }
@@ -251,7 +261,13 @@ public class MapFragment extends Fragment implements
 
             List<HashMap<String, String>> path = routes.get(i);
 
-            for (int j = 0; j < path.size(); j++) {
+            HashMap<String, String> duration_distance = path.get(0);
+            String distance = duration_distance.get("distance");
+            String duration = duration_distance.get("duration");
+
+            mTextViewDistance.setText(distance +" " + duration);
+
+            for (int j = 1; j < path.size(); j++) {
                 HashMap<String, String> point = path.get(j);
 
                 double lat = Double.parseDouble(point.get("lat"));
@@ -270,6 +286,9 @@ public class MapFragment extends Fragment implements
 
         if (lineOptions == null) return;
 
+        mProgressBar.setVisibility(View.GONE);
+
+
 // Drawing polyline in the Google Map for the i-th route
         if (mPolyline != null) mPolyline.remove();
         mPolyline = this.mMap.addPolyline(lineOptions);
@@ -286,15 +305,16 @@ public class MapFragment extends Fragment implements
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        mMap.setMyLocationEnabled(true);
+        setMyLocationEnabled(true);
 
-        if (mCameraUpdate==null){
+        if (mCameraUpdate == null) {
             LatLngBounds.Builder builder = new LatLngBounds.Builder();
             builder.include(mCurrentLocation);
             builder.include(mDestination);
             LatLngBounds bounds = builder.build();
 
             mCameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 50);
+            mMap.setPadding(10,300,10,300);
             mMap.animateCamera(mCameraUpdate, new GoogleMap.CancelableCallback() {
                 @Override
                 public void onFinish() {
@@ -310,11 +330,10 @@ public class MapFragment extends Fragment implements
         }
 
 
-
     }
 
 
-    public JSONObject objectToJSONObject(Object object){
+    public JSONObject objectToJSONObject(Object object) {
         Object json = null;
         JSONObject jsonObject = null;
         try {
@@ -361,31 +380,46 @@ public class MapFragment extends Fragment implements
                     public void onSuccess(Location location) {
                         // Got last known location. In some rare situations this can be null.
                         if (location != null) {
-                            mCurrentLocation = new LatLng(location.getLatitude(),location.getLongitude());
+                            mCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
 
-                            if (mode.equals("current_location"))
-                            {
-                                //if (mMarker!=null) mMarker.remove();
-                                if (mPolyline!=null) mPolyline.remove();
-                                //mMarker = mMap.addMarker(new MarkerOptions().position(mCurrentLocation).title(""));
-
-                                CameraUpdate loc = CameraUpdateFactory.newLatLngZoom(
-                                        mCurrentLocation, 15);
-                                mMap.animateCamera(loc);
-                            }
-                            else{
-                                String directions = getDirectionsUrl(mCurrentLocation,mDestination,mode);
-                                VolleyHelper.getInstance(getContext()).get(directions, null, MapFragment.this, MapFragment.this);
-                            }
-
-
+                            String directions = getDirectionsUrl(mCurrentLocation, mDestination, mode);
+                            mProgressBar.setVisibility(View.VISIBLE);
+                            VolleyHelper.getInstance(getContext()).get(directions, null, MapFragment.this, MapFragment.this);
 
                         }
                     }
                 });
     }
 
+    private void setPinOnCurrentEvent() {
 
+        setMyLocationEnabled(false);
+        //if (mMarker!=null) mMarker.remove();
+        if (mPolyline != null) mPolyline.remove();
+        //mMarker = mMap.addMarker(new MarkerOptions().position(mCurrentLocation).title(""));
+
+        CameraUpdate loc = CameraUpdateFactory.newLatLngZoom(
+                mDestination, 15);
+        mMap.moveCamera(loc);
+
+        mCameraUpdate = null;
+    }
+
+    private void setMyLocationEnabled(boolean Enabled) {
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        mMap.setMyLocationEnabled(Enabled);
+
+    }
 
 
 
