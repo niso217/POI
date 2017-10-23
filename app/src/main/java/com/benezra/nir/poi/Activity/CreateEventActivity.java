@@ -28,7 +28,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -558,6 +557,11 @@ public class CreateEventActivity extends BaseActivity
     @Override
     public void onCurrentLocationClicked() {
         navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+    }
+
+    @Override
+    public void onSwipe() {
+
     }
 
 

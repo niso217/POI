@@ -1,10 +1,7 @@
 package com.benezra.nir.poi.Fragment;
 
 import android.Manifest;
-import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -13,8 +10,8 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -26,7 +23,6 @@ import com.android.volley.VolleyError;
 import com.benezra.nir.poi.Helper.DirectionsJSONParser;
 import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.benezra.nir.poi.R;
-import com.benezra.nir.poi.RelativeLayoutTouchListener;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -53,9 +49,6 @@ import org.json.JSONTokener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Executor;
-
-import static com.benezra.nir.poi.R.string.id;
 
 public class MapFragment extends Fragment implements
         OnMapReadyCallback, PlaceSelectionListener,
@@ -78,6 +71,7 @@ public class MapFragment extends Fragment implements
     private CameraUpdate mCameraUpdate;
     private ProgressBar mProgressBar;
     private TextView mTextViewDistance;
+    private TabLayout mTabLayout;
 
 
     public void setDestination(LatLng mDestination) {
@@ -103,9 +97,8 @@ public class MapFragment extends Fragment implements
         mTextViewDistance = (TextView) view.findViewById(R.id.tv_distance);
 
         linearLayout = (LinearLayout) view.findViewById(R.id.tab_layout);
-        TabLayout tabs = (TabLayout) view.findViewById(R.id.tab_layout_tab);
-        tabs.setOnTouchListener(new RelativeLayoutTouchListener(getContext()));
-        tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+        mTabLayout = (TabLayout) view.findViewById(R.id.tab_layout_tab);
+        mTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 switch (tab.getPosition()) {
@@ -136,8 +129,25 @@ public class MapFragment extends Fragment implements
         });
         view.findViewById(R.id.current_location).setOnClickListener(this);
 
+        view.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View v, MotionEvent event) {
+
+                if(event.getAction() == MotionEvent.ACTION_DOWN){
+                   mListener.onSwipe();
+                    SelectCurrentEventPoint();
+                }
+                return true;
+            }
+        });
+
+
 
         return view;
+    }
+
+    private void SelectCurrentEventPoint(){
+        TabLayout.Tab tab = mTabLayout.getTabAt(3);
+        tab.select();
     }
 
 
@@ -214,6 +224,8 @@ public class MapFragment extends Fragment implements
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mListener.onMapReady(googleMap);
+        SelectCurrentEventPoint();
+
     }
 
     @Override
@@ -358,6 +370,8 @@ public class MapFragment extends Fragment implements
         void onMapReady(GoogleMap googleMap);
 
         void onCurrentLocationClicked();
+
+        void onSwipe();
 
     }
 

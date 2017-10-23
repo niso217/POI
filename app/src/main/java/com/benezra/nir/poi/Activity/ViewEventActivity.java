@@ -3,12 +3,10 @@ package com.benezra.nir.poi.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.StateListDrawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
-import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -24,6 +22,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.benezra.nir.poi.Adapter.ParticipateAdapter;
+import com.benezra.nir.poi.Adapter.PicturesAdapter;
 import com.benezra.nir.poi.BaseActivity;
 import com.benezra.nir.poi.Bitmap.BitmapUtil;
 import com.benezra.nir.poi.Bitmap.DateUtil;
@@ -33,7 +32,6 @@ import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
-import com.benezra.nir.poi.RelativeLayoutTouchListener;
 import com.benezra.nir.poi.User;
 import com.benezra.nir.poi.View.DividerItemDecoration;
 import com.google.android.gms.common.api.Status;
@@ -42,7 +40,6 @@ import com.google.android.gms.location.places.Place;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
@@ -55,6 +52,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
@@ -73,7 +71,7 @@ public class ViewEventActivity extends BaseActivity
         implements View.OnClickListener,
         OnMapReadyCallback,
         RecyclerTouchListener.ClickListener,
-        MapFragment.MapFragmentCallback, RelativeLayoutTouchListener.LayoutTouchListenerCallback {
+        MapFragment.MapFragmentCallback{
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -98,17 +96,26 @@ public class ViewEventActivity extends BaseActivity
     private CoordinatorLayout mCoordinatorLayout;
     private AppBarLayout mAppBarLayout;
     private boolean mCanDrag = true;
+    private int mCurrentOffset;
+    int totalScrollRange;
+    boolean isExpended;
+
+    RecyclerView mPicturesRecyclerView;
+    RecyclerView.LayoutManager mLayoutManager;
+    RecyclerView.Adapter mPicturesAdapter;
+    ArrayList<String> alName;
+    ArrayList<Integer> alImage;
 
     @Override
     public void onClick(View v) {
 
         switch (v.getId()) {
-            case R.id.navigate_now:
-                Uri gmmIntentUri = Uri.parse("google.navigation:q=" + mCurrentEvent.getLatitude() + "," + mCurrentEvent.getLongitude());
-                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                mapIntent.setPackage("com.google.android.apps.maps");
-                startActivity(mapIntent);
-                break;
+//            case R.id.navigate_now:
+//                Uri gmmIntentUri = Uri.parse("google.navigation:q=" + mCurrentEvent.getLatitude() + "," + mCurrentEvent.getLongitude());
+//                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+//                mapIntent.setPackage("com.google.android.apps.maps");
+//                startActivity(mapIntent);
+//                break;
             case R.id.recycler_view:
                 break;
         }
@@ -123,7 +130,6 @@ public class ViewEventActivity extends BaseActivity
 
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance = FirebaseDatabase.getInstance();
-
 
         //Using the ToolBar as ActionBar
         //Find the toolbar view inside the activity layout
@@ -152,19 +158,22 @@ public class ViewEventActivity extends BaseActivity
             @Override
             public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
 
-                if (verticalOffset > -2) {
-                    // Collapsed
-                    Log.d(TAG, "Collapsed " + verticalOffset);
-                    // mCanDrag = false;
-                    if (!mapFragment.isTabVisible())
-                        mapFragment.setTabVisibility(true);
-                } else {
-                    if (mapFragment.isTabVisible())
-                        mapFragment.setTabVisibility(false);
-                    // Not collapsed
-                    Log.d(TAG, " NOT Collapsed " + verticalOffset);
+                mCurrentOffset = Math.abs(verticalOffset);
+
+                Log.d(TAG,mCurrentOffset+"");
+                if (mCurrentOffset==0){
+                    isExpended = true;
+                    mCanDrag = false;
+                    //StopScrolling(0);
+                }
+                else{
+                    mCanDrag = true;
+                    isExpended = false;
 
                 }
+
+
+
             }
         });
 
@@ -181,18 +190,32 @@ public class ViewEventActivity extends BaseActivity
         tvTimePicker = (TextView) findViewById(R.id.tv_time);
 
         // Find the Navigate Now button
-        TextView navigateNow = (TextView) findViewById(R.id.navigate_now);
+       // TextView navigateNow = (TextView) findViewById(R.id.navigate_now);
 
         // Set a click listener on the button
-        navigateNow.setOnClickListener(this);
+        //navigateNow.setOnClickListener(this);
 
         mEventDetails = (TextView) findViewById(R.id.first_paragraph);
 
         mRecyclerView.setHasFixedSize(true);
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext(),LinearLayoutManager.HORIZONTAL, false);
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
         mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+
+
+        alName = new ArrayList<>(Arrays.asList("Cheesy...", "Crispy... ", "Fizzy...", "Cool...", "Softy...", "Fruity...", "Fresh...", "Sticky..."));
+        alImage = new ArrayList<>(Arrays.asList(R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy));
+
+
+
+        mPicturesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view_pictures);
+        mPicturesRecyclerView.setHasFixedSize(true);
+        mLayoutManager = new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false);
+        mPicturesRecyclerView.setLayoutManager(mLayoutManager);
+        mPicturesAdapter = new PicturesAdapter(this, alImage);
+        mPicturesRecyclerView.setAdapter(mPicturesAdapter);
+
 
 
         mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, this));
@@ -230,6 +253,7 @@ public class ViewEventActivity extends BaseActivity
             addParticipateChangeListener();
             setAppBarOffset(2);
 
+
         }
 
 
@@ -247,11 +271,14 @@ public class ViewEventActivity extends BaseActivity
         mAppBarLayout.post(new Runnable() {
             @Override
             public void run() {
-                int totalScrollRange = mAppBarLayout.getTotalScrollRange();
+                if (totalScrollRange==0)
+                totalScrollRange = mAppBarLayout.getTotalScrollRange();
                 Log.d(TAG, "total scroll range:" + totalScrollRange);
                 CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
                 AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) params.getBehavior();
-                behavior.onNestedPreScroll(mCoordinatorLayout, mAppBarLayout, null, 0, totalScrollRange / dev, new int[]{0, 0});
+                behavior.onNestedFling(mCoordinatorLayout, mAppBarLayout, null, 0, (int)(totalScrollRange*2.5),false);
+                //mAppBarLayout.setMinimumHeight(totalScrollRange/2);
+
             }
         });
 
@@ -488,7 +515,7 @@ public class ViewEventActivity extends BaseActivity
         mCanDrag = !visible;
         if (!visible) {
             // Add a marker in the respective location and move the camera and set the zoom level to 15
-            if (mMap!=null){
+            if (mMap != null) {
                 LatLng location = new LatLng(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude());
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16.0f));
                 Log.d(TAG, "map camera moved");
@@ -498,13 +525,6 @@ public class ViewEventActivity extends BaseActivity
 
     }
 
-    @Override
-    public void onSwipe() {
-        if (!mCanDrag)
-            setAppBarOffset(2);
-        mCanDrag = true;
-
-    }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -526,6 +546,13 @@ public class ViewEventActivity extends BaseActivity
     }
 
     @Override
+    public void onSwipe() {
+        setAppBarOffset(2);
+        mCanDrag = true;
+
+    }
+
+    @Override
     public void onClick(View view, int position) {
 
     }
@@ -536,5 +563,15 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
+
+
+    private void StopScrolling(int flag){
+        AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) collapsingToolbar.getLayoutParams();
+        params.setScrollFlags(flag);  // clear all scroll flags
+    }
+
 }
+
+
+
 
