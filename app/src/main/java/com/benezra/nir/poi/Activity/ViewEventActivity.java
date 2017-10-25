@@ -12,6 +12,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -65,6 +66,7 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_LONGITUDE;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_OWNER;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_START;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
+import static java.security.AccessController.getContext;
 
 
 public class ViewEventActivity extends BaseActivity
@@ -91,6 +93,8 @@ public class ViewEventActivity extends BaseActivity
     private boolean mJoinEvent;
     private Menu mMenu;
     private LinearLayout mPrivateLinearLayout;
+    private LinearLayout mButtonsLinearLayout;
+
     private NestedScrollView mNestedScrollView;
     private MapFragment mapFragment;
     private CoordinatorLayout mCoordinatorLayout;
@@ -154,35 +158,14 @@ public class ViewEventActivity extends BaseActivity
         mToolbarBackgroundImage = (ImageView) findViewById(R.id.backdrop);
 
         mAppBarLayout = (AppBarLayout) findViewById(R.id.appbar);
-        mAppBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-            @Override
-            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
 
-                mCurrentOffset = Math.abs(verticalOffset);
-
-                Log.d(TAG,mCurrentOffset+"");
-                if (mCurrentOffset==0){
-                    isExpended = true;
-                    mCanDrag = false;
-                    //StopScrolling(0);
-                }
-                else{
-                    mCanDrag = true;
-                    isExpended = false;
-
-                }
-
-
-
-            }
-        });
 
         mProgressBar = (ProgressBar) findViewById(R.id.pb_loading);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
 
         mPrivateLinearLayout = (LinearLayout) findViewById(R.id.private_layout);
-
+        mButtonsLinearLayout = (LinearLayout) findViewById(R.id.buttons_linear_layout);
         mNestedScrollView = (NestedScrollView) findViewById(R.id.nested_scrollview);
 
 
@@ -200,13 +183,15 @@ public class ViewEventActivity extends BaseActivity
         mRecyclerView.setHasFixedSize(true);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext(),LinearLayoutManager.HORIZONTAL, false);
         mRecyclerView.setLayoutManager(mLayoutManager);
-        mRecyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
-        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        //mRecyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
+        //mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        mRecyclerView.setNestedScrollingEnabled(false);
 
 
         alName = new ArrayList<>(Arrays.asList("Cheesy...", "Crispy... ", "Fizzy...", "Cool...", "Softy...", "Fruity...", "Fresh...", "Sticky..."));
         alImage = new ArrayList<>(Arrays.asList(R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy));
 
+        mapFragment = (MapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
 
         mPicturesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view_pictures);
@@ -215,22 +200,14 @@ public class ViewEventActivity extends BaseActivity
         mPicturesRecyclerView.setLayoutManager(mLayoutManager);
         mPicturesAdapter = new PicturesAdapter(this, alImage);
         mPicturesRecyclerView.setAdapter(mPicturesAdapter);
-
+        mPicturesRecyclerView.setNestedScrollingEnabled(false);
 
 
         mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, this));
         collapsingToolbar.setOnClickListener(this);
 
 
-        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
-        AppBarLayout.Behavior behavior = new AppBarLayout.Behavior();
-        behavior.setDragCallback(new AppBarLayout.Behavior.DragCallback() {
-            @Override
-            public boolean canDrag(AppBarLayout appBarLayout) {
-                return mCanDrag;
-            }
-        });
-        params.setBehavior(behavior);
+
 
 
         mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.main_content);
@@ -256,15 +233,75 @@ public class ViewEventActivity extends BaseActivity
 
         }
 
+        mAppBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
 
-//        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-//        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-//                .findFragmentById(R.id.map);
-//        mapFragment.getMapAsync(this);
+                mCurrentOffset = Math.abs(verticalOffset);
 
-        mapFragment = (MapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+                Log.d(TAG,mCurrentOffset+"");
+                if (mCurrentOffset==0){
+                    isExpended = true;
+                    mCanDrag = false;
+                    //mButtonsLinearLayout.setVisibility(View.INVISIBLE);
+                    setNestedScrollViewOverlayTop(0);
+
+
+                }
+                else{
+                    mCanDrag = true;
+                    isExpended = false;
+                    //mButtonsLinearLayout.setVisibility(View.VISIBLE);
+                    setNestedScrollViewOverlayTop(64);
+
+                }
+
+
+
+//                if (mCurrentOffset <totalScrollRange/1.5){
+//                    Log.d(TAG,"should be collapsed");
+//                    if (!isExpended)
+//                        mAppBarLayout.setExpanded(true);
+//                    else
+//                        mAppBarLayout.setExpanded(false);
+//
+//                }
+//
+//                else
+//                    Log.d(TAG,"should not be collapsed");
+
+            }
+        });
+
+        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
+        AppBarLayout.Behavior behavior = new AppBarLayout.Behavior();
+        behavior.setDragCallback(new AppBarLayout.Behavior.DragCallback() {
+            @Override
+            public boolean canDrag(AppBarLayout appBarLayout) {
+                return mCanDrag;
+            }
+        });
+        params.setBehavior(behavior);
+
+
+
+
     }
+
+
+    public int dpToPx(int dp) {
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        return Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
+    }
+
+    private void setNestedScrollViewOverlayTop(int n){
+        CoordinatorLayout.LayoutParams params =
+                (CoordinatorLayout.LayoutParams) mNestedScrollView.getLayoutParams();
+        AppBarLayout.ScrollingViewBehavior behavior =
+                (AppBarLayout.ScrollingViewBehavior) params.getBehavior();
+        behavior.setOverlayTop(dpToPx(n)); // Note: in pixels
+    }
+
 
     private void setAppBarOffset(final int dev) {
 
@@ -547,7 +584,7 @@ public class ViewEventActivity extends BaseActivity
 
     @Override
     public void onSwipe() {
-        setAppBarOffset(2);
+       setAppBarOffset(2);
         mCanDrag = true;
 
     }
