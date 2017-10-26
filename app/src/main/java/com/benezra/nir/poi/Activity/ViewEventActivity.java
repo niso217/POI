@@ -146,6 +146,7 @@ public class ViewEventActivity extends BaseActivity
         //Make sure the toolbar exists in the activity and is not null
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
 
 
         //Setting the category name onto collapsing toolbar
@@ -250,17 +251,17 @@ public class ViewEventActivity extends BaseActivity
                 if (mCurrentOffset == 0) {
                     isExpended = true;
                     mCanDrag = false;
-                    if (mToolbarBackgroundImage.getVisibility()==View.VISIBLE)
-                    mToolbarBackgroundImage.setVisibility(View.GONE);
-                    setNestedScrollViewOverlayTop(0);
+                   // if (mToolbarBackgroundImage.getVisibility()==View.VISIBLE)
+                    //mToolbarBackgroundImage.setVisibility(View.GONE);
+                    //setNestedScrollViewOverlayTop(0);
 
 
                 } else {
-                    if (mToolbarBackgroundImage.getVisibility()==View.GONE)
-                        mToolbarBackgroundImage.setVisibility(View.VISIBLE);
+                    //if (mToolbarBackgroundImage.getVisibility()==View.GONE)
+                        //mToolbarBackgroundImage.setVisibility(View.VISIBLE);
                     mCanDrag = true;
                     isExpended = false;
-                    setNestedScrollViewOverlayTop(64);
+                    //setNestedScrollViewOverlayTop(64);
 
                 }
 
