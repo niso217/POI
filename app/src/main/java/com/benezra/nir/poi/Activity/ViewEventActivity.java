@@ -250,30 +250,20 @@ public class ViewEventActivity extends BaseActivity
                 if (mCurrentOffset == 0) {
                     isExpended = true;
                     mCanDrag = false;
-                    //mButtonsLinearLayout.setVisibility(View.INVISIBLE);
+                    if (mToolbarBackgroundImage.getVisibility()==View.VISIBLE)
+                    mToolbarBackgroundImage.setVisibility(View.GONE);
                     setNestedScrollViewOverlayTop(0);
 
 
                 } else {
+                    if (mToolbarBackgroundImage.getVisibility()==View.GONE)
+                        mToolbarBackgroundImage.setVisibility(View.VISIBLE);
                     mCanDrag = true;
                     isExpended = false;
-                    //mButtonsLinearLayout.setVisibility(View.VISIBLE);
                     setNestedScrollViewOverlayTop(64);
 
                 }
 
-
-//                if (mCurrentOffset <totalScrollRange/1.5){
-//                    Log.d(TAG,"should be collapsed");
-//                    if (!isExpended)
-//                        mAppBarLayout.setExpanded(true);
-//                    else
-//                        mAppBarLayout.setExpanded(false);
-//
-//                }
-//
-//                else
-//                    Log.d(TAG,"should not be collapsed");
 
             }
         });
@@ -311,13 +301,9 @@ public class ViewEventActivity extends BaseActivity
         mAppBarLayout.post(new Runnable() {
             @Override
             public void run() {
-                if (totalScrollRange == 0)
-                    totalScrollRange = mAppBarLayout.getTotalScrollRange();
-                Log.d(TAG, "total scroll range:" + totalScrollRange);
                 CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
                 AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) params.getBehavior();
-                behavior.onNestedFling(mCoordinatorLayout, mAppBarLayout, null, 0, dpToPx(totalScrollRange), false);
-                //mAppBarLayout.setMinimumHeight(totalScrollRange/2);
+                behavior.onNestedFling(mCoordinatorLayout, mAppBarLayout, null, 0, mAppBarLayout.getTotalScrollRange()*2, false);
 
             }
         });
@@ -626,13 +612,14 @@ public class ViewEventActivity extends BaseActivity
 
             if (ev.getAction() == MotionEvent.ACTION_UP && mCanDrag) {
                 float per = Math.abs(mAppBarLayout.getY()) / mAppBarLayout.getTotalScrollRange();
-                boolean setExpanded = (per <= 0.5F);
+                boolean setExpanded = (per <= 0.2F);
                 if (setExpanded)
                 {
                     if (mScrollDirection<0)
                         mAppBarLayout.setExpanded(setExpanded, true);
 
                 }
+
             }
 
             return super.dispatchTouchEvent(ev);
