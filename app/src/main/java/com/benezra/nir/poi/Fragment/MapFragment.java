@@ -145,6 +145,10 @@ public class MapFragment extends Fragment implements
         return view;
     }
 
+    public float getBottomHeight(){
+        return mTextViewDistance.getY() + mTabLayout.getY();
+    }
+
     private void SelectCurrentEventPoint(){
         TabLayout.Tab tab = mTabLayout.getTabAt(3);
         tab.select();

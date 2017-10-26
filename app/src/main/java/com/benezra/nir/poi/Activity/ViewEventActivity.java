@@ -16,6 +16,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -73,7 +74,7 @@ public class ViewEventActivity extends BaseActivity
         implements View.OnClickListener,
         OnMapReadyCallback,
         RecyclerTouchListener.ClickListener,
-        MapFragment.MapFragmentCallback{
+        MapFragment.MapFragmentCallback {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -109,6 +110,8 @@ public class ViewEventActivity extends BaseActivity
     RecyclerView.Adapter mPicturesAdapter;
     ArrayList<String> alName;
     ArrayList<Integer> alImage;
+    private boolean ex = false;
+    private int mScrollDirection;
 
     @Override
     public void onClick(View v) {
@@ -173,7 +176,7 @@ public class ViewEventActivity extends BaseActivity
         tvTimePicker = (TextView) findViewById(R.id.tv_time);
 
         // Find the Navigate Now button
-       // TextView navigateNow = (TextView) findViewById(R.id.navigate_now);
+        // TextView navigateNow = (TextView) findViewById(R.id.navigate_now);
 
         // Set a click listener on the button
         //navigateNow.setOnClickListener(this);
@@ -181,7 +184,7 @@ public class ViewEventActivity extends BaseActivity
         mEventDetails = (TextView) findViewById(R.id.first_paragraph);
 
         mRecyclerView.setHasFixedSize(true);
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext(),LinearLayoutManager.HORIZONTAL, false);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false);
         mRecyclerView.setLayoutManager(mLayoutManager);
         //mRecyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
         //mRecyclerView.setItemAnimator(new DefaultItemAnimator());
@@ -207,9 +210,6 @@ public class ViewEventActivity extends BaseActivity
         collapsingToolbar.setOnClickListener(this);
 
 
-
-
-
         mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.main_content);
 
 
@@ -228,7 +228,7 @@ public class ViewEventActivity extends BaseActivity
             initParticipates();
             getEventIntent(getIntent());
             addParticipateChangeListener();
-            setAppBarOffset(2);
+            setAppBarOffset();
 
 
         }
@@ -237,25 +237,30 @@ public class ViewEventActivity extends BaseActivity
             @Override
             public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
 
+                int lastOfsset = mCurrentOffset;
+
                 mCurrentOffset = Math.abs(verticalOffset);
 
-                Log.d(TAG,mCurrentOffset+"");
-                if (mCurrentOffset==0){
+                if (mCurrentOffset-lastOfsset>0)
+                    mScrollDirection = 1;
+                else
+                    mScrollDirection = -1;
+
+
+                if (mCurrentOffset == 0) {
                     isExpended = true;
                     mCanDrag = false;
                     //mButtonsLinearLayout.setVisibility(View.INVISIBLE);
                     setNestedScrollViewOverlayTop(0);
 
 
-                }
-                else{
+                } else {
                     mCanDrag = true;
                     isExpended = false;
                     //mButtonsLinearLayout.setVisibility(View.VISIBLE);
                     setNestedScrollViewOverlayTop(64);
 
                 }
-
 
 
 //                if (mCurrentOffset <totalScrollRange/1.5){
@@ -284,8 +289,6 @@ public class ViewEventActivity extends BaseActivity
         params.setBehavior(behavior);
 
 
-
-
     }
 
 
@@ -294,7 +297,7 @@ public class ViewEventActivity extends BaseActivity
         return Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
     }
 
-    private void setNestedScrollViewOverlayTop(int n){
+    private void setNestedScrollViewOverlayTop(int n) {
         CoordinatorLayout.LayoutParams params =
                 (CoordinatorLayout.LayoutParams) mNestedScrollView.getLayoutParams();
         AppBarLayout.ScrollingViewBehavior behavior =
@@ -303,17 +306,17 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
-    private void setAppBarOffset(final int dev) {
+    private void setAppBarOffset() {
 
         mAppBarLayout.post(new Runnable() {
             @Override
             public void run() {
-                if (totalScrollRange==0)
-                totalScrollRange = mAppBarLayout.getTotalScrollRange();
+                if (totalScrollRange == 0)
+                    totalScrollRange = mAppBarLayout.getTotalScrollRange();
                 Log.d(TAG, "total scroll range:" + totalScrollRange);
                 CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
                 AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) params.getBehavior();
-                behavior.onNestedFling(mCoordinatorLayout, mAppBarLayout, null, 0, (int)(totalScrollRange*2.5),false);
+                behavior.onNestedFling(mCoordinatorLayout, mAppBarLayout, null, 0, dpToPx(totalScrollRange), false);
                 //mAppBarLayout.setMinimumHeight(totalScrollRange/2);
 
             }
@@ -584,8 +587,9 @@ public class ViewEventActivity extends BaseActivity
 
     @Override
     public void onSwipe() {
-       setAppBarOffset(2);
-        mCanDrag = true;
+
+        //setAppBarOffset();
+       // mCanDrag = true;
 
     }
 
@@ -600,11 +604,42 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
-
-
-    private void StopScrolling(int flag){
+    private void StopScrolling(int flag) {
         AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) collapsingToolbar.getLayoutParams();
         params.setScrollFlags(flag);  // clear all scroll flags
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        int x = (int)ev.getX();
+        int y = (int)ev.getY();
+        float bottom = mapFragment.getBottomHeight();
+
+
+        try {
+
+            if (ev.getAction() == MotionEvent.ACTION_DOWN && isExpended) {
+                    if (y > mCoordinatorLayout.getMeasuredHeight() - bottom)
+                        mCanDrag = true;
+
+            }
+
+            if (ev.getAction() == MotionEvent.ACTION_UP && mCanDrag) {
+                float per = Math.abs(mAppBarLayout.getY()) / mAppBarLayout.getTotalScrollRange();
+                boolean setExpanded = (per <= 0.5F);
+                if (setExpanded)
+                {
+                    if (mScrollDirection<0)
+                        mAppBarLayout.setExpanded(setExpanded, true);
+
+                }
+            }
+
+            return super.dispatchTouchEvent(ev);
+        } catch (Exception e) {
+            Log.e(TAG, "dispatchTouchEvent " + e.toString());
+            return false;
+        }
     }
 
 }
