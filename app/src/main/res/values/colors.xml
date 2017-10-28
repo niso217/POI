@@ -11,6 +11,7 @@
 
     <color name="aliceblue">#F0F8FF</color>
     <color name="deepskyblue">#00BFFF</color>
+    <color name="appbar">#62D6FF</color>
 
 
 </resources>

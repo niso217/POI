@@ -20,6 +20,7 @@ import android.widget.TextView;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.benezra.nir.poi.Activity.ViewEventActivity;
 import com.benezra.nir.poi.Helper.DirectionsJSONParser;
 import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.benezra.nir.poi.R;
@@ -72,6 +73,7 @@ public class MapFragment extends Fragment implements
     private ProgressBar mProgressBar;
     private TextView mTextViewDistance;
     private TabLayout mTabLayout;
+    private LinearLayout mUpperMenu;
 
 
     public void setDestination(LatLng mDestination) {
@@ -93,6 +95,8 @@ public class MapFragment extends Fragment implements
         }
 
         mProgressBar = (ProgressBar) view.findViewById(R.id.pb_loading);
+
+        mUpperMenu = (LinearLayout) view.findViewById(R.id.map_upper_menu);
 
         mTextViewDistance = (TextView) view.findViewById(R.id.tv_distance);
 
@@ -128,18 +132,6 @@ public class MapFragment extends Fragment implements
             }
         });
         view.findViewById(R.id.current_location).setOnClickListener(this);
-
-        view.setOnTouchListener(new View.OnTouchListener() {
-            public boolean onTouch(View v, MotionEvent event) {
-
-                if(event.getAction() == MotionEvent.ACTION_DOWN){
-                   mListener.onSwipe();
-                    SelectCurrentEventPoint();
-                }
-                return true;
-            }
-        });
-
 
 
         return view;
@@ -186,6 +178,7 @@ public class MapFragment extends Fragment implements
         if (context instanceof MapFragment.MapFragmentCallback) {
             mListener = (MapFragment.MapFragmentCallback) context;
         }
+
     }
 
     public void setTabVisibility(boolean visible) {
@@ -250,6 +243,10 @@ public class MapFragment extends Fragment implements
     @Override
     public void onErrorResponse(VolleyError error) {
 
+    }
+
+    public void hideUpperMenu(){
+        mUpperMenu.setVisibility(View.GONE);
     }
 
     @Override

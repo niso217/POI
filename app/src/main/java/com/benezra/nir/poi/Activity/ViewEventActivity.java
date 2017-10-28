@@ -1,8 +1,11 @@
 package com.benezra.nir.poi.Activity;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.StateListDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -18,10 +21,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
+import android.widget.HorizontalScrollView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.benezra.nir.poi.Adapter.ParticipateAdapter;
 import com.benezra.nir.poi.Adapter.PicturesAdapter;
@@ -73,7 +80,6 @@ import static java.security.AccessController.getContext;
 public class ViewEventActivity extends BaseActivity
         implements View.OnClickListener,
         OnMapReadyCallback,
-        RecyclerTouchListener.ClickListener,
         MapFragment.MapFragmentCallback {
 
     private GoogleMap mMap;
@@ -102,9 +108,7 @@ public class ViewEventActivity extends BaseActivity
     private AppBarLayout mAppBarLayout;
     private boolean mCanDrag = true;
     private int mCurrentOffset;
-    int totalScrollRange;
-    boolean isExpended;
-
+    private HorizontalScrollView mHorizontalScrollView;
     RecyclerView mPicturesRecyclerView;
     RecyclerView.LayoutManager mLayoutManager;
     RecyclerView.Adapter mPicturesAdapter;
@@ -112,18 +116,38 @@ public class ViewEventActivity extends BaseActivity
     ArrayList<Integer> alImage;
     private boolean ex = false;
     private int mScrollDirection;
+    private boolean mTouchEventFired;
+    private ImageButton mNavigate, mAddImage, mChat, mShare;
+    private ToggleButton mJoin;
 
     @Override
     public void onClick(View v) {
 
         switch (v.getId()) {
-//            case R.id.navigate_now:
-//                Uri gmmIntentUri = Uri.parse("google.navigation:q=" + mCurrentEvent.getLatitude() + "," + mCurrentEvent.getLongitude());
-//                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-//                mapIntent.setPackage("com.google.android.apps.maps");
-//                startActivity(mapIntent);
-//                break;
-            case R.id.recycler_view:
+            case R.id.btn_navigate:
+                Uri gmmIntentUri = Uri.parse("google.navigation:q=" + mCurrentEvent.getLatitude() + "," + mCurrentEvent.getLongitude());
+                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                mapIntent.setPackage("com.google.android.apps.maps");
+                startActivity(mapIntent);
+                break;
+            case R.id.btn_share:
+                Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                sharingIntent.setType("text/plain");
+                String shareBodyText = "Check it out. Your message goes here";
+                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Subject here");
+                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBodyText);
+                startActivity(Intent.createChooser(sharingIntent, "Shearing Option"));
+                break;
+            case R.id.btn_join:
+                mJoinEvent = mJoin.isChecked();
+                setMenuItemChecked();
+                JoinLeaveEvent();
+                //setIcon(mJoin);
+                break;
+            case R.id.btn_chat:
+                Intent i = new Intent(ViewEventActivity.this, ChatActivity.class);
+                i.putExtra(EVENT_ID, mCurrentEvent.getId());
+                startActivity(i);
                 break;
         }
     }
@@ -152,6 +176,20 @@ public class ViewEventActivity extends BaseActivity
         //Setting the category name onto collapsing toolbar
         collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
 
+        mHorizontalScrollView = (HorizontalScrollView) findViewById(R.id.scrolling_icons);
+
+
+        mJoin = (ToggleButton) findViewById(R.id.btn_join);
+        mShare = (ImageButton) findViewById(R.id.btn_share);
+        mNavigate = (ImageButton) findViewById(R.id.btn_navigate);
+        mAddImage = (ImageButton) findViewById(R.id.btn_add_image);
+        mChat = (ImageButton) findViewById(R.id.btn_chat);
+
+        mJoin.setOnClickListener(this);
+        mShare.setOnClickListener(this);
+        mNavigate.setOnClickListener(this);
+        mAddImage.setOnClickListener(this);
+        mChat.setOnClickListener(this);
 
         //Setting the styles to expanded and collapsed toolbar
         collapsingToolbar.setExpandedTitleTextAppearance(R.style.ExpandedAppBar);
@@ -196,7 +234,7 @@ public class ViewEventActivity extends BaseActivity
         alImage = new ArrayList<>(Arrays.asList(R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy, R.drawable.cheesy));
 
         mapFragment = (MapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-
+        mapFragment.hideUpperMenu();
 
         mPicturesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view_pictures);
         mPicturesRecyclerView.setHasFixedSize(true);
@@ -207,7 +245,6 @@ public class ViewEventActivity extends BaseActivity
         mPicturesRecyclerView.setNestedScrollingEnabled(false);
 
 
-        mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, this));
         collapsingToolbar.setOnClickListener(this);
 
 
@@ -230,6 +267,8 @@ public class ViewEventActivity extends BaseActivity
             getEventIntent(getIntent());
             addParticipateChangeListener();
             setAppBarOffset();
+            isJoined();
+
 
 
         }
@@ -240,28 +279,43 @@ public class ViewEventActivity extends BaseActivity
 
                 int lastOfsset = mCurrentOffset;
 
+                Log.d(TAG, "currentoffset: " + verticalOffset);
                 mCurrentOffset = Math.abs(verticalOffset);
 
-                if (mCurrentOffset-lastOfsset>0)
+                if (mCurrentOffset - lastOfsset > 0)
                     mScrollDirection = 1;
                 else
                     mScrollDirection = -1;
 
 
                 if (mCurrentOffset == 0) {
-                    isExpended = true;
                     mCanDrag = false;
-                   // if (mToolbarBackgroundImage.getVisibility()==View.VISIBLE)
-                    //mToolbarBackgroundImage.setVisibility(View.GONE);
-                    //setNestedScrollViewOverlayTop(0);
+                    if (mMenu!=null && !mMenu.findItem(R.id.clear).isVisible()){
+                        mMenu.findItem(R.id.clear).setVisible(true);
+                    }
+
+                } else if (mTouchEventFired) {
+
+                    if (mCurrentOffset < mHorizontalScrollView.getMeasuredHeight()) {
+                        if (mHorizontalScrollView.getVisibility() == View.VISIBLE)
+                            setVisibility(mHorizontalScrollView, 0.0f);
+                    } else {
 
 
-                } else {
-                    //if (mToolbarBackgroundImage.getVisibility()==View.GONE)
-                        //mToolbarBackgroundImage.setVisibility(View.VISIBLE);
+                        if (mCurrentOffset < mAppBarLayout.getTotalScrollRange() - mHorizontalScrollView.getMeasuredHeight()) {
+                            if (mHorizontalScrollView.getVisibility() == View.GONE)
+                                setVisibility(mHorizontalScrollView, 1.0f);
+                        } else {
+                            if (mHorizontalScrollView.getVisibility() == View.VISIBLE)
+                                setVisibility(mHorizontalScrollView, 0.0f);
+                        }
+
+                    }
+
                     mCanDrag = true;
-                    isExpended = false;
-                    //setNestedScrollViewOverlayTop(64);
+                    if (mMenu!=null && mMenu.findItem(R.id.clear).isVisible()){
+                        mMenu.findItem(R.id.clear).setVisible(false);
+                    }
 
                 }
 
@@ -280,6 +334,24 @@ public class ViewEventActivity extends BaseActivity
         params.setBehavior(behavior);
 
 
+    }
+
+
+    private void setVisibility(final View view, final float alpha) {
+        view.animate()
+                .alpha(alpha)
+                .setDuration(300)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        super.onAnimationEnd(animation);
+                        if (alpha == 1.0f)
+                            view.setVisibility(View.VISIBLE);
+                        else
+                            view.setVisibility(View.GONE);
+
+                    }
+                });
     }
 
 
@@ -304,7 +376,7 @@ public class ViewEventActivity extends BaseActivity
             public void run() {
                 CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
                 AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) params.getBehavior();
-                behavior.onNestedFling(mCoordinatorLayout, mAppBarLayout, null, 0, mAppBarLayout.getTotalScrollRange()*2, false);
+                behavior.onNestedFling(mCoordinatorLayout, mAppBarLayout, null, 0, mAppBarLayout.getTotalScrollRange() * 2, false);
 
             }
         });
@@ -335,9 +407,8 @@ public class ViewEventActivity extends BaseActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.view_event_menu, menu);
         mMenu = menu;
-        isJoined();
+        getMenuInflater().inflate(R.menu.view_event_menu, menu);
         return true;
     }
 
@@ -372,27 +443,9 @@ public class ViewEventActivity extends BaseActivity
             case android.R.id.home:
                 onBackPressed();
                 return true;
-            case R.id.share:
-                Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
-                sharingIntent.setType("text/plain");
-                String shareBodyText = "Check it out. Your message goes here";
-                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Subject here");
-                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBodyText);
-                startActivity(Intent.createChooser(sharingIntent, "Shearing Option"));
+            case R.id.clear:
+                setAppBarOffset();
                 return true;
-            case R.id.join:
-                mJoinEvent = !item.isChecked();
-                item.setChecked(mJoinEvent);
-                setMenuItemChecked();
-                JoinLeaveEvent();
-                setIcon(item);
-                return true;
-            case R.id.chat:
-                Intent i = new Intent(ViewEventActivity.this, ChatActivity.class);
-                i.putExtra(EVENT_ID, mCurrentEvent.getId());
-                startActivity(i);
-                return true;
-
         }
         return super.onOptionsItemSelected(item);
     }
@@ -412,21 +465,13 @@ public class ViewEventActivity extends BaseActivity
 
     private void setMenuItemChecked() {
 
-        MenuItem chatMenuItem = mMenu.findItem(R.id.chat);
-        MenuItem join = mMenu.findItem(R.id.join);
-        join.setChecked(mJoinEvent);
-        setIcon(join);
-        Log.d(TAG, "join.setChecked " + mJoinEvent);
-
         if (mJoinEvent) {
             mPrivateLinearLayout.setVisibility(View.VISIBLE);
-            //mNestedScrollView.setNestedScrollingEnabled(true);
-            chatMenuItem.setVisible(true);
         } else {
             mPrivateLinearLayout.setVisibility(View.GONE);
-            //mNestedScrollView.setNestedScrollingEnabled(false);
-            chatMenuItem.setVisible(false);
         }
+        mJoin.setChecked(mJoinEvent);
+
     }
 
     private void JoinEvent() {
@@ -575,48 +620,30 @@ public class ViewEventActivity extends BaseActivity
     @Override
     public void onSwipe() {
 
-        //setAppBarOffset();
-       // mCanDrag = true;
-
     }
 
-    @Override
-    public void onClick(View view, int position) {
-
-    }
-
-    @Override
-    public void onLongClick(View view, int position) {
-
-    }
-
-
-    private void StopScrolling(int flag) {
-        AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) collapsingToolbar.getLayoutParams();
-        params.setScrollFlags(flag);  // clear all scroll flags
-    }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        int x = (int)ev.getX();
-        int y = (int)ev.getY();
-        float bottom = mapFragment.getBottomHeight();
 
+        mTouchEventFired = true;
+        int x = (int) ev.getX();
+        int y = (int) ev.getY();
+        float bottom = mapFragment.getBottomHeight();
 
         try {
 
-            if (ev.getAction() == MotionEvent.ACTION_DOWN && isExpended) {
-                    if (y > mCoordinatorLayout.getMeasuredHeight() - bottom)
-                        mCanDrag = true;
+            if (ev.getAction() == MotionEvent.ACTION_DOWN && !mCanDrag) {
+                if (y > mCoordinatorLayout.getMeasuredHeight() - bottom)
+                    mCanDrag = true;
 
             }
 
             if (ev.getAction() == MotionEvent.ACTION_UP && mCanDrag) {
                 float per = Math.abs(mAppBarLayout.getY()) / mAppBarLayout.getTotalScrollRange();
                 boolean setExpanded = (per <= 0.2F);
-                if (setExpanded)
-                {
-                    if (mScrollDirection<0)
+                if (setExpanded) {
+                    if (mScrollDirection < 0)
                         mAppBarLayout.setExpanded(setExpanded, true);
 
                 }

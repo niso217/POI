@@ -1,27 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
->
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/chat"
-        android:actionProviderClass="android.widget.ShareActionProvider"
-        android:icon="@drawable/ic_chat_white_48dp"
-        android:title="Chat"
+        android:id="@+id/clear"
+        android:icon="@drawable/ic_clear_white_48dp"
         android:visible="false"
+        android:title="clear"
         app:showAsAction="always" />
-    <item
-        android:id="@+id/share"
-        android:actionProviderClass="android.widget.ShareActionProvider"
-        android:icon="@drawable/ic_share_white_48dp"
-        android:title="Share"
-        app:showAsAction="always" />
-    <item
-        android:id="@+id/join"
-        android:actionProviderClass="android.widget.ShareActionProvider"
-        android:checkable="true"
-        android:icon="@drawable/toggle_selector"
-        android:title="Join"
-        app:showAsAction="always" />
-
 
 </menu>
