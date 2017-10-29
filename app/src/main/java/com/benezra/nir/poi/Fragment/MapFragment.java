@@ -181,31 +181,7 @@ public class MapFragment extends Fragment implements
 
     }
 
-    public void setTabVisibility(boolean visible) {
-        if (visible)
-            linearLayout.setVisibility(View.VISIBLE);
-        else {
-            linearLayout.setVisibility(View.GONE);
-            if (mPolyline != null) mPolyline.remove();
-            //if (mMarker != null) mMarker.remove();
 
-
-        }
-
-        mListener.onTabVisible(visible);
-
-
-    }
-
-    public boolean isTabVisible() {
-        switch (linearLayout.getVisibility()) {
-            case View.VISIBLE:
-                return true;
-            case View.GONE:
-                return false;
-        }
-        return false;
-    }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
@@ -409,12 +385,10 @@ public class MapFragment extends Fragment implements
     private void setPinOnCurrentEvent() {
 
         setMyLocationEnabled(false);
-        //if (mMarker!=null) mMarker.remove();
         if (mPolyline != null) mPolyline.remove();
-        //mMarker = mMap.addMarker(new MarkerOptions().position(mCurrentLocation).title(""));
 
-        CameraUpdate loc = CameraUpdateFactory.newLatLngZoom(
-                mDestination, 15);
+        CameraUpdate loc = CameraUpdateFactory.newLatLngZoom(mDestination, 15);
+
         mMap.moveCamera(loc);
 
         mCameraUpdate = null;

@@ -4,7 +4,6 @@
     <item
         android:id="@+id/clear"
         android:icon="@drawable/ic_clear_white_48dp"
-        android:visible="false"
         android:title="clear"
         app:showAsAction="always" />
 

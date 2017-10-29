@@ -55,6 +55,7 @@ dependencies {
     compile 'com.squareup.picasso:picasso:2.5.2'
     compile 'com.firebase:geofire-android:2.1.2'
     compile 'com.firebaseui:firebase-ui:0.6.0'
+    compile 'com.firebaseui:firebase-ui-database:2.1.1'
 
 
 

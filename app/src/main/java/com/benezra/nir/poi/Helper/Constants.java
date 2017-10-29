@@ -28,6 +28,7 @@ public interface Constants {
     public static final String PARTICIPATES = "participates";
     public static final String OWNER = "owner";
     public static final String ID = "id";
+    public static final String URI = "uri";
 
 
 
