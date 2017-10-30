@@ -107,6 +107,7 @@
     <string name="no_image_message">No image add, are you sure you want to continue?</string>
 
     <!--Progress Dialog Titles-->
+    <string name="updating_event">Updating event</string>
     <string name="creating_event">Creating event</string>
     <string name="please_wait">Please wait...</string>
 

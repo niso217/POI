@@ -72,7 +72,7 @@ public class EventByInterestFragment extends Fragment
         implements ValueEventListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
         OnMapReadyCallback,
-        GoogleMap.OnInfoWindowClickListener{
+        GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMarkerClickListener {
 
     private EventModel mEventModel;
     private ArrayList<Event> mEventList;
@@ -83,10 +83,11 @@ public class EventByInterestFragment extends Fragment
     private Location mLastLocation;
     private FirebaseUser mFirebaseUser;
     final static String TAG = EventByInterestFragment.class.getSimpleName();
-    private HashMap<String,Event> mEventHashMap;
+    private HashMap<String, Event> mEventHashMap;
     private GoogleMap mMap;
     private MapView mMapView;
     List<MarkerOptions> markers = new ArrayList<MarkerOptions>();
+    private Event mCurrentSelectedEvent;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -97,6 +98,7 @@ public class EventByInterestFragment extends Fragment
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance.getReference().keepSynced(true);
         mEventHashMap = new HashMap<>();
+
 
     }
 
@@ -157,26 +159,27 @@ public class EventByInterestFragment extends Fragment
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setOnInfoWindowClickListener(this);
+        mMap.setOnMarkerClickListener(this);
+
     }
 
-    private void addEventsToMap(){
+    private void addEventsToMap() {
 
         mMap.clear();
         Iterator it = mEventHashMap.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
+            Map.Entry pair = (Map.Entry) it.next();
             Event event = (Event) pair.getValue();
         }
     }
 
 
-    private void addSingeMarkerToMap(String title,String id,String interest, GeoLocation location){
+    private void addSingeMarkerToMap(String id, GeoLocation location) {
         MarkerOptions markerOptions = new MarkerOptions()
-                .position(new LatLng(location.latitude,location.longitude))
-                .title(title);
+                .position(new LatLng(location.latitude, location.longitude));
         Marker marker = mMap.addMarker(markerOptions);
         marker.setTag(id);
-        mEventHashMap.put(id,new Event(interest,id,title,location,marker));
+        mEventHashMap.put(id, new Event(id, location, marker));
     }
 
     @Override
@@ -188,7 +191,7 @@ public class EventByInterestFragment extends Fragment
         // Create an {@link CategoryAdapter}, whose data source is a list of
         // {@link Categories}. The adapter knows how to create list item views for each item
         // in the list.
-        mCategoryAdapter = new CategoryAdapter(getActivity(), mEventList,mFirebaseUser.getPhotoUrl().toString());
+        mCategoryAdapter = new CategoryAdapter(getActivity(), mEventList, mFirebaseUser.getPhotoUrl().toString());
 
         // Get a reference to the ListView, and attach the adapter to the listView.
         mListView = (ListView) rootView.findViewById(R.id.list);
@@ -222,8 +225,8 @@ public class EventByInterestFragment extends Fragment
         });
 
         //initFusedLocation();
-        if (savedInstanceState==null)
-        navigateToCaptureFragment(new String[]{ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+        if (savedInstanceState == null)
+            navigateToCaptureFragment(new String[]{ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
 
         return rootView;
     }
@@ -233,45 +236,48 @@ public class EventByInterestFragment extends Fragment
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("events");
         GeoFire geoFire = new GeoFire(ref);
         // creates a new query around [37.7832, -122.4056] with a radius of 0.6 kilometers
-        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 55);
+        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 100);
 
         geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
             @Override
             public void onKeyEntered(String key, GeoLocation location) {
-                Log.d(TAG,String.format("Key %s entered the search area at [%f,%f]", key, location.latitude, location.longitude));
-                String[] tokens = key.split("\\_");
-                String interest = tokens[0];
-                String id = tokens[1];
-                String title = tokens[2];
-
-                Event event = mEventHashMap.get(id);
-                if (event==null){
-                    addSingeMarkerToMap(title,key,interest,location);
+                Log.d(TAG, String.format("Key %s entered the search area at [%f,%f]", key, location.latitude, location.longitude));
+//                String[] tokens = key.split("\\_");
+//                String interest = tokens[0];
+//                String id = tokens[1];
+//                String title = tokens[2];
+//
+                Event event = mEventHashMap.get(key);
+                if (event == null) {
+                    addSingeMarkerToMap(key, location);
                 }
             }
 
             @Override
             public void onKeyExited(String key) {
-                String[] tokens = key.split("\\_");
-                Log.d(TAG,String.format("Key %s is no longer in the search area", key));
-                Event event = mEventHashMap.get(tokens[1]);
+                Log.d(TAG, String.format("Key %s is no longer in the search area", key));
+
+                Event event = mEventHashMap.get(key);
                 Marker marker = event.getMarker();
                 marker.remove();
-                mEventHashMap.remove(tokens[1]);
+                mEventHashMap.remove(key);
                 //addEventsToMap();
 
             }
 
             @Override
             public void onKeyMoved(String key, GeoLocation location) {
-                Log.d(TAG,String.format("Key %s moved within the search area to [%f,%f]", key, location.latitude, location.longitude));
-
+                Log.d(TAG, String.format("Key %s moved within the search area to [%f,%f]", key, location.latitude, location.longitude));
+                Event event = mEventHashMap.get(key);
+                Marker marker = event.getMarker();
+                marker.remove();
+                addSingeMarkerToMap(key, location);
             }
 
             @Override
             public void onGeoQueryReady() {
                 //addEventsToMap();
-                Log.d(TAG,"All initial data has been loaded and events have been fired!");
+                Log.d(TAG, "All initial data has been loaded and events have been fired!");
                 //addEventsToMap();
 
             }
@@ -291,12 +297,12 @@ public class EventByInterestFragment extends Fragment
     @Override
     public void onDataChange(DataSnapshot dataSnapshot) {
         if (dataSnapshot.exists()) {
-                Event event = dataSnapshot.getValue(Event.class);
-                if (!mFirebaseUser.getUid().equals(event.getOwner())) {  //skip events from owner
-                    event.setDistance(mLastLocation);
-                    event.setId(dataSnapshot.getKey());
-                    mEventModel.addEvent(dataSnapshot.getKey(), event);
-                }
+            Event event = dataSnapshot.getValue(Event.class);
+            if (!mFirebaseUser.getUid().equals(event.getOwner())) {  //skip events from owner
+                event.setDistance(mLastLocation);
+                event.setId(dataSnapshot.getKey());
+                mEventModel.addEvent(dataSnapshot.getKey(), event);
+            }
             mEventList = new ArrayList<>(mEventModel.getEvents().values());
             mCategoryAdapter.setItems(mEventList);
 
@@ -335,27 +341,37 @@ public class EventByInterestFragment extends Fragment
 
     @Override
     public void onInfoWindowClick(final Marker marker) {
+
+
+        Intent userEvent = new Intent(getActivity(), ViewEventActivity.class);
+        userEvent.putExtra(EVENT_ID, marker.getTag().toString());
+        userEvent.putExtra(EVENT_TITLE, mCurrentSelectedEvent.getTitle());
+        userEvent.putExtra(EVENT_OWNER, mCurrentSelectedEvent.getOwner());
+        userEvent.putExtra(EVENT_IMAGE, mCurrentSelectedEvent.getImage());
+        userEvent.putExtra(EVENT_DETAILS, mCurrentSelectedEvent.getDetails());
+        userEvent.putExtra(EVENT_LATITUDE, mCurrentSelectedEvent.getLatitude());
+        userEvent.putExtra(EVENT_LONGITUDE, mCurrentSelectedEvent.getLongitude());
+        userEvent.putExtra(EVENT_INTEREST, mCurrentSelectedEvent.getInterest());
+        userEvent.putExtra(EVENT_START, mCurrentSelectedEvent.getStart());
+        userEvent.putExtra(EVENT_ADDRESS, mCurrentSelectedEvent.getAddress());
+
+
+        startActivity(userEvent);
+
+
+    }
+
+    @Override
+    public boolean onMarkerClick(final Marker marker) {
         Query query = mFirebaseInstance.getReference("events").child(marker.getTag().toString());
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
-                    Event event = dataSnapshot.getValue(Event.class);
-
-                    Intent userEvent = new Intent(getActivity(), ViewEventActivity.class);
-                    userEvent.putExtra(EVENT_ID, marker.getTag().toString());
-                    userEvent.putExtra(EVENT_TITLE, event.getTitle());
-                    userEvent.putExtra(EVENT_OWNER, event.getOwner());
-                    userEvent.putExtra(EVENT_IMAGE, event.getImage());
-                    userEvent.putExtra(EVENT_DETAILS, event.getDetails());
-                    userEvent.putExtra(EVENT_LATITUDE, event.getLatitude());
-                    userEvent.putExtra(EVENT_LONGITUDE, event.getLongitude());
-                    userEvent.putExtra(EVENT_INTEREST, event.getInterest());
-                    userEvent.putExtra(EVENT_START, event.getStart());
-                    userEvent.putExtra(EVENT_ADDRESS, event.getAddress());
-
-
-                    startActivity(userEvent);
+                    mCurrentSelectedEvent = dataSnapshot.getValue(Event.class);
+                    marker.setTitle(mCurrentSelectedEvent.getTitle());
+                    marker.showInfoWindow();
+                    //startActivity(userEvent);
                 }
 
             }
@@ -365,8 +381,6 @@ public class EventByInterestFragment extends Fragment
 
             }
         });
-
-
+        return false;
     }
-
 }

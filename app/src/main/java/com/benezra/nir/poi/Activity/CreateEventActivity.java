@@ -62,6 +62,7 @@ import com.benezra.nir.poi.User;
 import com.benezra.nir.poi.View.DividerItemDecoration;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.core.GeoHash;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -542,11 +543,6 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
-    @Override
-    public void onTabVisible(boolean visible) {
-
-    }
-
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -559,10 +555,6 @@ public class CreateEventActivity extends BaseActivity
         navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
     }
 
-    @Override
-    public void onSwipe() {
-
-    }
 
 
     private void buildImageAndTitleChooser() {
@@ -753,13 +745,7 @@ public class CreateEventActivity extends BaseActivity
             }
 
 
-            mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
-            if (mProgressDialogFragment == null) {
-                Log.d(TAG, "opening origress dialog");
-                mProgressDialogFragment = ProgressDialogFragment.newInstance(
-                        getString(R.string.creating_event), getString(R.string.please_wait), ProgressDialog.STYLE_HORIZONTAL);
-                mProgressDialogFragment.show(getSupportFragmentManager(), ProgressDialogFragment.class.getName());
-            }
+            showProgress(getString(R.string.creating_event),getString(R.string.please_wait));
 
             Bitmap bitmap = BitmapUtil.UriToBitmap(this, picUri);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -771,7 +757,6 @@ public class CreateEventActivity extends BaseActivity
                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            //mProgressDialogFragment.dismiss();
 
                             Log.i(TAG, "Uri: " + taskSnapshot.getDownloadUrl());
                             Log.i(TAG, "Name: " + taskSnapshot.getMetadata().getName());
@@ -784,8 +769,8 @@ public class CreateEventActivity extends BaseActivity
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception exception) {
-                            mProgressDialogFragment.dismiss();
 
+                            hideProgressMessage();
                             Toast.makeText(CreateEventActivity.this, exception.getMessage(), Toast.LENGTH_LONG).show();
                         }
                     })
@@ -796,11 +781,8 @@ public class CreateEventActivity extends BaseActivity
                             double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
                             Log.d(TAG, "addOnProgressListener " + progress + "");
                             // percentage in progress dialog
-                            Message message = new Message();
-                            Bundle bundle = new Bundle();
-                            bundle.putInt("prg", (int) progress);
-                            message.setData(bundle);
-                            mProgressDialogFragment.setProgress(message);
+                            setProgressValue(progress);
+
                         }
                     })
                     .addOnPausedListener(new OnPausedListener<UploadTask.TaskSnapshot>() {
@@ -816,43 +798,72 @@ public class CreateEventActivity extends BaseActivity
 
     private void saveEventToFirebase() {
 
-        GeoFire geoFire = new GeoFire(mFirebaseInstance.getReference("events"));
-        geoFire.setLocation(mCurrentEvent.getInterest()+"_"+mCurrentEvent.getId()+"_"+mCurrentEvent.getTitle(), new GeoLocation(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude()), new GeoFire.CompletionListener() {
+
+
+        DatabaseReference eventReference = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId());
+
+
+
+        GeoHash geoHash = new GeoHash(new GeoLocation(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude()));
+        Map<String, Object> updates = new HashMap<>();
+
+        if (mMode) {
+            Map<String, User> map = setOwnerAsParticipate();
+            updates.put(PARTICIPATES, map);
+
+        }
+        else
+            showProgress(getString(R.string.updating_event),getString(R.string.please_wait));
+
+
+        updates.put(DETAILS, mCurrentEvent.getDetails());
+        updates.put(START, mCurrentEvent.getStart());
+        updates.put(END, mCurrentEvent.getEnd());
+        updates.put(IMAGE, mCurrentEvent.getImage());
+        updates.put(LATITUDE, mCurrentEvent.getLatitude());
+        updates.put(LONGITUDE, mCurrentEvent.getLongitude());
+        updates.put(TITLE, mCurrentEvent.getTitle());
+        updates.put(INTEREST, mCurrentEvent.getInterest());
+        updates.put(ADDRESS, mCurrentEvent.getAddress());
+        updates.put(OWNER, mCurrentEvent.getOwner());
+
+        updates.put("/g", geoHash.getGeoHashString());
+        updates.put("/l", Arrays.asList(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude()));
+        eventReference.updateChildren(updates, new DatabaseReference.CompletionListener() {
             @Override
-            public void onComplete(String key, DatabaseError error) {
-                if (error != null) {
-                    Log.d(TAG, "There was an error saving the location to GeoFire: " + error);
+            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                hideProgressMessage();
+                finish();
 
-                } else {
-                    Log.d(TAG, "Location saved on server successfully!");
-
-                     DatabaseReference eventReference = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId());
-
-                    if (mMode)
-                    {
-                        Map<String, User> map = setOwnerAsParticipate();
-                        mCurrentEvent.setParticipates(map);
-                        eventReference.child(PARTICIPATES).setValue(map);
-                    }
-
-
-
-                    eventReference.child(DETAILS).setValue(mCurrentEvent.getDetails());
-                    eventReference.child(START).setValue(mCurrentEvent.getStart());
-                    eventReference.child(END).setValue(mCurrentEvent.getEnd());
-                    eventReference.child(IMAGE).setValue(mCurrentEvent.getImage());
-                    eventReference.child(LATITUDE).setValue(mCurrentEvent.getLatitude());
-                    eventReference.child(LONGITUDE).setValue(mCurrentEvent.getLongitude());
-                    eventReference.child(TITLE).setValue(mCurrentEvent.getTitle());
-                    eventReference.child(INTEREST).setValue(mCurrentEvent.getInterest());
-                    eventReference.child(ADDRESS).setValue(mCurrentEvent.getAddress());
-                    eventReference.child(OWNER).setValue(mFirebaseUser.getUid());
-                    eventReference.child(ID).setValue(mCurrentEvent.getId());
-                }
             }
-
         });
-        finish();
+
+    }
+
+    private void showProgress(String title, String message){
+        mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
+        if (mProgressDialogFragment == null) {
+            Log.d(TAG, "opening origress dialog");
+            mProgressDialogFragment = ProgressDialogFragment.newInstance(
+                    title, message, ProgressDialog.STYLE_HORIZONTAL);
+            mProgressDialogFragment.show(getSupportFragmentManager(), ProgressDialogFragment.class.getName());
+        }
+    }
+
+    private void hideProgressMessage(){
+        mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
+        if (mProgressDialogFragment != null)
+            mProgressDialogFragment.dismiss();
+
+    }
+
+    private void setProgressValue(double progress){
+        Message message = new Message();
+        Bundle bundle = new Bundle();
+        bundle.putInt("prg", (int) progress);
+        message.setData(bundle);
+        if (mProgressDialogFragment!=null)
+            mProgressDialogFragment.setProgress(message);
     }
 
     private Map<String, User> setOwnerAsParticipate() {

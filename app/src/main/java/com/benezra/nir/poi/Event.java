@@ -93,12 +93,10 @@ public class Event implements Parcelable {
         this.start = Calendar.getInstance().getTimeInMillis();
     }
 
-    public Event(String interest ,String uuid,String title,GeoLocation latLng,Marker marker) {
-        this.interest = interest;
+    public Event(String uuid,GeoLocation latLng,Marker marker) {
         this.id = uuid;
         this.latitude = latLng.latitude;
         this.longitude = latLng.longitude;
-        this.title = title;
         this.marker = marker;
 
     }

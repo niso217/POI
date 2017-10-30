@@ -76,9 +76,15 @@ public class MapFragment extends Fragment implements
     private LinearLayout mUpperMenu;
 
 
-    public void setDestination(LatLng mDestination) {
-        this.mDestination = mDestination;
+    public void setDestination(LatLng location,String address) {
+        this.mDestination = location;
+        Marker dest = mMap.addMarker(new MarkerOptions().position(location).title(address));
+        dest.showInfoWindow();
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16.0f));
+
     }
+
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -137,11 +143,11 @@ public class MapFragment extends Fragment implements
         return view;
     }
 
-    public float getBottomHeight(){
+    public float getBottomHeight() {
         return mTextViewDistance.getY() + mTabLayout.getY();
     }
 
-    private void SelectCurrentEventPoint(){
+    private void SelectCurrentEventPoint() {
         TabLayout.Tab tab = mTabLayout.getTabAt(3);
         tab.select();
     }
@@ -182,7 +188,6 @@ public class MapFragment extends Fragment implements
     }
 
 
-
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         mMapView = (MapView) view.findViewById(R.id.map);
@@ -198,6 +203,9 @@ public class MapFragment extends Fragment implements
         mMap = googleMap;
         mListener.onMapReady(googleMap);
         SelectCurrentEventPoint();
+        mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+        mMap.getUiSettings().setZoomGesturesEnabled(true);
+
 
     }
 
@@ -221,7 +229,7 @@ public class MapFragment extends Fragment implements
 
     }
 
-    public void hideUpperMenu(){
+    public void hideUpperMenu() {
         mUpperMenu.setVisibility(View.GONE);
     }
 
@@ -254,7 +262,7 @@ public class MapFragment extends Fragment implements
             String distance = duration_distance.get("distance");
             String duration = duration_distance.get("duration");
 
-            mTextViewDistance.setText(distance +" " + duration);
+            mTextViewDistance.setText(distance + " " + duration);
 
             for (int j = 1; j < path.size(); j++) {
                 HashMap<String, String> point = path.get(j);
@@ -284,14 +292,8 @@ public class MapFragment extends Fragment implements
         //if (mMarker!=null) mMarker.remove();
         //mMarker = this.mMap.addMarker(new MarkerOptions().position(mCurrentLocation).title(""));
 
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         setMyLocationEnabled(true);
@@ -303,7 +305,7 @@ public class MapFragment extends Fragment implements
             LatLngBounds bounds = builder.build();
 
             mCameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 50);
-            mMap.setPadding(10,300,10,300);
+            mMap.setPadding(10, 300, 10, 300);
             mMap.animateCamera(mCameraUpdate, new GoogleMap.CancelableCallback() {
                 @Override
                 public void onFinish() {
@@ -342,13 +344,9 @@ public class MapFragment extends Fragment implements
 
         void onError(Status status);
 
-        void onTabVisible(boolean visible);
-
         void onMapReady(GoogleMap googleMap);
 
         void onCurrentLocationClicked();
-
-        void onSwipe();
 
     }
 
@@ -356,13 +354,6 @@ public class MapFragment extends Fragment implements
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
 
         if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return;
         }
         mFusedLocationClient.getLastLocation()
@@ -387,9 +378,12 @@ public class MapFragment extends Fragment implements
         setMyLocationEnabled(false);
         if (mPolyline != null) mPolyline.remove();
 
-        CameraUpdate loc = CameraUpdateFactory.newLatLngZoom(mDestination, 15);
+        if (mDestination!=null){
+            CameraUpdate loc = CameraUpdateFactory.newLatLngZoom(mDestination, 15);
 
-        mMap.moveCamera(loc);
+            mMap.moveCamera(loc);
+        }
+
 
         mCameraUpdate = null;
     }
@@ -409,7 +403,6 @@ public class MapFragment extends Fragment implements
         mMap.setMyLocationEnabled(Enabled);
 
     }
-
 
 
 }

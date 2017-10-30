@@ -2,6 +2,8 @@ package com.benezra.nir.poi.Activity;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.StateListDrawable;
@@ -10,6 +12,7 @@ import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.v4.app.Fragment;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -20,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -62,7 +66,9 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
@@ -74,6 +80,7 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_LONGITUDE;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_OWNER;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_START;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
+import static com.benezra.nir.poi.Helper.Constants.ID;
 
 
 public class ViewEventActivity extends BaseActivity
@@ -82,7 +89,8 @@ public class ViewEventActivity extends BaseActivity
         MapFragment.MapFragmentCallback,
         ImageCameraDialogFragmentNew.ImageCameraDialogCallbackNew,
         RecyclerTouchListener.ClickListener,
-        AppBarLayout.OnOffsetChangedListener{
+        AppBarLayout.OnOffsetChangedListener,
+        CompoundButton.OnCheckedChangeListener {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -93,14 +101,11 @@ public class ViewEventActivity extends BaseActivity
     private ImageView mToolbarBackgroundImage;
     private FirebaseDatabase mFirebaseInstance;
     private ProgressBar mProgressBar;
-    private ProgressDialogFragment mProgressDialogFragment;
     private ArrayList<User> mParticipates;
-    private FusedLocationProviderClient mFusedLocationClient;
     private TextView tvDatePicker, tvTimePicker;
     private boolean mJoinEvent;
     private Menu mMenu;
     private LinearLayout mPrivateLinearLayout;
-    private LinearLayout mButtonsLinearLayout;
 
     private NestedScrollView mNestedScrollView;
     private MapFragment mapFragment;
@@ -109,17 +114,13 @@ public class ViewEventActivity extends BaseActivity
     private boolean mCanDrag = true;
     private int mCurrentOffset;
     private LinearLayout mHorizontalScrollView;
-
-    RecyclerView.LayoutManager mLayoutManager;
-    ArrayList<String> mEventImages;
-    private boolean ex = false;
     private int mScrollDirection;
     private boolean mTouchEventFired;
     private ImageButton mNavigate, mAddImage, mChat, mShare;
     private ToggleButton mJoin;
     private Toolbar mToolbar;
     private TextView mTitle;
-
+    private Set<String> mImageSet;
     private RecyclerView mPicturesRecyclerView;
     private RecyclerView mParticipateRecyclerView;
 
@@ -145,12 +146,6 @@ public class ViewEventActivity extends BaseActivity
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBodyText);
                 startActivity(Intent.createChooser(sharingIntent, "Shearing Option"));
                 break;
-            case R.id.btn_join:
-                mJoinEvent = mJoin.isChecked();
-                setMenuItemChecked();
-                JoinLeaveEvent();
-                //setIcon(mJoin);
-                break;
             case R.id.btn_chat:
                 Intent i = new Intent(ViewEventActivity.this, ChatActivity.class);
                 i.putExtra(EVENT_ID, mCurrentEvent.getId());
@@ -160,6 +155,19 @@ public class ViewEventActivity extends BaseActivity
                 buildImageAndTitleChooser();
                 break;
         }
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        switch (buttonView.getId()) {
+            case R.id.btn_join:
+                mJoinEvent = isChecked;
+                setMenuItemChecked();
+                JoinLeaveEvent();
+                Log.d(TAG, "isJoined onCheckedChanged " + mJoinEvent);
+                break;
+        }
+
     }
 
 
@@ -176,8 +184,6 @@ public class ViewEventActivity extends BaseActivity
         //Find the toolbar view inside the activity layout
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
 
-        mEventImages = new ArrayList<>();
-        mEventImages.add("http://www.orangefairs.com/images/resource/event-manegment.jpg");
         //Sets the Toolbar to act as the ActionBar for this Activity window.
         //Make sure the toolbar exists in the activity and is not null
         setSupportActionBar(mToolbar);
@@ -190,14 +196,15 @@ public class ViewEventActivity extends BaseActivity
 
         mHorizontalScrollView = (LinearLayout) findViewById(R.id.scrolling_icons);
         mTitle = (TextView) findViewById(R.id.tv_title);
+        mImageSet = new HashSet<>();
 
         mJoin = (ToggleButton) findViewById(R.id.btn_join);
         mShare = (ImageButton) findViewById(R.id.btn_share);
         mNavigate = (ImageButton) findViewById(R.id.btn_navigate);
         mAddImage = (ImageButton) findViewById(R.id.btn_add_image);
         mChat = (ImageButton) findViewById(R.id.btn_chat);
+        mJoin.setOnCheckedChangeListener(this);
 
-        mJoin.setOnClickListener(this);
         mShare.setOnClickListener(this);
         mNavigate.setOnClickListener(this);
         mAddImage.setOnClickListener(this);
@@ -217,7 +224,6 @@ public class ViewEventActivity extends BaseActivity
 
 
         mPrivateLinearLayout = (LinearLayout) findViewById(R.id.private_layout);
-        mButtonsLinearLayout = (LinearLayout) findViewById(R.id.buttons_linear_layout);
         mNestedScrollView = (NestedScrollView) findViewById(R.id.nested_scrollview);
 
 
@@ -227,23 +233,30 @@ public class ViewEventActivity extends BaseActivity
         mEventDetails = (TextView) findViewById(R.id.first_paragraph);
 
 
+        //mapFragment = (MapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
-        mapFragment = (MapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        mapFragment.hideUpperMenu();
+
+        mapFragment = (MapFragment) getSupportFragmentManager().findFragmentByTag(MapFragment.class.getSimpleName());
+        if (mapFragment==null)
+        {
+            Log.d(TAG,"map fragment null");
+            mapFragment = new MapFragment();
+            getSupportFragmentManager().beginTransaction().add(R.id.framelayout, mapFragment,MapFragment.class.getSimpleName()).commit();
+        }
+
 
 
         mPicturesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view_pictures);
-        mPicturesRecyclerView.setHasFixedSize(true);
         mPicturesRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
         mPicturesRecyclerView.setNestedScrollingEnabled(false);
+        mPicturesRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mPicturesRecyclerView, this));
+        //mPicturesRecyclerView.setHasFixedSize(true);
 
 
         mParticipateRecyclerView = (RecyclerView) findViewById(R.id.participate_recycler_view);
-        mParticipateRecyclerView.setHasFixedSize(true);
         mParticipateRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
         mParticipateRecyclerView.setNestedScrollingEnabled(false);
-
-
+        //mParticipateRecyclerView.setHasFixedSize(true);
 
 
         collapsingToolbar.setOnClickListener(this);
@@ -256,8 +269,9 @@ public class ViewEventActivity extends BaseActivity
             mCurrentEvent = savedInstanceState.getParcelable("event");
             mParticipates = savedInstanceState.getParcelableArrayList("participates");
             mJoinEvent = savedInstanceState.getBoolean("join");
-
+            mTouchEventFired = savedInstanceState.getBoolean("touch");
             setEventFields();
+            setMenuItemChecked();
 
 
         } else {
@@ -266,7 +280,6 @@ public class ViewEventActivity extends BaseActivity
             getEventIntent(getIntent());
             setAppBarOffset();
             isJoined();
-
 
 
         }
@@ -281,7 +294,7 @@ public class ViewEventActivity extends BaseActivity
 
     }
 
-    private void setCoordinatorLayoutBehavior(){
+    private void setCoordinatorLayoutBehavior() {
         CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
         AppBarLayout.Behavior behavior = new AppBarLayout.Behavior();
         behavior.setDragCallback(new AppBarLayout.Behavior.DragCallback() {
@@ -292,7 +305,6 @@ public class ViewEventActivity extends BaseActivity
         });
         params.setBehavior(behavior);
     }
-
 
 
     private void setVisibility(final View view, final float alpha) {
@@ -351,7 +363,7 @@ public class ViewEventActivity extends BaseActivity
                 } else
                     mJoinEvent = false;
 
-                Log.d(TAG, "child exist  " + mJoinEvent);
+                Log.d(TAG, "isJoined mFirebaseInstance " + mJoinEvent);
                 setMenuItemChecked();
             }
 
@@ -371,7 +383,6 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
-
     private void addImagesChangeListener() {
         Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("pictures");
 
@@ -383,6 +394,8 @@ public class ViewEventActivity extends BaseActivity
                         .load(model)
                         .error(R.drawable.common_google_signin_btn_icon_dark)
                         .into(picturesViewHolder.imgThumbnail);
+
+                mImageSet.add(model);
             }
 
         };
@@ -420,8 +433,6 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
-
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -451,9 +462,9 @@ public class ViewEventActivity extends BaseActivity
     private void setMenuItemChecked() {
 
         if (mJoinEvent) {
-           // mPrivateLinearLayout.setVisibility(View.VISIBLE);
+            mPrivateLinearLayout.setVisibility(View.VISIBLE);
         } else {
-            //mPrivateLinearLayout.setVisibility(View.GONE);
+            mPrivateLinearLayout.setVisibility(View.GONE);
         }
         mJoin.setChecked(mJoinEvent);
 
@@ -496,13 +507,13 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
-
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable("event", mCurrentEvent);
         outState.putParcelableArrayList("participates", mParticipates);
         outState.putBoolean("join", mJoinEvent);
+        outState.putBoolean("touch", mTouchEventFired);
 
 
     }
@@ -562,35 +573,16 @@ public class ViewEventActivity extends BaseActivity
 
     }
 
-    @Override
-    public void onTabVisible(boolean visible) {
-        mCanDrag = !visible;
-        if (!visible) {
-            // Add a marker in the respective location and move the camera and set the zoom level to 15
-            if (mMap != null) {
-                LatLng location = new LatLng(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude());
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16.0f));
-                Log.d(TAG, "map camera moved");
-            }
-
-        }
-
-    }
-
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
-        mMap.getUiSettings().setZoomGesturesEnabled(true);
 
         // Add a marker in the respective location and move the camera and set the zoom level to 15
         LatLng location = new LatLng(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude());
-        mapFragment.setDestination(location);
-        Marker x = mMap.addMarker(new MarkerOptions().position(location).title(mCurrentEvent.getTitle()));
-        x.showInfoWindow();
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16.0f));
+        mapFragment.setDestination(location, mCurrentEvent.getAddress());
+        mapFragment.hideUpperMenu();
     }
 
     @Override
@@ -598,10 +590,6 @@ public class ViewEventActivity extends BaseActivity
 
     }
 
-    @Override
-    public void onSwipe() {
-
-    }
 
 
     @Override
@@ -655,7 +643,7 @@ public class ViewEventActivity extends BaseActivity
         UploadToFireBaseFragment progressDialog = (UploadToFireBaseFragment) getSupportFragmentManager().findFragmentByTag(UploadToFireBaseFragment.class.getName());
         if (progressDialog == null) {
             Log.d(TAG, "opening origress dialog");
-            progressDialog = UploadToFireBaseFragment.newInstance(uri,mCurrentEvent.getId());
+            progressDialog = UploadToFireBaseFragment.newInstance(uri, mCurrentEvent.getId());
             progressDialog.show(getSupportFragmentManager(), UploadToFireBaseFragment.class.getName());
 
         }
@@ -668,7 +656,9 @@ public class ViewEventActivity extends BaseActivity
 
     @Override
     public void onClick(View view, int position) {
-        Log.d(TAG,"ItemClicked");
+        Intent galleryIntent = new Intent(ViewEventActivity.this, SpaceGalleryActivity.class);
+        galleryIntent.putExtra(ID,mCurrentEvent.getId());
+        startActivity(galleryIntent);
 
     }
 
@@ -681,7 +671,11 @@ public class ViewEventActivity extends BaseActivity
     public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
         int lastOfsset = mCurrentOffset;
 
+
         mCurrentOffset = Math.abs(verticalOffset);
+
+        Log.d(TAG,mCurrentOffset+"");
+
 
         if (mCurrentOffset - lastOfsset > 0)
             mScrollDirection = 1;
@@ -691,26 +685,28 @@ public class ViewEventActivity extends BaseActivity
 
         if (mCurrentOffset == 0) {
             mCanDrag = false;
-            if (mMenu!=null && !mMenu.findItem(R.id.clear).isVisible()){
+            if (mMenu != null && !mMenu.findItem(R.id.clear).isVisible())
                 mMenu.findItem(R.id.clear).setVisible(true);
-            }
+
+            if (mTouchEventFired && mHorizontalScrollView.getVisibility() == View.VISIBLE)
+                setVisibility(mHorizontalScrollView, 0.0f);
 
         } else
 
         {
             mCanDrag = true;
-            if (mMenu!=null && mMenu.findItem(R.id.clear).isVisible()){
+            if (mMenu != null && mMenu.findItem(R.id.clear).isVisible()) {
                 mMenu.findItem(R.id.clear).setVisible(false);
             }
             if (mTouchEventFired) {
 
-                if (mCurrentOffset < mHorizontalScrollView.getMeasuredHeight()) {
+                if (mCurrentOffset < mHorizontalScrollView.getHeight()) {
                     if (mHorizontalScrollView.getVisibility() == View.VISIBLE)
                         setVisibility(mHorizontalScrollView, 0.0f);
                 } else {
 
 
-                    if (mCurrentOffset < mAppBarLayout.getTotalScrollRange() - mHorizontalScrollView.getMeasuredHeight()) {
+                    if (mCurrentOffset < mAppBarLayout.getTotalScrollRange() - mHorizontalScrollView.getHeight()) {
                         if (mHorizontalScrollView.getVisibility() == View.GONE)
                             setVisibility(mHorizontalScrollView, 1.0f);
                     } else {
@@ -720,8 +716,6 @@ public class ViewEventActivity extends BaseActivity
 
                 }
             }
-
-
 
 
         }
