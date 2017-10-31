@@ -97,7 +97,7 @@
     <string name="missing_interest">Please fill the theme of the event</string>
     <string name="missing_details">Please give us details about the event</string>
     <string name="missing_title">Please add a tittle to the event</string>
-    <string name="collapsingtoolbar_title">Click to add title and image</string>
+    <string name="collapsingtoolbar_title">Click to add title</string>
 
 
     <!--Alert Dialog Titles-->
@@ -110,6 +110,14 @@
     <string name="updating_event">Updating event</string>
     <string name="creating_event">Creating event</string>
     <string name="please_wait">Please wait...</string>
+
+    <!--Icons Descriptions-->
+    <string name="navigate">Navigate</string>
+    <string name="share">Share</string>
+    <string name="join">Join</string>
+    <string name="add_image">Add image</string>
+    <string name="chat">Chat</string>
+
 
 
 </resources>

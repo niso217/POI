@@ -1,6 +1,8 @@
 package com.benezra.nir.poi.Activity;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
@@ -13,9 +15,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -26,24 +31,29 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Calendar;
 
 import com.benezra.nir.poi.Adapter.ParticipateAdapter;
+import com.benezra.nir.poi.Adapter.ViewHolders;
 import com.benezra.nir.poi.BaseActivity;
 import com.benezra.nir.poi.Bitmap.BitmapUtil;
 import com.benezra.nir.poi.Bitmap.DateUtil;
@@ -51,10 +61,12 @@ import com.benezra.nir.poi.ChatActivity;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Fragment.AlertDialogFragment;
 import com.benezra.nir.poi.Fragment.ImageCameraDialogFragment;
+import com.benezra.nir.poi.Fragment.ImageCameraDialogFragmentNew;
 import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Adapter.CustomSpinnerAdapter;
+import com.benezra.nir.poi.Fragment.UploadToFireBaseFragment;
 import com.benezra.nir.poi.Helper.AsyncGeocoder;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
@@ -63,10 +75,13 @@ import com.benezra.nir.poi.View.DividerItemDecoration;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.core.GeoHash;
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
@@ -125,14 +140,17 @@ import static com.benezra.nir.poi.Helper.Constants.TITLE;
 public class CreateEventActivity extends BaseActivity
         implements View.OnClickListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
+        RecyclerTouchListener.ClickListener,
         DatePickerDialog.OnDateSetListener,
         TimePickerDialog.OnTimeSetListener,
         CompoundButton.OnCheckedChangeListener,
-        ImageCameraDialogFragment.ImageCameraDialogCallback,
+        ImageCameraDialogFragmentNew.ImageCameraDialogCallbackNew,
         TextWatcher,
+        AppBarLayout.OnOffsetChangedListener,
         AdapterView.OnItemSelectedListener,
         AlertDialogFragment.DialogListenerCallback,
-        MapFragment.MapFragmentCallback {
+        MapFragment.MapFragmentCallback,
+        PlaceSelectionListener {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -147,17 +165,189 @@ public class CreateEventActivity extends BaseActivity
     private Spinner mspinnerCustom;
     private ArrayList<String> mInterestsList;
     private CustomSpinnerAdapter mCustomSpinnerAdapter;
-    private EditText mEventDetails;
+    private EditText mEventDetails,mTitle;
     //private ParticipatesAdapter mParticipatesAdapterAdapter;
     private ProgressBar mProgressBar;
     private ProgressDialogFragment mProgressDialogFragment;
     private boolean mMode; //true = new | false = edit
     private FusedLocationProviderClient mFusedLocationClient;
     private RecyclerView mRecyclerView;
-    private ParticipateAdapter mParticipateAdapter;
     private ArrayList<User> mParticipates;
     private Menu mMenu;
+    private ImageButton mAddImage, mChat, mShare, mLocation,mClear;
+    private MapFragment mapFragment;
+    private boolean mCanDrag = true;
+    private AppBarLayout mAppBarLayout;
+    private CoordinatorLayout mCoordinatorLayout;
+    private RecyclerView mPicturesRecyclerView;
+    private RecyclerView mParticipateRecyclerView;
+    private boolean mTouchEventFired;
+    private int mScrollDirection;
+    private int mCurrentOffset;
+    private LinearLayout mHorizontalScrollView;
+    private PlaceAutocompleteFragment mPlaceAutocompleteFragment;
+    private LinearLayout mPlaceAutoCompleteLayout;
 
+
+
+
+
+
+    private FirebaseRecyclerAdapter<String, ViewHolders.PicturesViewHolder> mPicturesAdapter;
+    private FirebaseRecyclerAdapter<User, ViewHolders.ParticipatesViewHolder> mParticipateAdapter;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_create_event);
+
+
+        mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        mFirebaseInstance = FirebaseDatabase.getInstance();
+        mEventTime = Calendar.getInstance();
+
+        mHorizontalScrollView = (LinearLayout) findViewById(R.id.scrolling_icons);
+
+        //Using the ToolBar as ActionBar
+        //Find the toolbar view inside the activity layout
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+
+        //Sets the Toolbar to act as the ActionBar for this Activity window.
+        //Make sure the toolbar exists in the activity and is not null
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+
+        //Setting the category name onto collapsing toolbar
+        collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
+        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.main_content);
+
+        mShare = (ImageButton) findViewById(R.id.btn_share);
+        mAddImage = (ImageButton) findViewById(R.id.btn_add_image);
+        mChat = (ImageButton) findViewById(R.id.btn_chat);
+        mLocation = (ImageButton) findViewById(R.id.btn_location);
+        mClear = (ImageButton) findViewById(R.id.btn_clear);
+
+        mShare.setOnClickListener(this);
+        mAddImage.setOnClickListener(this);
+        mChat.setOnClickListener(this);
+        mClear.setOnClickListener(this);
+        mLocation.setOnClickListener(this);
+
+        mPlaceAutoCompleteLayout= (LinearLayout) findViewById(R.id.place_autocomplete_layout);
+
+
+        if (mPlaceAutocompleteFragment == null) {
+            mPlaceAutocompleteFragment = (PlaceAutocompleteFragment)
+                    getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+
+            mPlaceAutocompleteFragment.setOnPlaceSelectedListener(this);
+        }
+
+        //Setting the styles to expanded and collapsed toolbar
+        collapsingToolbar.setExpandedTitleTextAppearance(R.style.ExpandedAppBar);
+        collapsingToolbar.setCollapsedTitleTextAppearance(R.style.CollapsedAppBar);
+
+        //Setting the category mDialogImageView onto collapsing toolbar
+        mToolbarBackgroundImage = (ImageView) findViewById(R.id.backdrop);
+
+        mAppBarLayout = (AppBarLayout) findViewById(R.id.appbar);
+
+        //Setting the paragraph text onto TextView
+        mEventDetails = (EditText) findViewById(R.id.tv_desciption);
+        mTitle = (EditText) findViewById(R.id.tv_title);
+        mEventDetails.addTextChangedListener(this);
+
+        tvDatePicker = (TextView) findViewById(R.id.tv_date);
+        tvDatePicker.setText(DateUtil.CalendartoDate(Calendar.getInstance().getTime()));
+        tvTimePicker = (TextView) findViewById(R.id.tv_time);
+
+        mspinnerCustom = (Spinner) findViewById(R.id.spinnerCustom);
+        mProgressBar = (ProgressBar) findViewById(R.id.pb_loading);
+
+        mSwitch = (Switch) findViewById(R.id.tgl_allday);
+
+
+        //mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+
+        mPicturesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view_pictures);
+        mPicturesRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
+        mPicturesRecyclerView.setNestedScrollingEnabled(false);
+        mPicturesRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mPicturesRecyclerView, this));
+        //mPicturesRecyclerView.setHasFixedSize(true);
+
+
+        mParticipateRecyclerView = (RecyclerView) findViewById(R.id.participate_recycler_view);
+        mParticipateRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
+        mParticipateRecyclerView.setNestedScrollingEnabled(false);
+        //mParticipateRecyclerView.setHasFixedSize(true);
+
+
+        mapFragment = (MapFragment) getSupportFragmentManager().findFragmentByTag(MapFragment.class.getSimpleName());
+        if (mapFragment==null)
+        {
+            Log.d(TAG,"map fragment null");
+            mapFragment = new MapFragment();
+            getSupportFragmentManager().beginTransaction().add(R.id.framelayout, mapFragment,MapFragment.class.getSimpleName()).commit();
+        }
+
+
+        tvDatePicker.setOnClickListener(this);
+        tvTimePicker.setOnClickListener(this);
+        mSwitch.setOnCheckedChangeListener(this);
+        collapsingToolbar.setOnClickListener(this);
+        mspinnerCustom.setOnItemSelectedListener(this);
+        mAppBarLayout.addOnOffsetChangedListener(this);
+
+
+
+        if (savedInstanceState != null) {
+            mCurrentEvent = savedInstanceState.getParcelable("event");
+            mInterestsList = savedInstanceState.getStringArrayList("interests");
+            mParticipates = savedInstanceState.getParcelableArrayList("participates");
+            mMode = savedInstanceState.getBoolean("mode");
+            mTouchEventFired = savedInstanceState.getBoolean("touch");
+
+            setEventFields();
+
+
+        } else {
+            mInterestsList = new ArrayList<>();
+            mParticipates = new ArrayList<>();
+
+            if (getIntent().getStringExtra(EVENT_ID) != null) {
+                mMode = false; //edit  existing event
+                getEventIntent(getIntent());
+            } else {
+                mMode = true; //new event
+                mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
+
+            }
+            setAppBarOffset();
+
+
+
+        }
+        initCustomSpinner();
+        addInterestsChangeListener();
+        setCoordinatorLayoutBehavior();
+        addImagesChangeListener();
+        participatesChangeListener();
+
+
+    }
+
+    public void HideShowPlaceAutoComplete(boolean visible)
+    {
+        if (visible)
+            mPlaceAutoCompleteLayout.setVisibility(View.VISIBLE);
+        else
+            mPlaceAutoCompleteLayout.setVisibility(View.INVISIBLE);
+
+
+    }
 
     @Override
     public void onClick(View v) {
@@ -180,8 +370,44 @@ public class CreateEventActivity extends BaseActivity
                 TimePickerDialog timePickerDialog = new TimePickerDialog(this, this, hour, minute, false);
                 timePickerDialog.show();
                 break;
+            case R.id.btn_chat:
+                Intent i = new Intent(CreateEventActivity.this, ChatActivity.class);
+                i.putExtra(EVENT_ID, mCurrentEvent.getId());
+                startActivity(i);
+                break;
+            case R.id.btn_add_image:
+                buildImageAndTitleChooser();
+                break;
+            case R.id.btn_clear:
+                setAppBarOffset();
+                break;
+            case R.id.btn_location:
+                mapFragment.initFusedLocation("");
+                break;
+            case R.id.btn_share:
+                Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                sharingIntent.setType("text/plain");
+                String shareBodyText = "Check it out. Your message goes here";
+                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Subject here");
+                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBodyText);
+                startActivity(Intent.createChooser(sharingIntent, "Shearing Option"));
+                break;
 
         }
+    }
+
+    private void setAppBarOffset() {
+
+        mAppBarLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
+                AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) params.getBehavior();
+                behavior.onNestedFling(mCoordinatorLayout, mAppBarLayout, null, 0, mAppBarLayout.getTotalScrollRange() * 2, false);
+
+            }
+        });
+
     }
 
     private void checkEvent() {
@@ -302,190 +528,21 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_create_event);
 
 
-        mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        mFirebaseInstance = FirebaseDatabase.getInstance();
-        mEventTime = Calendar.getInstance();
 
-
-        //Using the ToolBar as ActionBar
-        //Find the toolbar view inside the activity layout
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-
-        //Sets the Toolbar to act as the ActionBar for this Activity window.
-        //Make sure the toolbar exists in the activity and is not null
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-
-        //Setting the category name onto collapsing toolbar
-        collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
-
-
-        //Setting the styles to expanded and collapsed toolbar
-        collapsingToolbar.setExpandedTitleTextAppearance(R.style.ExpandedAppBar);
-        collapsingToolbar.setCollapsedTitleTextAppearance(R.style.CollapsedAppBar);
-        collapsingToolbar.setTitle(getString(R.string.collapsingtoolbar_title));
-
-        //Setting the category mDialogImageView onto collapsing toolbar
-        mToolbarBackgroundImage = (ImageView) findViewById(R.id.backdrop);
-
-
-        //Setting the paragraph text onto TextView
-        mEventDetails = (EditText) findViewById(R.id.first_paragraph);
-        mEventDetails.addTextChangedListener(this);
-
-        tvDatePicker = (TextView) findViewById(R.id.tv_date);
-        tvDatePicker.setText(DateUtil.CalendartoDate(Calendar.getInstance().getTime()));
-        tvTimePicker = (TextView) findViewById(R.id.tv_time);
-
-        mspinnerCustom = (Spinner) findViewById(R.id.spinnerCustom);
-        mProgressBar = (ProgressBar) findViewById(R.id.pb_loading);
-
-        mSwitch = (Switch) findViewById(R.id.tgl_allday);
-
-
-        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-
-
-        mRecyclerView.setHasFixedSize(true);
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
-        mRecyclerView.setLayoutManager(mLayoutManager);
-        mRecyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
-        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, new RecyclerTouchListener.ClickListener() {
+    private void setCoordinatorLayoutBehavior() {
+        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
+        AppBarLayout.Behavior behavior = new AppBarLayout.Behavior();
+        behavior.setDragCallback(new AppBarLayout.Behavior.DragCallback() {
             @Override
-            public void onClick(View view, int position) {
-                //Intent i = new Intent(CreateEventActivity.this, ChatActivity.class);
-                //startActivity(i);
-                //finish();
-            }
-
-            @Override
-            public void onLongClick(View view, int position) {
-
-            }
-        }));
-
-
-        tvDatePicker.setOnClickListener(this);
-        tvTimePicker.setOnClickListener(this);
-        mSwitch.setOnCheckedChangeListener(this);
-        collapsingToolbar.setOnClickListener(this);
-        mspinnerCustom.setOnItemSelectedListener(this);
-
-
-        if (savedInstanceState != null) {
-            mCurrentEvent = savedInstanceState.getParcelable("event");
-            mInterestsList = savedInstanceState.getStringArrayList("interests");
-            mParticipates = savedInstanceState.getParcelableArrayList("participates");
-            mMode = savedInstanceState.getBoolean("mode");
-
-            initCustomSpinner();
-            initParticipates();
-            setEventFields();
-
-
-        } else {
-            mInterestsList = new ArrayList<>();
-            initCustomSpinner();
-            mParticipates = new ArrayList<>();
-            initParticipates();
-
-            if (getIntent().getStringExtra(EVENT_ID) != null) {
-                mMode = false; //edit  existing event
-                getEventIntent(getIntent());
-            } else {
-                mMode = true; //new event
-                mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
-
-            }
-
-            addParticipateChangeListener();
-            addInterestsChangeListener();
-        }
-
-
-    }
-
-
-    private void addParticipateChangeListener() {
-        Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
-        query.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                Log.d(TAG, "onChildAdded");
-
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                Log.d(TAG, "onChildChanged");
-
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-                Log.d(TAG, "onChildRemoved");
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-                Log.d(TAG, "onChildMoved");
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
+            public boolean canDrag(AppBarLayout appBarLayout) {
+                return mCanDrag;
             }
         });
-
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    mParticipates.clear();
-                    for (DataSnapshot data : dataSnapshot.getChildren()) {
-                        User user = data.getValue(User.class);
-                        mParticipates.add(user);
-                    }
-
-                    //mParticipatesAdapterAdapter.setItems(new ArrayList<User>(mParticipates));
-                    mParticipateAdapter.notifyDataSetChanged();
-
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+        params.setBehavior(behavior);
     }
 
-    @Override
-    public void DialogResults(String title, Uri picuri) {
-        collapsingToolbar.setTitle(title);
-        mCurrentEvent.setTitle(title);
-        mCurrentEvent.setUri(picuri);
-        if (picuri != null)
-            mCurrentEvent.setImage(null);
-        setImageBack();
-
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.edit_event_menu, menu);
-        setMenuItemChecked(menu.findItem(R.id.chat));
-        return true;
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -493,17 +550,7 @@ public class CreateEventActivity extends BaseActivity
             case android.R.id.home:
                 onBackPressed();
                 return true;
-            case R.id.save:
-                checkEvent();
-                break;
-            case R.id.upload:
-                navigateToCaptureFragment(new String[]{Manifest.permission.CAMERA});
-                break;
-            case R.id.chat:
-                Intent i = new Intent(this, ChatActivity.class);
-                i.putExtra(EVENT_ID, mCurrentEvent.getId());
-                startActivity(i);
-                break;
+
         }
         return super.onOptionsItemSelected(item);
     }
@@ -528,13 +575,9 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
-
+    @Override
     public void onPlaceSelected(Place place) {
-        Log.d(TAG, place.getName().toString());
-        mCurrentEvent.setLatitude(place.getLatLng().latitude);
-        mCurrentEvent.setLongitude(place.getLatLng().longitude);
-        mCurrentEvent.setAddress(place.getName().toString());
-        initMap();
+        mapFragment.addSingeMarkerToMap(place.getLatLng());
 
     }
 
@@ -547,44 +590,58 @@ public class CreateEventActivity extends BaseActivity
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        initMap();
-    }
-
-    @Override
-    public void onCurrentLocationClicked() {
-        navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
-    }
-
-
-
-    private void buildImageAndTitleChooser() {
-
-        ImageCameraDialogFragment ImageCameraFragment = (ImageCameraDialogFragment) getSupportFragmentManager().findFragmentByTag(ImageCameraDialogFragment.class.getName());
-
-        if (ImageCameraFragment == null) {
-            Log.d(TAG, "opening image camera dialog");
-            ImageCameraFragment = ImageCameraDialogFragment.newInstance();
-            if (mCurrentEvent.getImage() != null)
-                ImageCameraFragment.setPicURL(mCurrentEvent.getImage());
-            else if (mCurrentEvent.getUri() != null)
-                ImageCameraFragment.setImageUri(mCurrentEvent.getUri());
-            if (mCurrentEvent.getTitle() != null)
-                ImageCameraFragment.setTitle(mCurrentEvent.getTitle());
-
-            ImageCameraFragment.show(getSupportFragmentManager(), ImageCameraDialogFragment.class.getName());
-
-        }
 
     }
+
+
+    //navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+
+
+    private void addImagesChangeListener() {
+        Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("pictures");
+
+        mPicturesAdapter = new FirebaseRecyclerAdapter<String, ViewHolders.PicturesViewHolder>(
+                String.class, R.layout.grid_item_event_pic, ViewHolders.PicturesViewHolder.class, query) {
+            @Override
+            protected void populateViewHolder(ViewHolders.PicturesViewHolder picturesViewHolder, String model, int position) {
+                Picasso.with(CreateEventActivity.this)
+                        .load(model)
+                        .error(R.drawable.common_google_signin_btn_icon_dark)
+                        .into(picturesViewHolder.imgThumbnail);
+
+            }
+
+        };
+
+        mPicturesRecyclerView.setAdapter(mPicturesAdapter);
+
+    }
+
+    private void participatesChangeListener() {
+        Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
+
+        mParticipateAdapter = new FirebaseRecyclerAdapter<User, ViewHolders.ParticipatesViewHolder>(
+                User.class, R.layout.participate_list_row, ViewHolders.ParticipatesViewHolder.class, query) {
+            @Override
+            protected void populateViewHolder(ViewHolders.ParticipatesViewHolder participatesViewHolder, User model, int position) {
+                participatesViewHolder.name.setText(model.getName());
+                Picasso.with(CreateEventActivity.this)
+                        .load(model.getAvatar())
+                        .error(R.drawable.common_google_signin_btn_icon_dark)
+                        .into(participatesViewHolder.image);
+            }
+
+        };
+
+        mParticipateRecyclerView.setAdapter(mParticipateAdapter);
+
+    }
+
+
 
     private void initCustomSpinner() {
         mCustomSpinnerAdapter = new CustomSpinnerAdapter(this, new ArrayList<String>(mInterestsList));
         mspinnerCustom.setAdapter(mCustomSpinnerAdapter);
-    }
-
-    private void initParticipates() {
-        mParticipateAdapter = new ParticipateAdapter(this, mParticipates);
-        mRecyclerView.setAdapter(mParticipateAdapter);
     }
 
 
@@ -610,17 +667,6 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
-    public void initMap() {
-
-        if (mCurrentEvent.getAddress() != null)
-            mMap.addMarker(new MarkerOptions().position(mCurrentEvent.getLatlng()).title(mCurrentEvent.getAddress()));
-        else
-            mMap.addMarker(new MarkerOptions().position(mCurrentEvent.getLatlng()).title(""));
-
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mCurrentEvent.getLatlng(), 15.0f));
-
-
-    }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -629,6 +675,8 @@ public class CreateEventActivity extends BaseActivity
         outState.putStringArrayList("interests", mInterestsList);
         outState.putParcelableArrayList("participates", mParticipates);
         outState.putBoolean("mode", mMode);
+        outState.putBoolean("touch", mTouchEventFired);
+
 
     }
 
@@ -637,8 +685,8 @@ public class CreateEventActivity extends BaseActivity
 
 
         if (mCurrentEvent != null) {
-            collapsingToolbar.setTitle(mCurrentEvent.getTitle());
-            setImageBack();
+            mTitle.setText(mCurrentEvent.getTitle());
+            //setImageBack();
             mEventDetails.setText(mCurrentEvent.getDetails());
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(mCurrentEvent.getStart());
@@ -715,7 +763,6 @@ public class CreateEventActivity extends BaseActivity
             public void onAddressFound(String result) {
                 mCurrentEvent.setAddress(result);
                 Log.d(TAG, "the address is: " + result);
-                initMap();
 
             }
         }).execute(new AsyncGeocoder.AsyncGeocoderObject(
@@ -920,6 +967,155 @@ public class CreateEventActivity extends BaseActivity
             chatMenuItem.setVisible(false);
         }
     }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+
+        mTouchEventFired = true;
+        int x = (int) ev.getX();
+        int y = (int) ev.getY();
+        float bottom = mapFragment.getBottomHeight();
+
+        try {
+
+            if (ev.getAction() == MotionEvent.ACTION_DOWN && !mCanDrag) {
+                if (y > mCoordinatorLayout.getMeasuredHeight() - bottom)
+                    mCanDrag = true;
+
+            }
+
+            if (ev.getAction() == MotionEvent.ACTION_UP && mCanDrag) {
+                float per = Math.abs(mAppBarLayout.getY()) / mAppBarLayout.getTotalScrollRange();
+                boolean setExpanded = (per <= 0.2F);
+                if (setExpanded) {
+                    if (mScrollDirection < 0)
+                        mAppBarLayout.setExpanded(setExpanded, true);
+
+                }
+
+            }
+
+            return super.dispatchTouchEvent(ev);
+        } catch (Exception e) {
+            Log.e(TAG, "dispatchTouchEvent " + e.toString());
+            return false;
+        }
+    }
+
+    private void buildImageAndTitleChooser() {
+
+        ImageCameraDialogFragmentNew ImageCameraFragment = (ImageCameraDialogFragmentNew) getSupportFragmentManager().findFragmentByTag(ImageCameraDialogFragmentNew.class.getName());
+
+        if (ImageCameraFragment == null) {
+            Log.d(TAG, "opening image camera dialog");
+            ImageCameraFragment = ImageCameraDialogFragmentNew.newInstance();
+            ImageCameraFragment.show(getSupportFragmentManager(), ImageCameraDialogFragmentNew.class.getName());
+
+        }
+
+    }
+
+    private void BuildProgressDialogFragment(Uri uri) {
+        UploadToFireBaseFragment progressDialog = (UploadToFireBaseFragment) getSupportFragmentManager().findFragmentByTag(UploadToFireBaseFragment.class.getName());
+        if (progressDialog == null) {
+            Log.d(TAG, "opening origress dialog");
+            progressDialog = UploadToFireBaseFragment.newInstance(uri, mCurrentEvent.getId());
+            progressDialog.show(getSupportFragmentManager(), UploadToFireBaseFragment.class.getName());
+
+        }
+    }
+
+    @Override
+    public void DialogResults(Uri picUri) {
+        BuildProgressDialogFragment(picUri);
+    }
+
+    @Override
+    public void onClick(View view, int position) {
+        Intent galleryIntent = new Intent(CreateEventActivity.this, SpaceGalleryActivity.class);
+        galleryIntent.putExtra(ID,mCurrentEvent.getId());
+        startActivity(galleryIntent);
+
+    }
+
+    @Override
+    public void onLongClick(View view, int position) {
+
+    }
+
+    @Override
+    public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+        int lastOfsset = mCurrentOffset;
+
+
+        mCurrentOffset = Math.abs(verticalOffset);
+
+        Log.d(TAG,mCurrentOffset+"");
+
+
+        if (mCurrentOffset - lastOfsset > 0)
+            mScrollDirection = 1;
+        else
+            mScrollDirection = -1;
+
+
+        if (mCurrentOffset == 0) {
+            mCanDrag = false;
+            if (mPlaceAutoCompleteLayout.getVisibility()==View.GONE)
+                mPlaceAutoCompleteLayout.setVisibility(View.VISIBLE);
+
+            if (mTouchEventFired && mHorizontalScrollView.getVisibility() == View.VISIBLE)
+                setVisibility(mHorizontalScrollView, 0.0f);
+
+        } else
+
+        {
+            mCanDrag = true;
+            if (mPlaceAutoCompleteLayout.getVisibility()==View.VISIBLE)
+                mPlaceAutoCompleteLayout.setVisibility(View.GONE);
+            }
+            if (mTouchEventFired) {
+
+                if (mCurrentOffset < mHorizontalScrollView.getHeight()) {
+                    if (mHorizontalScrollView.getVisibility() == View.VISIBLE)
+                        setVisibility(mHorizontalScrollView, 0.0f);
+                } else {
+
+
+                    if (mCurrentOffset < mAppBarLayout.getTotalScrollRange() - mHorizontalScrollView.getHeight()) {
+                        if (mHorizontalScrollView.getVisibility() == View.GONE)
+                            setVisibility(mHorizontalScrollView, 1.0f);
+                    } else {
+                        if (mHorizontalScrollView.getVisibility() == View.VISIBLE)
+                            setVisibility(mHorizontalScrollView, 0.0f);
+                    }
+
+                }
+            }
+
+
+        }
+
+
+
+    private void setVisibility(final View view, final float alpha) {
+        view.animate()
+                .alpha(alpha)
+                .setDuration(300)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        super.onAnimationEnd(animation);
+                        if (alpha == 1.0f)
+                            view.setVisibility(View.VISIBLE);
+                        else
+                            view.setVisibility(View.GONE);
+
+                    }
+                });
+    }
+
+
 
 
 }

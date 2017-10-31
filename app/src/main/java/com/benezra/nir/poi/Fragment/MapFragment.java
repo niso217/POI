@@ -21,9 +21,11 @@ import android.widget.TextView;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.benezra.nir.poi.Activity.ViewEventActivity;
+import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Helper.DirectionsJSONParser;
 import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.benezra.nir.poi.R;
+import com.firebase.geofire.GeoLocation;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -52,14 +54,13 @@ import java.util.HashMap;
 import java.util.List;
 
 public class MapFragment extends Fragment implements
-        OnMapReadyCallback, PlaceSelectionListener,
+        OnMapReadyCallback,
         View.OnClickListener,
         Response.Listener,
         Response.ErrorListener {
 
     private GoogleMap mMap;
     private MapView mMapView;
-    private PlaceAutocompleteFragment mPlaceAutocompleteFragment;
     private Context mContext;
     private MapFragmentCallback mListener;
     private static final String TAG = MapFragment.class.getSimpleName();
@@ -74,16 +75,17 @@ public class MapFragment extends Fragment implements
     private TextView mTextViewDistance;
     private TabLayout mTabLayout;
     private LinearLayout mUpperMenu;
+    private Marker mEventMarker;
+    private LatLng mEventLocation;
 
 
-    public void setDestination(LatLng location,String address) {
+    public void setDestination(LatLng location, String address) {
         this.mDestination = location;
         Marker dest = mMap.addMarker(new MarkerOptions().position(location).title(address));
         dest.showInfoWindow();
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16.0f));
 
     }
-
 
 
     @Override
@@ -93,16 +95,9 @@ public class MapFragment extends Fragment implements
 
         View view = inflater.inflate(R.layout.map_fragment, container, false);
 
-        if (mPlaceAutocompleteFragment == null) {
-            mPlaceAutocompleteFragment = (PlaceAutocompleteFragment)
-                    getActivity().getFragmentManager().findFragmentById(R.id.autocomplete_fragment);
-
-            mPlaceAutocompleteFragment.setOnPlaceSelectedListener(this);
-        }
 
         mProgressBar = (ProgressBar) view.findViewById(R.id.pb_loading);
 
-        mUpperMenu = (LinearLayout) view.findViewById(R.id.map_upper_menu);
 
         mTextViewDistance = (TextView) view.findViewById(R.id.tv_distance);
 
@@ -137,17 +132,36 @@ public class MapFragment extends Fragment implements
 
             }
         });
-        view.findViewById(R.id.current_location).setOnClickListener(this);
 
+        setRetainInstance(true);
 
         return view;
+    }
+
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable("event_location",mEventLocation);
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        if (savedInstanceState!=null)
+            mEventLocation = savedInstanceState.getParcelable("event_location");
+
+    }
+
+    public void ShowNavigationLayout() {
+        linearLayout.setVisibility(View.VISIBLE);
     }
 
     public float getBottomHeight() {
         return mTextViewDistance.getY() + mTabLayout.getY();
     }
 
-    private void SelectCurrentEventPoint() {
+    public void SelectCurrentEventPoint() {
         TabLayout.Tab tab = mTabLayout.getTabAt(3);
         tab.select();
     }
@@ -194,7 +208,6 @@ public class MapFragment extends Fragment implements
         mMapView.onCreate(savedInstanceState);
         mMapView.onResume();
         mMapView.getMapAsync(this);//when you already implement OnMapReadyCallback in your fragment
-        setRetainInstance(true);
     }
 
 
@@ -202,26 +215,17 @@ public class MapFragment extends Fragment implements
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mListener.onMapReady(googleMap);
-        SelectCurrentEventPoint();
         mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
-        mMap.getUiSettings().setZoomGesturesEnabled(true);
+        if (mEventLocation!=null)
+        addSingeMarkerToMap(mEventLocation);
+
 
 
     }
 
-    @Override
-    public void onPlaceSelected(Place place) {
-        mListener.onPlaceSelected(place);
-    }
-
-    @Override
-    public void onError(Status status) {
-        mListener.onError(status);
-    }
 
     @Override
     public void onClick(View v) {
-        mListener.onCurrentLocationClicked();
     }
 
     @Override
@@ -229,9 +233,6 @@ public class MapFragment extends Fragment implements
 
     }
 
-    public void hideUpperMenu() {
-        mUpperMenu.setVisibility(View.GONE);
-    }
 
     @Override
     public void onResponse(Object response) {
@@ -286,11 +287,8 @@ public class MapFragment extends Fragment implements
         mProgressBar.setVisibility(View.GONE);
 
 
-// Drawing polyline in the Google Map for the i-th route
         if (mPolyline != null) mPolyline.remove();
         mPolyline = this.mMap.addPolyline(lineOptions);
-        //if (mMarker!=null) mMarker.remove();
-        //mMarker = this.mMap.addMarker(new MarkerOptions().position(mCurrentLocation).title(""));
 
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -340,17 +338,12 @@ public class MapFragment extends Fragment implements
 
 
     public interface MapFragmentCallback {
-        void onPlaceSelected(Place place);
-
-        void onError(Status status);
 
         void onMapReady(GoogleMap googleMap);
 
-        void onCurrentLocationClicked();
-
     }
 
-    private void initFusedLocation(final String mode) {
+    public void initFusedLocation(final String mode) {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
 
         if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -363,14 +356,30 @@ public class MapFragment extends Fragment implements
                         // Got last known location. In some rare situations this can be null.
                         if (location != null) {
                             mCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                            String directions = "";
+                            if (!mode.equals("")) {
+                                directions = getDirectionsUrl(mCurrentLocation, mDestination, mode);
+                                mProgressBar.setVisibility(View.VISIBLE);
+                                VolleyHelper.getInstance(getContext()).get(directions, null, MapFragment.this, MapFragment.this);
+                            } else {
 
-                            String directions = getDirectionsUrl(mCurrentLocation, mDestination, mode);
-                            mProgressBar.setVisibility(View.VISIBLE);
-                            VolleyHelper.getInstance(getContext()).get(directions, null, MapFragment.this, MapFragment.this);
-
+                                addSingeMarkerToMap(mCurrentLocation);
+                            }
                         }
                     }
                 });
+    }
+
+    public void addSingeMarkerToMap(LatLng location) {
+        mEventLocation = location;
+        MarkerOptions markerOptions = new MarkerOptions()
+                .position(location).draggable(true);
+        if (mEventMarker!=null)
+            mEventMarker.remove();
+
+        mEventMarker = mMap.addMarker(markerOptions);
+        CameraUpdate loc = CameraUpdateFactory.newLatLngZoom(location, 15);
+        mMap.moveCamera(loc);
     }
 
     private void setPinOnCurrentEvent() {
@@ -378,7 +387,7 @@ public class MapFragment extends Fragment implements
         setMyLocationEnabled(false);
         if (mPolyline != null) mPolyline.remove();
 
-        if (mDestination!=null){
+        if (mDestination != null) {
             CameraUpdate loc = CameraUpdateFactory.newLatLngZoom(mDestination, 15);
 
             mMap.moveCamera(loc);
@@ -388,7 +397,7 @@ public class MapFragment extends Fragment implements
         mCameraUpdate = null;
     }
 
-    private void setMyLocationEnabled(boolean Enabled) {
+    public void setMyLocationEnabled(boolean Enabled) {
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -401,6 +410,7 @@ public class MapFragment extends Fragment implements
             return;
         }
         mMap.setMyLocationEnabled(Enabled);
+        mMap.getUiSettings().setMyLocationButtonEnabled(false);
 
     }
 

@@ -85,7 +85,6 @@ import static com.benezra.nir.poi.Helper.Constants.ID;
 
 public class ViewEventActivity extends BaseActivity
         implements View.OnClickListener,
-        OnMapReadyCallback,
         MapFragment.MapFragmentCallback,
         ImageCameraDialogFragmentNew.ImageCameraDialogCallbackNew,
         RecyclerTouchListener.ClickListener,
@@ -101,7 +100,6 @@ public class ViewEventActivity extends BaseActivity
     private ImageView mToolbarBackgroundImage;
     private FirebaseDatabase mFirebaseInstance;
     private ProgressBar mProgressBar;
-    private ArrayList<User> mParticipates;
     private TextView tvDatePicker, tvTimePicker;
     private boolean mJoinEvent;
     private Menu mMenu;
@@ -120,7 +118,6 @@ public class ViewEventActivity extends BaseActivity
     private ToggleButton mJoin;
     private Toolbar mToolbar;
     private TextView mTitle;
-    private Set<String> mImageSet;
     private RecyclerView mPicturesRecyclerView;
     private RecyclerView mParticipateRecyclerView;
 
@@ -196,7 +193,6 @@ public class ViewEventActivity extends BaseActivity
 
         mHorizontalScrollView = (LinearLayout) findViewById(R.id.scrolling_icons);
         mTitle = (TextView) findViewById(R.id.tv_title);
-        mImageSet = new HashSet<>();
 
         mJoin = (ToggleButton) findViewById(R.id.btn_join);
         mShare = (ImageButton) findViewById(R.id.btn_share);
@@ -267,7 +263,6 @@ public class ViewEventActivity extends BaseActivity
 
         if (savedInstanceState != null) {
             mCurrentEvent = savedInstanceState.getParcelable("event");
-            mParticipates = savedInstanceState.getParcelableArrayList("participates");
             mJoinEvent = savedInstanceState.getBoolean("join");
             mTouchEventFired = savedInstanceState.getBoolean("touch");
             setEventFields();
@@ -276,7 +271,6 @@ public class ViewEventActivity extends BaseActivity
 
         } else {
             mJoinEvent = false;
-            mParticipates = new ArrayList<>();
             getEventIntent(getIntent());
             setAppBarOffset();
             isJoined();
@@ -395,7 +389,6 @@ public class ViewEventActivity extends BaseActivity
                         .error(R.drawable.common_google_signin_btn_icon_dark)
                         .into(picturesViewHolder.imgThumbnail);
 
-                mImageSet.add(model);
             }
 
         };
@@ -511,7 +504,6 @@ public class ViewEventActivity extends BaseActivity
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable("event", mCurrentEvent);
-        outState.putParcelableArrayList("participates", mParticipates);
         outState.putBoolean("join", mJoinEvent);
         outState.putBoolean("touch", mTouchEventFired);
 
@@ -563,32 +555,18 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
-    @Override
-    public void onPlaceSelected(Place place) {
-
-    }
-
-    @Override
-    public void onError(Status status) {
-
-    }
-
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-
+        mapFragment.SelectCurrentEventPoint();
+        mapFragment.ShowNavigationLayout();
         // Add a marker in the respective location and move the camera and set the zoom level to 15
         LatLng location = new LatLng(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude());
         mapFragment.setDestination(location, mCurrentEvent.getAddress());
-        mapFragment.hideUpperMenu();
-    }
-
-    @Override
-    public void onCurrentLocationClicked() {
 
     }
+
 
 
 
