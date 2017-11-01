@@ -135,6 +135,11 @@ public class Event implements Parcelable {
         this.distance =  Math.round((Math.ceil(current.distanceTo(location)*4) / 4.0d) / 1000);
     }
 
+    public void setLatLang(LatLng latLang){
+        setLongitude(latLang.longitude);
+        setLatitude(latLang.latitude);
+    }
+
     public String getOwner() {
         return owner;
     }

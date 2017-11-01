@@ -11,7 +11,6 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -20,18 +19,11 @@ import android.widget.TextView;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.benezra.nir.poi.Activity.ViewEventActivity;
-import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Helper.DirectionsJSONParser;
 import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.benezra.nir.poi.R;
-import com.firebase.geofire.GeoLocation;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
-import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -53,11 +45,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.benezra.nir.poi.Helper.Constants.CYCLING;
+import static com.benezra.nir.poi.Helper.Constants.DRIVING;
+import static com.benezra.nir.poi.Helper.Constants.WALKING;
+
 public class MapFragment extends Fragment implements
         OnMapReadyCallback,
         View.OnClickListener,
         Response.Listener,
-        Response.ErrorListener {
+        Response.ErrorListener,
+        TabLayout.OnTabSelectedListener, GoogleMap.OnMarkerDragListener {
 
     private GoogleMap mMap;
     private MapView mMapView;
@@ -67,7 +64,6 @@ public class MapFragment extends Fragment implements
     private LinearLayout linearLayout;
     private FusedLocationProviderClient mFusedLocationClient;
     private LatLng mCurrentLocation;
-    private LatLng mDestination;
     private Polyline mPolyline;
     private Marker mMarker;
     private CameraUpdate mCameraUpdate;
@@ -77,63 +73,41 @@ public class MapFragment extends Fragment implements
     private LinearLayout mUpperMenu;
     private Marker mEventMarker;
     private LatLng mEventLocation;
+    public static final int DRIVING_TAB = 0;
+    public static final int WALKING_TAB = 1;
+    public static final int CYCLING_TAB = 2;
+    public static final int EVENT_LOC_TAB = 3;
+    private int mTabSelectedIndex;
 
 
-    public void setDestination(LatLng location, String address) {
-        this.mDestination = location;
-        Marker dest = mMap.addMarker(new MarkerOptions().position(location).title(address));
-        dest.showInfoWindow();
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16.0f));
-
+    public void setEventLocation(LatLng location, String address) {
+        this.mEventLocation = location;
     }
 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
 
         View view = inflater.inflate(R.layout.map_fragment, container, false);
 
 
         mProgressBar = (ProgressBar) view.findViewById(R.id.pb_loading);
 
-
         mTextViewDistance = (TextView) view.findViewById(R.id.tv_distance);
 
         linearLayout = (LinearLayout) view.findViewById(R.id.tab_layout);
         mTabLayout = (TabLayout) view.findViewById(R.id.tab_layout_tab);
-        mTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                switch (tab.getPosition()) {
-                    case 0:
-                        initFusedLocation("driving");
-                        break;
-                    case 1:
-                        initFusedLocation("walking");
-                        break;
-                    case 2:
-                        initFusedLocation("cycling");
-                        break;
-                    case 3:
-                        setPinOnCurrentEvent();
-                        break;
-                }
-            }
+        mTabLayout.addOnTabSelectedListener(this);
 
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
+        if (savedInstanceState != null) {
+            mTabSelectedIndex = savedInstanceState.getInt("tab_selected_index");
+            mEventLocation = savedInstanceState.getParcelable("event_location");
+            mCurrentLocation = savedInstanceState.getParcelable("current_location");
 
-            }
+        } else
+            mTabSelectedIndex = -1;
 
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-
-            }
-        });
-
-        setRetainInstance(true);
 
         return view;
     }
@@ -142,16 +116,32 @@ public class MapFragment extends Fragment implements
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putParcelable("event_location",mEventLocation);
+        outState.putParcelable("current_location", mCurrentLocation);
+        outState.putParcelable("event_location", mEventLocation);
+        outState.putInt("tab_selected_index", mTabSelectedIndex);
+
     }
 
     @Override
-    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
-        super.onViewStateRestored(savedInstanceState);
-        if (savedInstanceState!=null)
-            mEventLocation = savedInstanceState.getParcelable("event_location");
+    public void onTabSelected(TabLayout.Tab tab) {
+        mTabSelectedIndex = tab.getPosition();
+        switch (mTabSelectedIndex) {
+            case DRIVING_TAB:
+                initFusedLocation();
+                break;
+            case WALKING_TAB:
+                initFusedLocation();
+                break;
+            case CYCLING_TAB:
+                initFusedLocation();
+                break;
+            case EVENT_LOC_TAB:
+                addSingeMarkerToMap(mEventLocation);
+                break;
 
+        }
     }
+
 
     public void ShowNavigationLayout() {
         linearLayout.setVisibility(View.VISIBLE);
@@ -162,8 +152,12 @@ public class MapFragment extends Fragment implements
     }
 
     public void SelectCurrentEventPoint() {
-        TabLayout.Tab tab = mTabLayout.getTabAt(3);
-        tab.select();
+        if (mTabSelectedIndex < 0)
+            mTabLayout.getTabAt(EVENT_LOC_TAB).select();
+        else
+            mTabLayout.getTabAt(mTabSelectedIndex).select();
+
+
     }
 
 
@@ -216,11 +210,7 @@ public class MapFragment extends Fragment implements
         mMap = googleMap;
         mListener.onMapReady(googleMap);
         mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
-        if (mEventLocation!=null)
-        addSingeMarkerToMap(mEventLocation);
-
-
-
+        mMap.setOnMarkerDragListener(this);
     }
 
 
@@ -299,7 +289,7 @@ public class MapFragment extends Fragment implements
         if (mCameraUpdate == null) {
             LatLngBounds.Builder builder = new LatLngBounds.Builder();
             builder.include(mCurrentLocation);
-            builder.include(mDestination);
+            builder.include(mEventLocation);
             LatLngBounds bounds = builder.build();
 
             mCameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 50);
@@ -337,13 +327,41 @@ public class MapFragment extends Fragment implements
     }
 
 
+    @Override
+    public void onTabUnselected(TabLayout.Tab tab) {
+
+    }
+
+    @Override
+    public void onTabReselected(TabLayout.Tab tab) {
+
+    }
+
+    @Override
+    public void onMarkerDragStart(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDrag(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDragEnd(Marker marker) {
+        mListener.onEventLocationChanged(marker.getPosition());
+    }
+
+
     public interface MapFragmentCallback {
 
         void onMapReady(GoogleMap googleMap);
 
+        void onEventLocationChanged(LatLng latLng);
+
     }
 
-    public void initFusedLocation(final String mode) {
+    public void initFusedLocation() {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
 
         if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -357,45 +375,57 @@ public class MapFragment extends Fragment implements
                         if (location != null) {
                             mCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
                             String directions = "";
-                            if (!mode.equals("")) {
-                                directions = getDirectionsUrl(mCurrentLocation, mDestination, mode);
-                                mProgressBar.setVisibility(View.VISIBLE);
-                                VolleyHelper.getInstance(getContext()).get(directions, null, MapFragment.this, MapFragment.this);
-                            } else {
+                            switch (mTabSelectedIndex) {
+                                case DRIVING_TAB:
+                                    mProgressBar.setVisibility(View.VISIBLE);
+                                    directions = getDirectionsUrl(mCurrentLocation, mEventLocation, DRIVING);
+                                    break;
+                                case CYCLING_TAB:
+                                    mProgressBar.setVisibility(View.VISIBLE);
+                                    directions = getDirectionsUrl(mCurrentLocation, mEventLocation, CYCLING);
+                                    break;
+                                case WALKING_TAB:
+                                    mProgressBar.setVisibility(View.VISIBLE);
+                                    directions = getDirectionsUrl(mCurrentLocation, mEventLocation, WALKING);
+                                    break;
+                                case EVENT_LOC_TAB:
+                                    //addSingeMarkerToMap(mEventLocation);
+                                    break;
+                                default:
+                                    addSingeMarkerToMap(mEventLocation = mCurrentLocation);
+                                    break;
 
-                                addSingeMarkerToMap(mCurrentLocation);
                             }
+                            VolleyHelper.getInstance(getContext()).get(directions, null, MapFragment.this, MapFragment.this);
+
                         }
+
                     }
                 });
     }
 
     public void addSingeMarkerToMap(LatLng location) {
-        mEventLocation = location;
-        MarkerOptions markerOptions = new MarkerOptions()
-                .position(location).draggable(true);
-        if (mEventMarker!=null)
-            mEventMarker.remove();
-
-        mEventMarker = mMap.addMarker(markerOptions);
-        CameraUpdate loc = CameraUpdateFactory.newLatLngZoom(location, 15);
-        mMap.moveCamera(loc);
-    }
-
-    private void setPinOnCurrentEvent() {
 
         setMyLocationEnabled(false);
         if (mPolyline != null) mPolyline.remove();
 
-        if (mDestination != null) {
-            CameraUpdate loc = CameraUpdateFactory.newLatLngZoom(mDestination, 15);
+        MarkerOptions markerOptions = new MarkerOptions()
+                .position(location).draggable(true);
 
-            mMap.moveCamera(loc);
-        }
+        if (mEventMarker != null)
+            mEventMarker.remove();
 
+        mEventMarker = mMap.addMarker(markerOptions);
+        mEventMarker.showInfoWindow();
+        CameraUpdate loc = CameraUpdateFactory.newLatLngZoom(location, 15);
+        mMap.moveCamera(loc);
 
         mCameraUpdate = null;
+
+        mListener.onEventLocationChanged(location);
+
     }
+
 
     public void setMyLocationEnabled(boolean Enabled) {
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED

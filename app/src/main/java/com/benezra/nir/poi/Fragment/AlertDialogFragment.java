@@ -25,6 +25,7 @@ import java.util.Map;
 import static android.content.DialogInterface.BUTTON_NEGATIVE;
 import static android.content.DialogInterface.BUTTON_NEUTRAL;
 import static android.content.DialogInterface.BUTTON_POSITIVE;
+import static com.benezra.nir.poi.Helper.Constants.ACTION;
 import static com.benezra.nir.poi.Helper.Constants.MESSAGE;
 import static com.benezra.nir.poi.Helper.Constants.OPTIONS;
 import static com.benezra.nir.poi.Helper.Constants.TITLE;
@@ -36,18 +37,22 @@ import static com.benezra.nir.poi.Helper.Constants.TITLE;
 public class AlertDialogFragment extends DialogFragment implements DialogInterface.OnClickListener {
 
 
+
+
     private Context mContext;
     private DialogListenerCallback mListener;
+    private int action;
 
     public AlertDialogFragment() {
         // Empty constructor required for DialogFragment
     }
 
-    public static AlertDialogFragment newInstance(String title, String message, HashMap<Integer,String> options) {
+    public static AlertDialogFragment newInstance(String title, String message, HashMap<Integer,String> options,int action) {
         AlertDialogFragment frag = new AlertDialogFragment();
         Bundle args = new Bundle();
         args.putString(TITLE, title);
         args.putString(MESSAGE, message);
+        args.putInt(ACTION,action);
         args.putSerializable(OPTIONS,options);
         frag.setArguments(args);
         return frag;
@@ -66,13 +71,14 @@ public class AlertDialogFragment extends DialogFragment implements DialogInterfa
 
     // 1. Defines the listener interface with a method passing back data result.
     public interface DialogListenerCallback {
-        void onFinishDialog(int state);
+        void onFinishDialog(int state,int action);
     }
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         String title = getArguments().getString(TITLE);
         String message = getArguments().getString(MESSAGE);
+        action = getArguments().getInt(ACTION);
         HashMap<Integer,String> map = (HashMap<Integer, String>) getArguments().getSerializable(OPTIONS);
         setCancelable(false);
 
@@ -112,13 +118,13 @@ public class AlertDialogFragment extends DialogFragment implements DialogInterfa
         switch (which)
         {
             case BUTTON_POSITIVE:
-                mListener.onFinishDialog(BUTTON_POSITIVE);
+                mListener.onFinishDialog(BUTTON_POSITIVE,action);
                 break;
             case BUTTON_NEGATIVE:
-                mListener.onFinishDialog(BUTTON_NEGATIVE);
+                mListener.onFinishDialog(BUTTON_NEGATIVE,action);
                 break;
             case BUTTON_NEUTRAL:
-                mListener.onFinishDialog(BUTTON_NEUTRAL);
+                mListener.onFinishDialog(BUTTON_NEUTRAL,action);
                 break;
         }
         dismiss();

@@ -97,23 +97,32 @@
     <string name="missing_interest">Please fill the theme of the event</string>
     <string name="missing_details">Please give us details about the event</string>
     <string name="missing_title">Please add a tittle to the event</string>
-    <string name="collapsingtoolbar_title">Click to add title</string>
+    <string name="collapsingtoolbar_title">Click to add title...</string>
 
 
     <!--Alert Dialog Titles-->
     <string name="no_image_title">No image</string>
+    <string name="unsave_saved">Unsaved changes</string>
     <string name="sure">Sure</string>
     <string name="return_to_event">Return</string>
+    <string name="discard_event">Event haven\'t saved, are you sure you want to leave?</string>
     <string name="no_image_message">No image add, are you sure you want to continue?</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="delete_event_title">Delete</string>
+    <string name="delete_event_message">Are you sure you want to delte the event?</string>
 
     <!--Progress Dialog Titles-->
     <string name="updating_event">Updating event</string>
     <string name="creating_event">Creating event</string>
+    <string name="delete_event">Deleting event</string>
     <string name="please_wait">Please wait...</string>
+    <string name="event_created">Event created successfully</string>
 
     <!--Icons Descriptions-->
     <string name="navigate">Navigate</string>
     <string name="share">Share</string>
+    <string name="delete">Delete</string>
     <string name="join">Join</string>
     <string name="add_image">Add image</string>
     <string name="chat">Chat</string>

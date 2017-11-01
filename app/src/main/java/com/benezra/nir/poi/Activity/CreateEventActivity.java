@@ -20,8 +20,6 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.widget.NestedScrollView;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -46,13 +44,11 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Calendar;
 
-import com.benezra.nir.poi.Adapter.ParticipateAdapter;
 import com.benezra.nir.poi.Adapter.ViewHolders;
 import com.benezra.nir.poi.BaseActivity;
 import com.benezra.nir.poi.Bitmap.BitmapUtil;
@@ -60,7 +56,6 @@ import com.benezra.nir.poi.Bitmap.DateUtil;
 import com.benezra.nir.poi.ChatActivity;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Fragment.AlertDialogFragment;
-import com.benezra.nir.poi.Fragment.ImageCameraDialogFragment;
 import com.benezra.nir.poi.Fragment.ImageCameraDialogFragmentNew;
 import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
@@ -71,8 +66,6 @@ import com.benezra.nir.poi.Helper.AsyncGeocoder;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.benezra.nir.poi.User;
-import com.benezra.nir.poi.View.DividerItemDecoration;
-import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.core.GeoHash;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
@@ -82,15 +75,12 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
 import com.google.android.gms.location.places.ui.PlaceSelectionListener;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -111,8 +101,11 @@ import java.util.Map;
 import java.util.UUID;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.content.DialogInterface.BUTTON_NEGATIVE;
 import static android.content.DialogInterface.BUTTON_NEUTRAL;
 import static android.content.DialogInterface.BUTTON_POSITIVE;
+import static com.benezra.nir.poi.Helper.Constants.ACTION_FINISH;
+import static com.benezra.nir.poi.Helper.Constants.ACTION_REMOVE;
 import static com.benezra.nir.poi.Helper.Constants.ADDRESS;
 import static com.benezra.nir.poi.Helper.Constants.DETAILS;
 import static com.benezra.nir.poi.Helper.Constants.END;
@@ -150,7 +143,8 @@ public class CreateEventActivity extends BaseActivity
         AdapterView.OnItemSelectedListener,
         AlertDialogFragment.DialogListenerCallback,
         MapFragment.MapFragmentCallback,
-        PlaceSelectionListener {
+        PlaceSelectionListener,
+        View.OnFocusChangeListener {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -165,7 +159,7 @@ public class CreateEventActivity extends BaseActivity
     private Spinner mspinnerCustom;
     private ArrayList<String> mInterestsList;
     private CustomSpinnerAdapter mCustomSpinnerAdapter;
-    private EditText mEventDetails,mTitle;
+    private EditText mEventDetails, mTitle;
     //private ParticipatesAdapter mParticipatesAdapterAdapter;
     private ProgressBar mProgressBar;
     private ProgressDialogFragment mProgressDialogFragment;
@@ -174,7 +168,7 @@ public class CreateEventActivity extends BaseActivity
     private RecyclerView mRecyclerView;
     private ArrayList<User> mParticipates;
     private Menu mMenu;
-    private ImageButton mAddImage, mChat, mShare, mLocation,mClear;
+    private ImageButton mAddImage, mChat, mShare, mLocation, mClear, mSave, mDelete;
     private MapFragment mapFragment;
     private boolean mCanDrag = true;
     private AppBarLayout mAppBarLayout;
@@ -187,10 +181,11 @@ public class CreateEventActivity extends BaseActivity
     private LinearLayout mHorizontalScrollView;
     private PlaceAutocompleteFragment mPlaceAutocompleteFragment;
     private LinearLayout mPlaceAutoCompleteLayout;
-
-
-
-
+    private Toolbar mToolbar;
+    private final static int DETAILS_FOCUS = 0;
+    private final static int TITLE_FOCUS = 1;
+    private int mFocusedEditText;
+    private boolean[] mEventChangeFlag;
 
 
     private FirebaseRecyclerAdapter<String, ViewHolders.PicturesViewHolder> mPicturesAdapter;
@@ -209,14 +204,21 @@ public class CreateEventActivity extends BaseActivity
 
         mHorizontalScrollView = (LinearLayout) findViewById(R.id.scrolling_icons);
 
+        mEventChangeFlag = new boolean[7];
+        //[0]  - title
+        //[1] - details
+        //[2] - lat
+        //[3] - long
+        //[4] - time
+        //[5] - date
+        //[6] - interest
+
         //Using the ToolBar as ActionBar
         //Find the toolbar view inside the activity layout
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-
-        //Sets the Toolbar to act as the ActionBar for this Activity window.
-        //Make sure the toolbar exists in the activity and is not null
-        setSupportActionBar(toolbar);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
 
 
         //Setting the category name onto collapsing toolbar
@@ -228,14 +230,20 @@ public class CreateEventActivity extends BaseActivity
         mChat = (ImageButton) findViewById(R.id.btn_chat);
         mLocation = (ImageButton) findViewById(R.id.btn_location);
         mClear = (ImageButton) findViewById(R.id.btn_clear);
+        mSave = (ImageButton) findViewById(R.id.btn_save);
+        mDelete = (ImageButton) findViewById(R.id.btn_delete);
 
         mShare.setOnClickListener(this);
         mAddImage.setOnClickListener(this);
         mChat.setOnClickListener(this);
+        mSave.setOnClickListener(this);
         mClear.setOnClickListener(this);
+        mDelete.setOnClickListener(this);
+
+
         mLocation.setOnClickListener(this);
 
-        mPlaceAutoCompleteLayout= (LinearLayout) findViewById(R.id.place_autocomplete_layout);
+        mPlaceAutoCompleteLayout = (LinearLayout) findViewById(R.id.place_autocomplete_layout);
 
 
         if (mPlaceAutocompleteFragment == null) {
@@ -257,7 +265,10 @@ public class CreateEventActivity extends BaseActivity
         //Setting the paragraph text onto TextView
         mEventDetails = (EditText) findViewById(R.id.tv_desciption);
         mTitle = (EditText) findViewById(R.id.tv_title);
-        mEventDetails.addTextChangedListener(this);
+
+        mEventDetails.setOnFocusChangeListener(this);
+        mTitle.setOnFocusChangeListener(this);
+
 
         tvDatePicker = (TextView) findViewById(R.id.tv_date);
         tvDatePicker.setText(DateUtil.CalendartoDate(Calendar.getInstance().getTime()));
@@ -286,11 +297,10 @@ public class CreateEventActivity extends BaseActivity
 
 
         mapFragment = (MapFragment) getSupportFragmentManager().findFragmentByTag(MapFragment.class.getSimpleName());
-        if (mapFragment==null)
-        {
-            Log.d(TAG,"map fragment null");
+        if (mapFragment == null) {
+            Log.d(TAG, "map fragment null");
             mapFragment = new MapFragment();
-            getSupportFragmentManager().beginTransaction().add(R.id.framelayout, mapFragment,MapFragment.class.getSimpleName()).commit();
+            getSupportFragmentManager().beginTransaction().add(R.id.framelayout, mapFragment, MapFragment.class.getSimpleName()).commit();
         }
 
 
@@ -300,7 +310,6 @@ public class CreateEventActivity extends BaseActivity
         collapsingToolbar.setOnClickListener(this);
         mspinnerCustom.setOnItemSelectedListener(this);
         mAppBarLayout.addOnOffsetChangedListener(this);
-
 
 
         if (savedInstanceState != null) {
@@ -328,19 +337,37 @@ public class CreateEventActivity extends BaseActivity
             setAppBarOffset();
 
 
-
         }
+        initView();
         initCustomSpinner();
         addInterestsChangeListener();
         setCoordinatorLayoutBehavior();
         addImagesChangeListener();
         participatesChangeListener();
 
+        mEventDetails.addTextChangedListener(this);
+        mTitle.addTextChangedListener(this);
+
 
     }
 
-    public void HideShowPlaceAutoComplete(boolean visible)
-    {
+    private void initView() {
+        if (mMode) {
+            mShare.setEnabled(false);
+            mAddImage.setEnabled(false);
+            mChat.setEnabled(false);
+            mDelete.setVisibility(View.GONE);
+
+        } else {
+            mSave.setEnabled(false);
+            mShare.setEnabled(true);
+            mAddImage.setEnabled(true);
+            mChat.setEnabled(true);
+            mDelete.setVisibility(View.VISIBLE);
+        }
+    }
+
+    public void HideShowPlaceAutoComplete(boolean visible) {
         if (visible)
             mPlaceAutoCompleteLayout.setVisibility(View.VISIBLE);
         else
@@ -382,7 +409,7 @@ public class CreateEventActivity extends BaseActivity
                 setAppBarOffset();
                 break;
             case R.id.btn_location:
-                mapFragment.initFusedLocation("");
+                mapFragment.initFusedLocation();
                 break;
             case R.id.btn_share:
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
@@ -392,8 +419,27 @@ public class CreateEventActivity extends BaseActivity
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBodyText);
                 startActivity(Intent.createChooser(sharingIntent, "Shearing Option"));
                 break;
+            case R.id.btn_save:
+                checkEvent();
+                break;
+            case R.id.btn_delete:
+                BuildDeleteFragment();
+                break;
 
         }
+    }
+
+    private void deleteEvent() {
+        showProgress(getString(R.string.delete_event), getString(R.string.please_wait));
+
+        mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).removeValue(new DatabaseReference.CompletionListener() {
+            @Override
+            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                hideProgressMessage();
+                finish();
+            }
+        });
+
     }
 
     private void setAppBarOffset() {
@@ -430,14 +476,14 @@ public class CreateEventActivity extends BaseActivity
             }
         }
 
-        if (mCurrentEvent.getImage() == null && mCurrentEvent.getUri() == null)
-            BuildDialogFragment();
-        else
-            saveEvent();
+//        if (mCurrentEvent.getImage() == null && mCurrentEvent.getUri() == null)
+//            BuildReturnDialogFragment();
+//        else
+        saveEventToFirebase();
 
     }
 
-    private void BuildDialogFragment() {
+    private void BuildReturnDialogFragment() {
         AlertDialogFragment alertDialog = (AlertDialogFragment) getSupportFragmentManager().findFragmentByTag(AlertDialogFragment.class.getName());
         if (alertDialog == null) {
             Log.d(TAG, "opening alert dialog");
@@ -445,7 +491,21 @@ public class CreateEventActivity extends BaseActivity
             map.put(BUTTON_POSITIVE, getString(R.string.sure));
             map.put(BUTTON_NEUTRAL, getString(R.string.return_to_event));
             alertDialog = AlertDialogFragment.newInstance(
-                    getString(R.string.no_image_title), getString(R.string.no_image_message), map);
+                    getString(R.string.unsave_saved), getString(R.string.discard_event), map, ACTION_FINISH);
+            alertDialog.show(getSupportFragmentManager(), AlertDialogFragment.class.getName());
+
+        }
+    }
+
+    private void BuildDeleteFragment() {
+        AlertDialogFragment alertDialog = (AlertDialogFragment) getSupportFragmentManager().findFragmentByTag(AlertDialogFragment.class.getName());
+        if (alertDialog == null) {
+            Log.d(TAG, "opening alert dialog");
+            HashMap<Integer, String> map = new HashMap<>();
+            map.put(BUTTON_POSITIVE, getString(R.string.delete));
+            map.put(BUTTON_NEUTRAL, getString(R.string.cancel));
+            alertDialog = AlertDialogFragment.newInstance(
+                    getString(R.string.delete_event_title), getString(R.string.delete_event_message), map, ACTION_REMOVE);
             alertDialog.show(getSupportFragmentManager(), AlertDialogFragment.class.getName());
 
         }
@@ -453,19 +513,25 @@ public class CreateEventActivity extends BaseActivity
 
 
     @Override
-    public void onFinishDialog(int state) {
+    public void onFinishDialog(int state, int action) {
+
         switch (state) {
             case BUTTON_POSITIVE:
-                saveEvent();
+                if (action == ACTION_REMOVE)
+                    deleteEvent();
+                else
+                    finish();
+                break;
+            case BUTTON_NEGATIVE:
                 break;
         }
     }
 
     private void saveEvent() {
-        if (mCurrentEvent.getUri() != null)
-            uploadBytes(mCurrentEvent.getUri());
-        else
-            saveEventToFirebase();
+//        if (mCurrentEvent.getUri() != null)
+//            uploadBytes(mCurrentEvent.getUri());
+//        else
+        saveEventToFirebase();
     }
 
 
@@ -477,6 +543,9 @@ public class CreateEventActivity extends BaseActivity
         mEventTime.set(Calendar.YEAR, year);
         mEventTime.set(Calendar.MONTH, month);
         mEventTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+        if (!mMode && mCurrentEvent.getStart() != mEventTime.getTimeInMillis())
+            setSaveEnable();
+
         mCurrentEvent.setStart(mEventTime.getTimeInMillis());
 
     }
@@ -513,13 +582,34 @@ public class CreateEventActivity extends BaseActivity
 
     @Override
     public void afterTextChanged(Editable s) {
-        mCurrentEvent.setDetails(s.toString());
+        switch (mFocusedEditText) {
+            case DETAILS_FOCUS:
+                if (!mMode && !s.toString().equals(mCurrentEvent.getDetails()))
+                    setSaveEnable();
+
+                mCurrentEvent.setDetails(s.toString());
+                break;
+            case TITLE_FOCUS:
+                if (!mMode && !s.toString().equals(mCurrentEvent.getTitle()))
+                    setSaveEnable();
+
+
+                mCurrentEvent.setTitle(s.toString());
+                break;
+        }
+    }
+
+    private void setSaveEnable() {
+        mSave.setEnabled(true);
     }
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
         String interest = parent.getItemAtPosition(position).toString();
+        if (!mMode && !mCurrentEvent.getInterest().equals(interest))
+            setSaveEnable();
+
         mCurrentEvent.setInterest(interest);
     }
 
@@ -527,8 +617,6 @@ public class CreateEventActivity extends BaseActivity
     public void onNothingSelected(AdapterView<?> parent) {
 
     }
-
-
 
 
     private void setCoordinatorLayoutBehavior() {
@@ -555,6 +643,20 @@ public class CreateEventActivity extends BaseActivity
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onBackPressed() {
+        if (!mCanDrag)
+            setAppBarOffset();
+        else {
+            if (mMode)
+                BuildReturnDialogFragment();
+            else
+                super.onBackPressed();
+        }
+
+
+    }
+
     private void getEventIntent(Intent intent) {
         //showDialog();
 
@@ -577,7 +679,9 @@ public class CreateEventActivity extends BaseActivity
 
     @Override
     public void onPlaceSelected(Place place) {
+        mapFragment.setEventLocation(place.getLatLng(), place.getAddress().toString());
         mapFragment.addSingeMarkerToMap(place.getLatLng());
+
 
     }
 
@@ -590,6 +694,17 @@ public class CreateEventActivity extends BaseActivity
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        if (mCurrentEvent.getLatitude() != 0)
+            mapFragment.addSingeMarkerToMap(mCurrentEvent.getLatlng());
+
+    }
+
+    @Override
+    public void onEventLocationChanged(LatLng latLng) {
+        if (distance(mCurrentEvent.getLatlng(), latLng) > 0.02)  // if distance < 30 meters we take locations as equal
+            setSaveEnable();
+        mCurrentEvent.setLatLang(latLng);
+
 
     }
 
@@ -638,7 +753,6 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
-
     private void initCustomSpinner() {
         mCustomSpinnerAdapter = new CustomSpinnerAdapter(this, new ArrayList<String>(mInterestsList));
         mspinnerCustom.setAdapter(mCustomSpinnerAdapter);
@@ -667,7 +781,6 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
-
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -691,7 +804,6 @@ public class CreateEventActivity extends BaseActivity
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(mCurrentEvent.getStart());
             tvDatePicker.setText(DateUtil.CalendartoDate(calendar.getTime()));
-
         }
 
     }
@@ -792,7 +904,7 @@ public class CreateEventActivity extends BaseActivity
             }
 
 
-            showProgress(getString(R.string.creating_event),getString(R.string.please_wait));
+            showProgress(getString(R.string.creating_event), getString(R.string.please_wait));
 
             Bitmap bitmap = BitmapUtil.UriToBitmap(this, picUri);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -846,9 +958,7 @@ public class CreateEventActivity extends BaseActivity
     private void saveEventToFirebase() {
 
 
-
         DatabaseReference eventReference = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId());
-
 
 
         GeoHash geoHash = new GeoHash(new GeoLocation(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude()));
@@ -857,10 +967,11 @@ public class CreateEventActivity extends BaseActivity
         if (mMode) {
             Map<String, User> map = setOwnerAsParticipate();
             updates.put(PARTICIPATES, map);
+            showProgress(getString(R.string.creating_event), getString(R.string.please_wait));
 
-        }
-        else
-            showProgress(getString(R.string.updating_event),getString(R.string.please_wait));
+
+        } else
+            showProgress(getString(R.string.updating_event), getString(R.string.please_wait));
 
 
         updates.put(DETAILS, mCurrentEvent.getDetails());
@@ -880,14 +991,17 @@ public class CreateEventActivity extends BaseActivity
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                 hideProgressMessage();
-                finish();
+                Toast.makeText(CreateEventActivity.this, getString(R.string.event_created), Toast.LENGTH_SHORT).show();
+                //finish();
+                mMode = false;
+                initView();
 
             }
         });
 
     }
 
-    private void showProgress(String title, String message){
+    private void showProgress(String title, String message) {
         mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
         if (mProgressDialogFragment == null) {
             Log.d(TAG, "opening origress dialog");
@@ -897,19 +1011,19 @@ public class CreateEventActivity extends BaseActivity
         }
     }
 
-    private void hideProgressMessage(){
+    private void hideProgressMessage() {
         mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
         if (mProgressDialogFragment != null)
             mProgressDialogFragment.dismiss();
 
     }
 
-    private void setProgressValue(double progress){
+    private void setProgressValue(double progress) {
         Message message = new Message();
         Bundle bundle = new Bundle();
         bundle.putInt("prg", (int) progress);
         message.setData(bundle);
-        if (mProgressDialogFragment!=null)
+        if (mProgressDialogFragment != null)
             mProgressDialogFragment.setProgress(message);
     }
 
@@ -978,9 +1092,13 @@ public class CreateEventActivity extends BaseActivity
 
         try {
 
-            if (ev.getAction() == MotionEvent.ACTION_DOWN && !mCanDrag) {
-                if (y > mCoordinatorLayout.getMeasuredHeight() - bottom)
-                    mCanDrag = true;
+            if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+                if (!mCanDrag)
+                    if (y > mCoordinatorLayout.getMeasuredHeight() - bottom)
+                        mCanDrag = true;
+                if (mEventDetails.isFocused()) mEventDetails.clearFocus();
+                if (mTitle.isFocused()) mTitle.clearFocus();
+
 
             }
 
@@ -1033,7 +1151,7 @@ public class CreateEventActivity extends BaseActivity
     @Override
     public void onClick(View view, int position) {
         Intent galleryIntent = new Intent(CreateEventActivity.this, SpaceGalleryActivity.class);
-        galleryIntent.putExtra(ID,mCurrentEvent.getId());
+        galleryIntent.putExtra(ID, mCurrentEvent.getId());
         startActivity(galleryIntent);
 
     }
@@ -1050,7 +1168,7 @@ public class CreateEventActivity extends BaseActivity
 
         mCurrentOffset = Math.abs(verticalOffset);
 
-        Log.d(TAG,mCurrentOffset+"");
+        Log.d(TAG, mCurrentOffset + "");
 
 
         if (mCurrentOffset - lastOfsset > 0)
@@ -1061,7 +1179,7 @@ public class CreateEventActivity extends BaseActivity
 
         if (mCurrentOffset == 0) {
             mCanDrag = false;
-            if (mPlaceAutoCompleteLayout.getVisibility()==View.GONE)
+            if (mPlaceAutoCompleteLayout.getVisibility() == View.GONE)
                 mPlaceAutoCompleteLayout.setVisibility(View.VISIBLE);
 
             if (mTouchEventFired && mHorizontalScrollView.getVisibility() == View.VISIBLE)
@@ -1071,31 +1189,30 @@ public class CreateEventActivity extends BaseActivity
 
         {
             mCanDrag = true;
-            if (mPlaceAutoCompleteLayout.getVisibility()==View.VISIBLE)
+            if (mPlaceAutoCompleteLayout.getVisibility() == View.VISIBLE)
                 mPlaceAutoCompleteLayout.setVisibility(View.GONE);
-            }
-            if (mTouchEventFired) {
+        }
+        if (mTouchEventFired) {
 
-                if (mCurrentOffset < mHorizontalScrollView.getHeight()) {
+            if (mCurrentOffset < mHorizontalScrollView.getHeight()) {
+                if (mHorizontalScrollView.getVisibility() == View.VISIBLE)
+                    setVisibility(mHorizontalScrollView, 0.0f);
+            } else {
+
+
+                if (mCurrentOffset < mAppBarLayout.getTotalScrollRange() - mHorizontalScrollView.getHeight()) {
+                    if (mHorizontalScrollView.getVisibility() == View.GONE)
+                        setVisibility(mHorizontalScrollView, 1.0f);
+                } else {
                     if (mHorizontalScrollView.getVisibility() == View.VISIBLE)
                         setVisibility(mHorizontalScrollView, 0.0f);
-                } else {
-
-
-                    if (mCurrentOffset < mAppBarLayout.getTotalScrollRange() - mHorizontalScrollView.getHeight()) {
-                        if (mHorizontalScrollView.getVisibility() == View.GONE)
-                            setVisibility(mHorizontalScrollView, 1.0f);
-                    } else {
-                        if (mHorizontalScrollView.getVisibility() == View.VISIBLE)
-                            setVisibility(mHorizontalScrollView, 0.0f);
-                    }
-
                 }
+
             }
-
-
         }
 
+
+    }
 
 
     private void setVisibility(final View view, final float alpha) {
@@ -1116,7 +1233,39 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
+    @Override
+    public void onFocusChange(View v, boolean hasFocus) {
+        switch (v.getId()) {
+            case R.id.tv_title:
+                mFocusedEditText = TITLE_FOCUS;
+                break;
+            case R.id.tv_desciption:
+                mFocusedEditText = DETAILS_FOCUS;
+                break;
+        }
+    }
 
+    /**
+     * calculates the distance between two locations in MILES
+     */
+    private double distance(LatLng latLng1, LatLng latLng2) {
 
+        double earthRadius = 3958.75; // in miles, change to 6371 for kilometer output
+
+        double dLat = Math.toRadians(latLng2.latitude - latLng1.latitude);
+        double dLng = Math.toRadians(latLng2.longitude - latLng1.longitude);
+
+        double sindLat = Math.sin(dLat / 2);
+        double sindLng = Math.sin(dLng / 2);
+
+        double a = Math.pow(sindLat, 2) + Math.pow(sindLng, 2)
+                * Math.cos(Math.toRadians(latLng1.latitude)) * Math.cos(Math.toRadians(latLng2.latitude));
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        double dist = earthRadius * c;
+
+        return dist; // output distance, in MILES
+    }
 }
 

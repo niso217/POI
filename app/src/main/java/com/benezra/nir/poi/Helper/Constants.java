@@ -30,7 +30,9 @@ public interface Constants {
     public static final String ID = "id";
     public static final String URI = "uri";
 
-
+    public static final String ACTION = "action";
+    public static final int ACTION_REMOVE = 1;
+    public static final int ACTION_FINISH = 0;
 
     public static final String TITLE = "title";
     public static final String MESSAGE = "message";
@@ -40,5 +42,10 @@ public interface Constants {
     //permissions type
     public static final String LOCATION = "location";
     public static final String CAMERA = "camera";
+
+    //transportation type
+    public static final String DRIVING = "driving";
+    public static final String WALKING = "walking";
+    public static final String CYCLING = "cycling";
 
 }

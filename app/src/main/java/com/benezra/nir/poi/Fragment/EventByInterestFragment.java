@@ -258,8 +258,11 @@ public class EventByInterestFragment extends Fragment
                 Log.d(TAG, String.format("Key %s is no longer in the search area", key));
 
                 Event event = mEventHashMap.get(key);
-                Marker marker = event.getMarker();
-                marker.remove();
+                if (event!=null){
+                    Marker marker = event.getMarker();
+                    marker.remove();
+                }
+
                 mEventHashMap.remove(key);
                 //addEventsToMap();
 

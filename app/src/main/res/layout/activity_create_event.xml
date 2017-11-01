@@ -5,6 +5,7 @@
     android:id="@+id/main_content"
     android:descendantFocusability="beforeDescendants"
     android:focusableInTouchMode="true"
+    android:focusable="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
@@ -65,12 +66,16 @@
                     app:layout_collapseMode="pin"
                     app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
 
-                    <TextView
-                        android:id="@+id/tv_title_toolbar"
-                        android:layout_width="wrap_content"
+                    <EditText
+                        android:id="@+id/tv_title"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text=""
+                        android:backgroundTint="@android:color/transparent"
+                        android:hint="@string/collapsingtoolbar_title"
+                        android:textAlignment="center"
                         android:textColor="@android:color/white"
+                        android:textColorHighlight="@android:color/white"
+                        android:textColorHint="@android:color/white"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -139,36 +144,8 @@
                 android:layout_height="match_parent"
                 android:layout_marginBottom="@dimen/card_margin"
                 android:layout_marginLeft="@dimen/card_margin"
-                android:layout_marginRight="@dimen/card_margin">
-
-
-                <LinearLayout
-                    style="@style/Widget.CardContent"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <EditText
-                        android:id="@+id/tv_title"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:ems="20"
-                        android:hint="Title"
-                        android:padding="10dp"
-                        android:textColor="#333"
-                        tools:focusable="false" />
-
-
-                </LinearLayout>
-
-            </android.support.v7.widget.CardView>
-
-            <android.support.v7.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginBottom="@dimen/card_margin"
-                android:layout_marginLeft="@dimen/card_margin"
-                android:layout_marginRight="@dimen/card_margin">
+                android:layout_marginRight="@dimen/card_margin"
+                android:layout_marginTop="@dimen/card_margin">
 
 
                 <android.support.v7.widget.RecyclerView
@@ -199,10 +176,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
+                        android:maxLength="30"
                         android:hint="Tell Us About the Event...                          "
                         android:padding="10dp"
                         android:textColor="#333"
-                        tools:focusable="false" />
+                       />
 
                 </LinearLayout>
 
@@ -367,6 +345,14 @@
         app:layout_anchor="@id/appbar"
         app:layout_anchorGravity="bottom|right|end">
 
+        <ImageButton
+            android:id="@+id/btn_delete"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:visibility="gone"
+            android:layout_marginLeft="@dimen/icons_margin"
+            android:background="@drawable/delete_button"
+            android:contentDescription="@string/share" />
 
         <ImageButton
             android:id="@+id/btn_share"
@@ -390,14 +376,6 @@
             android:layout_height="60dp"
             android:layout_marginLeft="@dimen/icons_margin"
             android:background="@drawable/chat_button"
-            android:contentDescription="@string/chat" />
-
-        <ImageButton
-            android:id="@+id/btn_edit"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:layout_marginLeft="@dimen/icons_margin"
-            android:background="@drawable/edit_button"
             android:contentDescription="@string/chat" />
 
         <ImageButton
