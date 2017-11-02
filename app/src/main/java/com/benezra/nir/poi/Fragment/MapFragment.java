@@ -90,7 +90,6 @@ public class MapFragment extends Fragment implements
     }
 
 
-    //navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
 
 
     @Override

@@ -6,6 +6,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
 import com.benezra.nir.poi.Fragment.EventByInterestFragment;
+import com.benezra.nir.poi.Fragment.MainEventFragment;
 import com.benezra.nir.poi.Fragment.UserEventFragment;
 
 /**
@@ -28,7 +29,7 @@ public class SimpleFragmentPagerAdapter extends FragmentPagerAdapter {
     @Override
     public Fragment getItem(int position) {
         if (position == 0) {
-            return new EventByInterestFragment();
+            return new MainEventFragment();
         } else if (position == 1){
             return new UserEventFragment();
             //return new PlacesFragment();

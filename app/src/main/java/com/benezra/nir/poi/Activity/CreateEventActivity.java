@@ -403,13 +403,13 @@ public class CreateEventActivity extends BaseActivity
                 startActivity(i);
                 break;
             case R.id.btn_add_image:
-                buildImageAndTitleChooser();
+                navigateToCaptureFragment(new String[]{Manifest.permission.CAMERA});
                 break;
             case R.id.btn_clear:
                 setAppBarOffset();
                 break;
             case R.id.btn_location:
-                mapFragment.initFusedLocation();
+                navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
                 break;
             case R.id.btn_share:
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
@@ -861,10 +861,11 @@ public class CreateEventActivity extends BaseActivity
 
 
             if (Arrays.asList(permissions).contains(ACCESS_FINE_LOCATION)) {
-                //initFusedLocation();
+                mapFragment.initFusedLocation();
             }
             if (Arrays.asList(permissions).contains(Manifest.permission.CAMERA)) {
                 buildImageAndTitleChooser();
+
             }
         } else {
             PermissionsDialogFragment dialogFragment = (PermissionsDialogFragment) getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
