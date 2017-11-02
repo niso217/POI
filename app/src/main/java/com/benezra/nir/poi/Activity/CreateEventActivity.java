@@ -151,6 +151,7 @@ public class CreateEventActivity extends BaseActivity
     TextView tvDatePicker, tvTimePicker;
     private Switch mSwitch;
     private Event mCurrentEvent;
+    private Event mCurrentEventChangeFlag;
     final static String TAG = CreateEventActivity.class.getSimpleName();
     private CollapsingToolbarLayout collapsingToolbar;
     private ImageView mToolbarBackgroundImage;
@@ -207,11 +208,10 @@ public class CreateEventActivity extends BaseActivity
         mEventChangeFlag = new boolean[7];
         //[0]  - title
         //[1] - details
-        //[2] - lat
-        //[3] - long
-        //[4] - time
-        //[5] - date
-        //[6] - interest
+        //[2] - location
+        //[3] - time
+        //[4] - date
+        //[5] - interest
 
         //Using the ToolBar as ActionBar
         //Find the toolbar view inside the activity layout
@@ -314,6 +314,7 @@ public class CreateEventActivity extends BaseActivity
 
         if (savedInstanceState != null) {
             mCurrentEvent = savedInstanceState.getParcelable("event");
+            mCurrentEventChangeFlag = savedInstanceState.getParcelable("event_clone");
             mInterestsList = savedInstanceState.getStringArrayList("interests");
             mParticipates = savedInstanceState.getParcelableArrayList("participates");
             mMode = savedInstanceState.getBoolean("mode");
@@ -364,6 +365,7 @@ public class CreateEventActivity extends BaseActivity
             mAddImage.setEnabled(true);
             mChat.setEnabled(true);
             mDelete.setVisibility(View.VISIBLE);
+            isChangeMade();
         }
     }
 
@@ -483,6 +485,25 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
+    private void isChangeMade() {
+
+        if (!mMode) {
+
+            if (!mCurrentEvent.getTitle().equals(mCurrentEventChangeFlag.getTitle()) ||
+                    !mCurrentEvent.getDetails().equals(mCurrentEventChangeFlag.getDetails()) ||
+                    distance(mCurrentEvent.getLatlng(), mCurrentEventChangeFlag.getLatlng()) > 0.02 ||
+                    !mCurrentEvent.getInterest().equals(mCurrentEventChangeFlag.getInterest()) ||
+                    mCurrentEvent.getStart() != mCurrentEventChangeFlag.getStart())
+
+                setSaveEnable(true);
+
+            else
+                setSaveEnable(false);
+
+        }
+
+    }
+
     private void BuildReturnDialogFragment() {
         AlertDialogFragment alertDialog = (AlertDialogFragment) getSupportFragmentManager().findFragmentByTag(AlertDialogFragment.class.getName());
         if (alertDialog == null) {
@@ -543,10 +564,9 @@ public class CreateEventActivity extends BaseActivity
         mEventTime.set(Calendar.YEAR, year);
         mEventTime.set(Calendar.MONTH, month);
         mEventTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-        if (!mMode && mCurrentEvent.getStart() != mEventTime.getTimeInMillis())
-            setSaveEnable();
-
         mCurrentEvent.setStart(mEventTime.getTimeInMillis());
+
+        isChangeMade();
 
     }
 
@@ -584,33 +604,26 @@ public class CreateEventActivity extends BaseActivity
     public void afterTextChanged(Editable s) {
         switch (mFocusedEditText) {
             case DETAILS_FOCUS:
-                if (!mMode && !s.toString().equals(mCurrentEvent.getDetails()))
-                    setSaveEnable();
-
                 mCurrentEvent.setDetails(s.toString());
                 break;
             case TITLE_FOCUS:
-                if (!mMode && !s.toString().equals(mCurrentEvent.getTitle()))
-                    setSaveEnable();
-
-
                 mCurrentEvent.setTitle(s.toString());
                 break;
         }
+        isChangeMade();
     }
 
-    private void setSaveEnable() {
-        mSave.setEnabled(true);
+    private void setSaveEnable(boolean enable) {
+        mSave.setEnabled(enable);
     }
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
         String interest = parent.getItemAtPosition(position).toString();
-        if (!mMode && !mCurrentEvent.getInterest().equals(interest))
-            setSaveEnable();
-
         mCurrentEvent.setInterest(interest);
+
+        isChangeMade();
     }
 
     @Override
@@ -672,6 +685,18 @@ public class CreateEventActivity extends BaseActivity
         mCurrentEvent.setImage(intent.getStringExtra(EVENT_IMAGE));
         mCurrentEvent.setAddress(intent.getStringExtra(EVENT_ADDRESS));
 
+        mCurrentEventChangeFlag = new Event();
+        mCurrentEventChangeFlag.setId(intent.getStringExtra(EVENT_ID));
+        mCurrentEventChangeFlag.setDetails(intent.getStringExtra(EVENT_DETAILS));
+        mCurrentEventChangeFlag.setInterest(intent.getStringExtra(EVENT_INTEREST));
+        mCurrentEventChangeFlag.setOwner(intent.getStringExtra(EVENT_OWNER));
+        mCurrentEventChangeFlag.setTitle(intent.getStringExtra(EVENT_TITLE));
+        mCurrentEventChangeFlag.setStart(intent.getLongExtra(EVENT_START, 0));
+        mCurrentEventChangeFlag.setLatitude(intent.getDoubleExtra(EVENT_LATITUDE, 0));
+        mCurrentEventChangeFlag.setLongitude(intent.getDoubleExtra(EVENT_LONGITUDE, 0));
+        mCurrentEventChangeFlag.setImage(intent.getStringExtra(EVENT_IMAGE));
+        mCurrentEventChangeFlag.setAddress(intent.getStringExtra(EVENT_ADDRESS));
+
         setEventFields();
 
 
@@ -701,9 +726,8 @@ public class CreateEventActivity extends BaseActivity
 
     @Override
     public void onEventLocationChanged(LatLng latLng) {
-        if (distance(mCurrentEvent.getLatlng(), latLng) > 0.02)  // if distance < 30 meters we take locations as equal
-            setSaveEnable();
         mCurrentEvent.setLatLang(latLng);
+        isChangeMade();
 
 
     }
@@ -785,6 +809,7 @@ public class CreateEventActivity extends BaseActivity
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable("event", mCurrentEvent);
+        outState.putParcelable("event_clone", mCurrentEventChangeFlag);
         outState.putStringArrayList("interests", mInterestsList);
         outState.putParcelableArrayList("participates", mParticipates);
         outState.putBoolean("mode", mMode);

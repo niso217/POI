@@ -87,6 +87,10 @@ public class Event implements Parcelable {
     public Event() {
     }
 
+    public Event clone() throws CloneNotSupportedException {
+        return this.clone();
+    }
+
     public Event(String uuid,String userid) {
         this.id = uuid;
         this.owner = userid;
