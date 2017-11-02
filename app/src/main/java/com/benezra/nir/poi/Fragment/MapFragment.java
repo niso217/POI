@@ -4,12 +4,14 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +21,7 @@ import android.widget.TextView;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.benezra.nir.poi.Helper.AsyncGeocoder;
 import com.benezra.nir.poi.Helper.DirectionsJSONParser;
 import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.benezra.nir.poi.R;
@@ -72,6 +75,7 @@ public class MapFragment extends Fragment implements
     private TabLayout mTabLayout;
     private LinearLayout mUpperMenu;
     private Marker mEventMarker;
+    private String mEventAddress;
     private LatLng mEventLocation;
     public static final int DRIVING_TAB = 0;
     public static final int WALKING_TAB = 1;
@@ -80,9 +84,13 @@ public class MapFragment extends Fragment implements
     private int mTabSelectedIndex;
 
 
-    public void setEventLocation(LatLng location, String address) {
+    public void setEventLocation(LatLng location,String address) {
         this.mEventLocation = location;
+        addSingeMarkerToMap(location,address);
     }
+
+
+    //navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
 
 
     @Override
@@ -104,6 +112,7 @@ public class MapFragment extends Fragment implements
             mTabSelectedIndex = savedInstanceState.getInt("tab_selected_index");
             mEventLocation = savedInstanceState.getParcelable("event_location");
             mCurrentLocation = savedInstanceState.getParcelable("current_location");
+            mEventAddress = savedInstanceState.getString("event_address");
 
         } else
             mTabSelectedIndex = -1;
@@ -119,6 +128,7 @@ public class MapFragment extends Fragment implements
         outState.putParcelable("current_location", mCurrentLocation);
         outState.putParcelable("event_location", mEventLocation);
         outState.putInt("tab_selected_index", mTabSelectedIndex);
+        outState.putString("event_address",mEventAddress);
 
     }
 
@@ -136,7 +146,7 @@ public class MapFragment extends Fragment implements
                 initFusedLocation();
                 break;
             case EVENT_LOC_TAB:
-                addSingeMarkerToMap(mEventLocation);
+                getAddress(mEventLocation);
                 break;
 
         }
@@ -349,7 +359,8 @@ public class MapFragment extends Fragment implements
 
     @Override
     public void onMarkerDragEnd(Marker marker) {
-        mListener.onEventLocationChanged(marker.getPosition());
+        mEventMarker = marker;
+        getAddress(marker.getPosition());
     }
 
 
@@ -357,7 +368,7 @@ public class MapFragment extends Fragment implements
 
         void onMapReady(GoogleMap googleMap);
 
-        void onEventLocationChanged(LatLng latLng);
+        void onEventLocationChanged(LatLng latLng,String address);
 
     }
 
@@ -388,11 +399,8 @@ public class MapFragment extends Fragment implements
                                     mProgressBar.setVisibility(View.VISIBLE);
                                     directions = getDirectionsUrl(mCurrentLocation, mEventLocation, WALKING);
                                     break;
-                                case EVENT_LOC_TAB:
-                                    //addSingeMarkerToMap(mEventLocation);
-                                    break;
                                 default:
-                                    addSingeMarkerToMap(mEventLocation = mCurrentLocation);
+                                    getAddress(mEventLocation = mCurrentLocation);
                                     break;
 
                             }
@@ -402,15 +410,37 @@ public class MapFragment extends Fragment implements
 
                     }
                 });
+
     }
 
-    public void addSingeMarkerToMap(LatLng location) {
+    public void getAddress(final LatLng latLng) {
+
+        new AsyncGeocoder(new AsyncGeocoder.onAddressFoundListener() {
+            @Override
+            public void onAddressFound(String result) {
+                addSingeMarkerToMap(latLng,result);
+                mListener.onEventLocationChanged(latLng,result);
+                Log.d(TAG, "the address is: " + result);
+
+            }
+        }).execute(new AsyncGeocoder.AsyncGeocoderObject(
+                new Geocoder(getContext()), LatLongToLocation(latLng)));
+    }
+
+    private Location LatLongToLocation(LatLng latLng){
+        Location loc = new Location("");
+        loc.setLatitude(latLng.latitude);
+        loc.setLongitude(latLng.longitude);
+        return loc;
+    }
+
+    public void addSingeMarkerToMap(LatLng location,String address) {
 
         setMyLocationEnabled(false);
         if (mPolyline != null) mPolyline.remove();
 
         MarkerOptions markerOptions = new MarkerOptions()
-                .position(location).draggable(true);
+                .position(location).title(address).draggable(true);
 
         if (mEventMarker != null)
             mEventMarker.remove();
@@ -421,8 +451,6 @@ public class MapFragment extends Fragment implements
         mMap.moveCamera(loc);
 
         mCameraUpdate = null;
-
-        mListener.onEventLocationChanged(location);
 
     }
 

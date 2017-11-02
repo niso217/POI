@@ -8,6 +8,7 @@ import android.util.Log;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,7 +44,12 @@ public class AsyncGeocoder extends AsyncTask<AsyncGeocoder.AsyncGeocoderObject, 
         Log.v("onPostExecute", "location: " + addresses);
         String address;
         if (addresses != null){
-            address = addresses.get(0).getLocality() + ", " + addresses.get(0).getCountryName();
+            List<String> addr = new ArrayList<>();
+            if(addresses.get(0).getLocality() != null) addr.add(addresses.get(0).getLocality());
+            if(addresses.get(0).getCountryName() != null) addr.add(addresses.get(0).getCountryName());
+            if(addresses.get(0).getThoroughfare() != null) addr.add(addresses.get(0).getThoroughfare());
+
+            address = android.text.TextUtils.join(",", addr);
         }
         else address = "Service unavailable.";
 

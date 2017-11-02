@@ -23,7 +23,7 @@ import java.util.Map;
  */
 
 @IgnoreExtraProperties
-public class Event implements Parcelable {
+public class Event implements Parcelable , Cloneable{
 
     private String interest;
     private double latitude;
@@ -87,9 +87,12 @@ public class Event implements Parcelable {
     public Event() {
     }
 
-    public Event clone() throws CloneNotSupportedException {
-        return this.clone();
+    public Object clone() throws
+            CloneNotSupportedException
+    {
+        return super.clone();
     }
+
 
     public Event(String uuid,String userid) {
         this.id = uuid;

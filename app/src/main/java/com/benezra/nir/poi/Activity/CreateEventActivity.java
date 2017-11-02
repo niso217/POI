@@ -63,6 +63,7 @@ import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Adapter.CustomSpinnerAdapter;
 import com.benezra.nir.poi.Fragment.UploadToFireBaseFragment;
 import com.benezra.nir.poi.Helper.AsyncGeocoder;
+import com.benezra.nir.poi.Objects.EventPhotos;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.benezra.nir.poi.User;
@@ -97,7 +98,10 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
@@ -186,10 +190,10 @@ public class CreateEventActivity extends BaseActivity
     private final static int DETAILS_FOCUS = 0;
     private final static int TITLE_FOCUS = 1;
     private int mFocusedEditText;
-    private boolean[] mEventChangeFlag;
+    private Set<String> mPicturesKeys;
 
 
-    private FirebaseRecyclerAdapter<String, ViewHolders.PicturesViewHolder> mPicturesAdapter;
+    private FirebaseRecyclerAdapter<EventPhotos, ViewHolders.PicturesViewHolder> mPicturesAdapter;
     private FirebaseRecyclerAdapter<User, ViewHolders.ParticipatesViewHolder> mParticipateAdapter;
 
 
@@ -204,14 +208,7 @@ public class CreateEventActivity extends BaseActivity
         mEventTime = Calendar.getInstance();
 
         mHorizontalScrollView = (LinearLayout) findViewById(R.id.scrolling_icons);
-
-        mEventChangeFlag = new boolean[7];
-        //[0]  - title
-        //[1] - details
-        //[2] - location
-        //[3] - time
-        //[4] - date
-        //[5] - interest
+        mPicturesKeys = new HashSet<>();
 
         //Using the ToolBar as ActionBar
         //Find the toolbar view inside the activity layout
@@ -242,6 +239,7 @@ public class CreateEventActivity extends BaseActivity
 
 
         mLocation.setOnClickListener(this);
+
 
         mPlaceAutoCompleteLayout = (LinearLayout) findViewById(R.id.place_autocomplete_layout);
 
@@ -431,18 +429,36 @@ public class CreateEventActivity extends BaseActivity
         }
     }
 
-    private void deleteEvent() {
+    private void delete() {
+        deleteEventDataBase();
+        deleteEventStorage();
+    }
+
+    private void deleteEventDataBase() {
         showProgress(getString(R.string.delete_event), getString(R.string.please_wait));
 
         mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).removeValue(new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                 hideProgressMessage();
-                finish();
             }
         });
 
     }
+
+    private void deleteEventStorage() {
+
+        Iterator<String> itr = mPicturesKeys.iterator();
+        while (itr.hasNext()) {
+            String child = itr.next();
+            StorageReference fileRef = FirebaseStorage.getInstance().getReference().child("images").child(mCurrentEvent.getId()).child(child);
+            fileRef.delete();
+        }
+        finish();
+
+
+    }
+
 
     private void setAppBarOffset() {
 
@@ -489,19 +505,21 @@ public class CreateEventActivity extends BaseActivity
 
         if (!mMode) {
 
-            if (!mCurrentEvent.getTitle().equals(mCurrentEventChangeFlag.getTitle()) ||
-                    !mCurrentEvent.getDetails().equals(mCurrentEventChangeFlag.getDetails()) ||
-                    distance(mCurrentEvent.getLatlng(), mCurrentEventChangeFlag.getLatlng()) > 0.02 ||
-                    !mCurrentEvent.getInterest().equals(mCurrentEventChangeFlag.getInterest()) ||
-                    mCurrentEvent.getStart() != mCurrentEventChangeFlag.getStart())
-
+            if (isEventChanged())
                 setSaveEnable(true);
-
             else
                 setSaveEnable(false);
 
         }
 
+    }
+
+    private boolean isEventChanged() {
+        return (!mCurrentEvent.getTitle().equals(mCurrentEventChangeFlag.getTitle()) ||
+                !mCurrentEvent.getDetails().equals(mCurrentEventChangeFlag.getDetails()) ||
+                distance(mCurrentEvent.getLatlng(), mCurrentEventChangeFlag.getLatlng()) > 0.02 ||
+                !mCurrentEvent.getInterest().equals(mCurrentEventChangeFlag.getInterest()) ||
+                mCurrentEvent.getStart() != mCurrentEventChangeFlag.getStart());
     }
 
     private void BuildReturnDialogFragment() {
@@ -539,7 +557,7 @@ public class CreateEventActivity extends BaseActivity
         switch (state) {
             case BUTTON_POSITIVE:
                 if (action == ACTION_REMOVE)
-                    deleteEvent();
+                    delete();
                 else
                     finish();
                 break;
@@ -663,8 +681,13 @@ public class CreateEventActivity extends BaseActivity
         else {
             if (mMode)
                 BuildReturnDialogFragment();
-            else
-                super.onBackPressed();
+            else {
+                if (isEventChanged())
+                    BuildReturnDialogFragment();
+                else
+                    super.onBackPressed();
+            }
+
         }
 
 
@@ -685,27 +708,25 @@ public class CreateEventActivity extends BaseActivity
         mCurrentEvent.setImage(intent.getStringExtra(EVENT_IMAGE));
         mCurrentEvent.setAddress(intent.getStringExtra(EVENT_ADDRESS));
 
-        mCurrentEventChangeFlag = new Event();
-        mCurrentEventChangeFlag.setId(intent.getStringExtra(EVENT_ID));
-        mCurrentEventChangeFlag.setDetails(intent.getStringExtra(EVENT_DETAILS));
-        mCurrentEventChangeFlag.setInterest(intent.getStringExtra(EVENT_INTEREST));
-        mCurrentEventChangeFlag.setOwner(intent.getStringExtra(EVENT_OWNER));
-        mCurrentEventChangeFlag.setTitle(intent.getStringExtra(EVENT_TITLE));
-        mCurrentEventChangeFlag.setStart(intent.getLongExtra(EVENT_START, 0));
-        mCurrentEventChangeFlag.setLatitude(intent.getDoubleExtra(EVENT_LATITUDE, 0));
-        mCurrentEventChangeFlag.setLongitude(intent.getDoubleExtra(EVENT_LONGITUDE, 0));
-        mCurrentEventChangeFlag.setImage(intent.getStringExtra(EVENT_IMAGE));
-        mCurrentEventChangeFlag.setAddress(intent.getStringExtra(EVENT_ADDRESS));
-
+        cloneEvent();
         setEventFields();
 
 
     }
 
+    private void cloneEvent() {
+        try {
+            mCurrentEventChangeFlag = (Event) mCurrentEvent.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void onPlaceSelected(Place place) {
+        mCurrentEvent.setAddress(place.getAddress().toString());
+        mCurrentEvent.setLatLang(place.getLatLng());
         mapFragment.setEventLocation(place.getLatLng(), place.getAddress().toString());
-        mapFragment.addSingeMarkerToMap(place.getLatLng());
 
 
     }
@@ -720,33 +741,32 @@ public class CreateEventActivity extends BaseActivity
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         if (mCurrentEvent.getLatitude() != 0)
-            mapFragment.addSingeMarkerToMap(mCurrentEvent.getLatlng());
+            mapFragment.addSingeMarkerToMap(mCurrentEvent.getLatlng(), mCurrentEvent.getAddress());
 
     }
 
     @Override
-    public void onEventLocationChanged(LatLng latLng) {
+    public void onEventLocationChanged(LatLng latLng, String address) {
         mCurrentEvent.setLatLang(latLng);
+        mCurrentEvent.setAddress(address);
         isChangeMade();
 
-
     }
-
-
-    //navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
 
 
     private void addImagesChangeListener() {
         Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("pictures");
 
-        mPicturesAdapter = new FirebaseRecyclerAdapter<String, ViewHolders.PicturesViewHolder>(
-                String.class, R.layout.grid_item_event_pic, ViewHolders.PicturesViewHolder.class, query) {
+        mPicturesAdapter = new FirebaseRecyclerAdapter<EventPhotos, ViewHolders.PicturesViewHolder>(
+                EventPhotos.class, R.layout.grid_item_event_pic, ViewHolders.PicturesViewHolder.class, query) {
             @Override
-            protected void populateViewHolder(ViewHolders.PicturesViewHolder picturesViewHolder, String model, int position) {
+            protected void populateViewHolder(ViewHolders.PicturesViewHolder picturesViewHolder, EventPhotos model, int position) {
                 Picasso.with(CreateEventActivity.this)
-                        .load(model)
+                        .load(model.getUrl())
                         .error(R.drawable.common_google_signin_btn_icon_dark)
                         .into(picturesViewHolder.imgThumbnail);
+
+                mPicturesKeys.add(model.getTitle());
 
             }
 
@@ -841,7 +861,7 @@ public class CreateEventActivity extends BaseActivity
 
 
             if (Arrays.asList(permissions).contains(ACCESS_FINE_LOCATION)) {
-                initFusedLocation();
+                //initFusedLocation();
             }
             if (Arrays.asList(permissions).contains(Manifest.permission.CAMERA)) {
                 buildImageAndTitleChooser();
@@ -866,119 +886,6 @@ public class CreateEventActivity extends BaseActivity
         return true;
     }
 
-    private void initFusedLocation() {
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        mFusedLocationClient.getLastLocation()
-                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            LatLng latLang = new LatLng(location.getLatitude(), location.getLongitude());
-                            mCurrentEvent.setLatitude(latLang.latitude);
-                            mCurrentEvent.setLongitude(latLang.longitude);
-                            getAddress();
-                        }
-                    }
-                });
-    }
-
-    private void getAddress() {
-        new AsyncGeocoder(new AsyncGeocoder.onAddressFoundListener() {
-            @Override
-            public void onAddressFound(String result) {
-                mCurrentEvent.setAddress(result);
-                Log.d(TAG, "the address is: " + result);
-
-            }
-        }).execute(new AsyncGeocoder.AsyncGeocoderObject(
-                new Geocoder(this),
-                mCurrentEvent.getLocation()));
-    }
-
-
-    private void BuildProgressDialogFragment() {
-        ProgressDialogFragment progressDialog = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
-        if (progressDialog == null) {
-            Log.d(TAG, "opening origress dialog");
-            progressDialog = ProgressDialogFragment.newInstance(
-                    getString(R.string.creating_event), getString(R.string.please_wait), ProgressDialog.STYLE_HORIZONTAL);
-            progressDialog.show(getSupportFragmentManager(), ProgressDialogFragment.class.getName());
-
-        }
-    }
-
-    private void uploadBytes(Uri picUri) {
-
-        if (picUri != null) {
-            String fileName = mCurrentEvent.getTitle();
-
-            if (!validateInputFileName(fileName)) {
-                return;
-            }
-
-
-            showProgress(getString(R.string.creating_event), getString(R.string.please_wait));
-
-            Bitmap bitmap = BitmapUtil.UriToBitmap(this, picUri);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
-            byte[] data = baos.toByteArray();
-
-            StorageReference fileRef = FirebaseStorage.getInstance().getReference().child("images").child(mCurrentEvent.getId());
-            fileRef.putBytes(data)
-                    .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-
-                            Log.i(TAG, "Uri: " + taskSnapshot.getDownloadUrl());
-                            Log.i(TAG, "Name: " + taskSnapshot.getMetadata().getName());
-                            mCurrentEvent.setImage(taskSnapshot.getDownloadUrl().toString());
-                            saveEventToFirebase();
-
-                            Toast.makeText(CreateEventActivity.this, "File Uploaded ", Toast.LENGTH_LONG).show();
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception exception) {
-
-                            hideProgressMessage();
-                            Toast.makeText(CreateEventActivity.this, exception.getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    })
-                    .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                            // progress percentage
-                            double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
-                            Log.d(TAG, "addOnProgressListener " + progress + "");
-                            // percentage in progress dialog
-                            setProgressValue(progress);
-
-                        }
-                    })
-                    .addOnPausedListener(new OnPausedListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onPaused(UploadTask.TaskSnapshot taskSnapshot) {
-                            System.out.println("Upload is paused!");
-                        }
-                    });
-        } else {
-            Toast.makeText(CreateEventActivity.this, "No File!", Toast.LENGTH_LONG).show();
-        }
-    }
 
     private void saveEventToFirebase() {
 
@@ -1019,6 +926,7 @@ public class CreateEventActivity extends BaseActivity
                 Toast.makeText(CreateEventActivity.this, getString(R.string.event_created), Toast.LENGTH_SHORT).show();
                 //finish();
                 mMode = false;
+                cloneEvent();
                 initView();
 
             }
@@ -1043,14 +951,6 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
-    private void setProgressValue(double progress) {
-        Message message = new Message();
-        Bundle bundle = new Bundle();
-        bundle.putInt("prg", (int) progress);
-        message.setData(bundle);
-        if (mProgressDialogFragment != null)
-            mProgressDialogFragment.setProgress(message);
-    }
 
     private Map<String, User> setOwnerAsParticipate() {
         User owner = new User();
@@ -1060,51 +960,6 @@ public class CreateEventActivity extends BaseActivity
         HashMap<String, User> map = new HashMap<>();
         map.put(mFirebaseUser.getUid(), owner);
         return map;
-    }
-
-    private boolean validateInputFileName(String fileName) {
-
-        if (TextUtils.isEmpty(fileName)) {
-            Toast.makeText(this, "Enter file name!", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-
-        return true;
-    }
-
-
-    private void setImageBack() {
-        if (mCurrentEvent.getImage() != null) {
-            mProgressBar.setVisibility(View.VISIBLE);
-            Picasso.with(this)
-                    .load(mCurrentEvent.getImage())
-                    .into(mToolbarBackgroundImage, new com.squareup.picasso.Callback() {
-                        @Override
-                        public void onSuccess() {
-                            mProgressBar.setVisibility(View.GONE);
-                        }
-
-                        @Override
-                        public void onError() {
-                            mProgressBar.setVisibility(View.GONE);
-
-                        }
-                    });
-        } else {
-            Bitmap bitmap = BitmapUtil.UriToBitmap(this, mCurrentEvent.getUri());
-            if (bitmap != null)
-                mToolbarBackgroundImage.setImageBitmap(bitmap);
-        }
-
-    }
-
-    private void setMenuItemChecked(MenuItem chatMenuItem) {
-
-        if (!mMode) {
-            chatMenuItem.setVisible(true);
-        } else {
-            chatMenuItem.setVisible(false);
-        }
     }
 
     @Override

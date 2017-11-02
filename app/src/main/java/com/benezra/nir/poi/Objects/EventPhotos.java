@@ -17,6 +17,10 @@ public class EventPhotos implements Parcelable {
         mTitle = title;
     }
 
+    public EventPhotos(){
+
+    }
+
     protected EventPhotos(Parcel in) {
         mUrl = in.readString();
         mTitle = in.readString();

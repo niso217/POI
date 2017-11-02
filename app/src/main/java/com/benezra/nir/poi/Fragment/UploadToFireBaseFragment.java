@@ -28,6 +28,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.benezra.nir.poi.Bitmap.BitmapUtil;
+import com.benezra.nir.poi.Objects.EventPhotos;
 import com.benezra.nir.poi.Objects.UploadInfo;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -141,14 +142,17 @@ public class UploadToFireBaseFragment extends DialogFragment{
 
     private void uploadBytes(Uri picUri,String id) {
 
+
         if (picUri != null) {
 
             Bitmap bitmap = BitmapUtil.UriToBitmap(getContext(), picUri);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
             byte[] data = baos.toByteArray();
+            final String pic_id  = UUID.randomUUID().toString() +".jpg";
 
-            StorageReference fileRef = FirebaseStorage.getInstance().getReference().child("images").child(id).child(UUID.randomUUID()+".jpg");
+
+            StorageReference fileRef = FirebaseStorage.getInstance().getReference().child("images").child(id).child(pic_id);
             fileRef.putBytes(data)
                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
@@ -157,7 +161,7 @@ public class UploadToFireBaseFragment extends DialogFragment{
 
                             Log.i(TAG, "Uri: " + taskSnapshot.getDownloadUrl());
                             Log.i(TAG, "Name: " + taskSnapshot.getMetadata().getName());
-                            writeNewImageInfoToDB(taskSnapshot.getDownloadUrl().toString());
+                            writeNewImageInfoToDB(pic_id,taskSnapshot.getDownloadUrl().toString());
                             Toast.makeText(getContext(), "File Uploaded ", Toast.LENGTH_LONG).show();
                         }
                     })
@@ -193,9 +197,9 @@ public class UploadToFireBaseFragment extends DialogFragment{
         }
     }
 
-    private void writeNewImageInfoToDB(String url) {
+    private void writeNewImageInfoToDB(String title,String url) {
         String key = mFirebaseEventPicReference.push().getKey();
-        mFirebaseEventPicReference.child(key).setValue(url);
+        mFirebaseEventPicReference.child(key).setValue(new EventPhotos(url,title));
     }
 
     private boolean validateInputFileName(String fileName) {

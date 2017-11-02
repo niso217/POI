@@ -53,6 +53,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
 import java.util.Calendar;
+import java.util.Set;
 
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
@@ -547,14 +548,14 @@ public class ViewEventActivity extends BaseActivity
         // Add a marker in the respective location and move the camera and set the zoom level to 15
         LatLng location = new LatLng(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude());
         mapFragment.setEventLocation(location, mCurrentEvent.getAddress());
-        mapFragment.addSingeMarkerToMap(location);
+        mapFragment.addSingeMarkerToMap(location,mCurrentEvent.getAddress());
         mapFragment.SelectCurrentEventPoint();
 
 
     }
 
     @Override
-    public void onEventLocationChanged(LatLng latLng) {
+    public void onEventLocationChanged(LatLng latLng,String address) {
 
     }
 
