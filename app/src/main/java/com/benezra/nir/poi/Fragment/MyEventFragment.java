@@ -13,15 +13,11 @@ import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ListView;
 
-import com.benezra.nir.poi.Adapter.CategoryAdapter;
 import com.benezra.nir.poi.Activity.CreateEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.EventModel;
-import com.benezra.nir.poi.Helper.SimpleItemTouchHelperCallback;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -50,7 +46,7 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class UserEventFragment extends Fragment implements ValueEventListener,RecyclerTouchListener.ClickListener {
+public class MyEventFragment extends Fragment implements ValueEventListener,RecyclerTouchListener.ClickListener {
 
     private EventModel mEventModel;
     private FirebaseDatabase mFirebaseInstance;
@@ -130,7 +126,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener,Re
     }
 
 
-    public UserEventFragment() {
+    public MyEventFragment() {
         // Required empty public constructor
     }
 
@@ -138,12 +134,11 @@ public class UserEventFragment extends Fragment implements ValueEventListener,Re
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.category_list, container, false);
+        View rootView = inflater.inflate(R.layout.my_events, container, false);
 
 
-        mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.events_recycler_view);
+        mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.my_events_list);
         mEventsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        mEventsRecyclerView.setNestedScrollingEnabled(false);
         mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
         mEventsRecyclerView.setAdapter(mEventsAdapter);
 

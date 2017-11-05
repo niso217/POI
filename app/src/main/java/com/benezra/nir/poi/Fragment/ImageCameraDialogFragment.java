@@ -34,13 +34,10 @@ import com.benezra.nir.poi.R;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.benezra.nir.poi.R.id.imageView;
 
 
 public class ImageCameraDialogFragment extends DialogFragment implements View.OnClickListener {

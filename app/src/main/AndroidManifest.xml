@@ -86,6 +86,7 @@
         <activity android:name=".Activity.ViewEventActivity"></activity>
         <activity android:name=".Activity.SpaceGalleryActivity"></activity>
         <activity android:name=".Activity.SpacePhotoActivity"></activity>
+        <activity android:name=".Activity.EventsActivity"></activity>
 
 
     </application>

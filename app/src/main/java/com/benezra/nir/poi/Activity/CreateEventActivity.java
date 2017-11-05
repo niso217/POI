@@ -148,7 +148,7 @@ public class CreateEventActivity extends BaseActivity
         AlertDialogFragment.DialogListenerCallback,
         MapFragment.MapFragmentCallback,
         PlaceSelectionListener,
-        View.OnFocusChangeListener {
+        View.OnFocusChangeListener,UploadToFireBaseFragment.UploadListener {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -516,6 +516,7 @@ public class CreateEventActivity extends BaseActivity
 
     private boolean isEventChanged() {
         return (!mCurrentEvent.getTitle().equals(mCurrentEventChangeFlag.getTitle()) ||
+                !mCurrentEvent.getImage().equals(mCurrentEventChangeFlag.getImage())||
                 !mCurrentEvent.getDetails().equals(mCurrentEventChangeFlag.getDetails()) ||
                 distance(mCurrentEvent.getLatlng(), mCurrentEventChangeFlag.getLatlng()) > 0.02 ||
                 !mCurrentEvent.getInterest().equals(mCurrentEventChangeFlag.getInterest()) ||
@@ -907,6 +908,7 @@ public class CreateEventActivity extends BaseActivity
             showProgress(getString(R.string.updating_event), getString(R.string.please_wait));
 
 
+        updates.put(ID, mCurrentEvent.getId());
         updates.put(DETAILS, mCurrentEvent.getDetails());
         updates.put(START, mCurrentEvent.getStart());
         updates.put(END, mCurrentEvent.getEnd());
@@ -1147,6 +1149,13 @@ public class CreateEventActivity extends BaseActivity
         double dist = earthRadius * c;
 
         return dist; // output distance, in MILES
+    }
+
+    @Override
+    public void onFinishDialog(String image) {
+        mCurrentEvent.setImage(image);
+        isChangeMade();
+
     }
 }
 

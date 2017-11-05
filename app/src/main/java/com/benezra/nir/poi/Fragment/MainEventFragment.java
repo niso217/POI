@@ -1,6 +1,7 @@
 package com.benezra.nir.poi.Fragment;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -10,17 +11,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.benezra.nir.poi.Activity.EventsActivity;
 import com.benezra.nir.poi.Adapter.ViewHolders;
 import com.benezra.nir.poi.R;
+import com.benezra.nir.poi.RecyclerTouchListener;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+
+import static com.facebook.FacebookSdk.getApplicationContext;
 
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class MainEventFragment extends Fragment {
+public class MainEventFragment extends Fragment implements RecyclerTouchListener.ClickListener{
 
     private FirebaseRecyclerAdapter<String, ViewHolders.ParticipatesViewHolder> mInterestAdapter;
     private FirebaseDatabase mFirebaseInstance;
@@ -45,6 +50,7 @@ public class MainEventFragment extends Fragment {
         RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getContext(), 4);
         mInteresRecyclerView = (RecyclerView) rootView.findViewById(R.id.main_event_list);
         mInteresRecyclerView.setLayoutManager(layoutManager);
+        mInteresRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mInteresRecyclerView, this));
 
         participatesChangeListener();
         return rootView;
@@ -69,5 +75,15 @@ public class MainEventFragment extends Fragment {
     }
 
 
+    @Override
+    public void onClick(View view, int position) {
+        Intent galleryIntent = new Intent(getContext(), EventsActivity.class);
+        getActivity().startActivity(galleryIntent);
+    }
+
+    @Override
+    public void onLongClick(View view, int position) {
+
+    }
 }
     //;

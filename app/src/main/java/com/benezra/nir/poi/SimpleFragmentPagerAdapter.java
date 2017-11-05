@@ -7,6 +7,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 
 import com.benezra.nir.poi.Fragment.EventByInterestFragment;
 import com.benezra.nir.poi.Fragment.MainEventFragment;
+import com.benezra.nir.poi.Fragment.MyEventFragment;
 import com.benezra.nir.poi.Fragment.UserEventFragment;
 
 /**
@@ -28,23 +29,21 @@ public class SimpleFragmentPagerAdapter extends FragmentPagerAdapter {
     // This determines the fragment for each tab
     @Override
     public Fragment getItem(int position) {
-        if (position == 0) {
-            return new MainEventFragment();
-        } else if (position == 1){
-            return new UserEventFragment();
-            //return new PlacesFragment();
-        } else if (position == 2){
-            //return new FoodFragment();
-        } else {
-            //return new NatureFragment();
+        switch (position)
+        {
+            case 0:
+                return new MainEventFragment();
+            case 1:
+                return new MyEventFragment();
         }
-        return new EventByInterestFragment();
+        return null;
+
     }
 
     // This determines the number of tabs
     @Override
     public int getCount() {
-        return 4;
+        return 2;
     }
 
     // This determines the name for each tab
@@ -56,10 +55,6 @@ public class SimpleFragmentPagerAdapter extends FragmentPagerAdapter {
                 return mContext.getString(R.string.event_by_interests);
             case 1:
                 return mContext.getString(R.string.events_by_user);
-            case 2:
-                return mContext.getString(R.string.category_food);
-            case 3:
-                return mContext.getString(R.string.category_nature);
             default:
                 return null;
         }

@@ -15,6 +15,7 @@ package com.benezra.nir.poi.Fragment;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -56,9 +57,19 @@ public class UploadToFireBaseFragment extends DialogFragment{
     private Handler mHandler;
     private DatabaseReference mFirebaseEventPicReference;
     private static final int MAX = 100;
+    private Context mContext;
     final static String TAG = UploadToFireBaseFragment.class.getSimpleName();
+    private UploadListener mListener;
 
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        this.mContext = context;
+        if (context instanceof UploadToFireBaseFragment.UploadListener) {
+            mListener = (UploadToFireBaseFragment.UploadListener) context;
+        }
+    }
 
     public UploadToFireBaseFragment() {
         // Empty constructor required for DialogFragment
@@ -77,7 +88,7 @@ public class UploadToFireBaseFragment extends DialogFragment{
 
     // 1. Defines the listener interface with a method passing back data result.
     public interface UploadListener {
-        void onFinishDialog(int state);
+        void onFinishDialog(String image);
     }
 
     @Override
@@ -162,6 +173,7 @@ public class UploadToFireBaseFragment extends DialogFragment{
                             Log.i(TAG, "Uri: " + taskSnapshot.getDownloadUrl());
                             Log.i(TAG, "Name: " + taskSnapshot.getMetadata().getName());
                             writeNewImageInfoToDB(pic_id,taskSnapshot.getDownloadUrl().toString());
+                            mListener.onFinishDialog(taskSnapshot.getDownloadUrl().toString());
                             Toast.makeText(getContext(), "File Uploaded ", Toast.LENGTH_LONG).show();
                         }
                     })

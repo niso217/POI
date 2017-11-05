@@ -19,7 +19,7 @@ import java.util.ArrayList;
 public class ViewHolders {
 
 
-    public static class PicturesViewHolder extends RecyclerView.ViewHolder  {
+    public static class PicturesViewHolder extends RecyclerView.ViewHolder {
 
         public ImageView imgThumbnail;
 
@@ -43,7 +43,7 @@ public class ViewHolders {
         }
     }
 
-    public static class PicturesActivityViewHolder extends RecyclerView.ViewHolder  {
+    public static class PicturesActivityViewHolder extends RecyclerView.ViewHolder {
 
         public ImageView mPhotoImageView;
 
@@ -55,6 +55,17 @@ public class ViewHolders {
 
     }
 
+
+    public static class EventDetailsViewHolder extends RecyclerView.ViewHolder {
+        public TextView title, start, distance;
+
+        public EventDetailsViewHolder(View view) {
+            super(view);
+            title = (TextView) view.findViewById(R.id.tv_title);
+            start = (TextView) view.findViewById(R.id.tv_start);
+            distance = (TextView) view.findViewById(R.id.tv_distance);
+        }
+    }
 
 
 }

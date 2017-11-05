@@ -9,28 +9,34 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PagerSnapHelper;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SnapHelper;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ListView;
 
 import com.benezra.nir.poi.Activity.ViewEventActivity;
-import com.benezra.nir.poi.Adapter.CategoryAdapter;
+import com.benezra.nir.poi.Adapter.EventsAdapter;
 import com.benezra.nir.poi.Event;
-import com.benezra.nir.poi.EventModel;
 import com.benezra.nir.poi.R;
+import com.benezra.nir.poi.RecyclerTouchListener;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
 import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -44,13 +50,10 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
@@ -68,36 +71,42 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class EventByInterestFragment extends Fragment
-        implements ValueEventListener,
+public class EventByInterestFragment extends Fragment implements
         PermissionsDialogFragment.PermissionsGrantedCallback,
         OnMapReadyCallback,
-        GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMarkerClickListener {
+        GoogleMap.OnInfoWindowClickListener,
+        GoogleMap.OnMarkerClickListener,
+        RecyclerTouchListener.ClickListener {
 
-    private EventModel mEventModel;
-    private ArrayList<Event> mEventList;
     private FirebaseDatabase mFirebaseInstance;
-    private CategoryAdapter mCategoryAdapter;
-    private ListView mListView;
     private FusedLocationProviderClient mFusedLocationClient;
     private Location mLastLocation;
     private FirebaseUser mFirebaseUser;
     final static String TAG = EventByInterestFragment.class.getSimpleName();
-    private HashMap<String, Event> mEventHashMap;
+    private LinkedHashMap<String, Event> mEventHashMap;
     private GoogleMap mMap;
     private MapView mMapView;
     List<MarkerOptions> markers = new ArrayList<MarkerOptions>();
     private Event mCurrentSelectedEvent;
+    private RecyclerView mEventsRecyclerView;
+    private List<Event> mEventList;
+    private EventsAdapter mEventsAdapter;
+    private ItemTouchHelper mItemTouchHelper;
+    private LatLngBounds mLatLngBounds;
+    private LatLngBounds.Builder mBoundsBuilder;
+
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mEventModel = new EventModel();
         mFirebaseInstance = FirebaseDatabase.getInstance();
-        mEventList = new ArrayList<>();
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance.getReference().keepSynced(true);
-        mEventHashMap = new HashMap<>();
+        mEventHashMap = new LinkedHashMap<>();
+        mEventList = new ArrayList<>();;
+        mEventsAdapter = new EventsAdapter(getContext(),mEventList);
+        mBoundsBuilder = new LatLngBounds.Builder();
 
 
     }
@@ -122,23 +131,10 @@ public class EventByInterestFragment extends Fragment
                         // Got last known location. In some rare situations this can be null.
                         if (location != null) {
                             mLastLocation = location;
-                            //addEventChangeListener();
                             initGeoFire();
                         }
                     }
                 });
-    }
-
-
-    private void addEventChangeListener() {
-        String[] temp = new String[]{"Dance", "Swim", "Geocaching"};
-
-        for (int i = 0; i < temp.length; i++) {
-            Query query = mFirebaseInstance.getReference("events").orderByChild("interest").equalTo(temp[i]);
-            query.addValueEventListener(this);
-
-        }
-
     }
 
 
@@ -158,81 +154,70 @@ public class EventByInterestFragment extends Fragment
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.getUiSettings().setMapToolbarEnabled(false);
         mMap.setOnInfoWindowClickListener(this);
         mMap.setOnMarkerClickListener(this);
 
     }
 
-    private void addEventsToMap() {
-
-        mMap.clear();
-        Iterator it = mEventHashMap.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry) it.next();
-            Event event = (Event) pair.getValue();
-        }
-    }
 
 
     private void addSingeMarkerToMap(String id, GeoLocation location) {
+        LatLng latLng = new LatLng(location.latitude, location.longitude);
         MarkerOptions markerOptions = new MarkerOptions()
-                .position(new LatLng(location.latitude, location.longitude));
+                .position(latLng);
         Marker marker = mMap.addMarker(markerOptions);
         marker.setTag(id);
         mEventHashMap.put(id, new Event(id, location, marker));
+        mBoundsBuilder.include(latLng);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.category_list, container, false);
+        View rootView = inflater.inflate(R.layout.events_map_fragment, container, false);
 
 
-        // Create an {@link CategoryAdapter}, whose data source is a list of
-        // {@link Categories}. The adapter knows how to create list item views for each item
-        // in the list.
-        mCategoryAdapter = new CategoryAdapter(getActivity(), mEventList, mFirebaseUser.getPhotoUrl().toString());
+        mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view_events);
+        final LinearLayoutManager  layoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, true);
+        mEventsRecyclerView.setLayoutManager(layoutManager);
+        mEventsRecyclerView.setNestedScrollingEnabled(false);
+        mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
+        mEventsRecyclerView.setAdapter(mEventsAdapter);
 
-        // Get a reference to the ListView, and attach the adapter to the listView.
-        mListView = (ListView) rootView.findViewById(R.id.list);
-        mListView.setAdapter(mCategoryAdapter);
+        SnapHelper snapHelper = new PagerSnapHelper();
+        snapHelper.attachToRecyclerView(mEventsRecyclerView);
 
+//        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mEventsAdapter);
+//        mItemTouchHelper = new ItemTouchHelper(callback);
+//        mItemTouchHelper.attachToRecyclerView(mEventsRecyclerView);
 
-        //Set a click listener on that View
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mEventsRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long l) {
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                switch (newState) {
+                    case RecyclerView.SCROLL_STATE_IDLE:
+                        int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
+                        System.out.println("The RecyclerView is not scrolling " + firstVisiblePosition);
+                        if (mMap!=null)
+                        {
+                            CameraUpdate loc = CameraUpdateFactory.newLatLng(mEventList.get(firstVisiblePosition).getLatlng());
+                            mMap.animateCamera(loc);
+                        }
 
-                // Get the Category object at the given position the user clicked on
-                Event event = mEventList.get(position);
-
-
-                Intent userEvent = new Intent(getActivity(), ViewEventActivity.class);
-                userEvent.putExtra(EVENT_ID, event.getId());
-                userEvent.putExtra(EVENT_TITLE, event.getTitle());
-                userEvent.putExtra(EVENT_OWNER, event.getOwner());
-                userEvent.putExtra(EVENT_IMAGE, event.getImage());
-                userEvent.putExtra(EVENT_DETAILS, event.getDetails());
-                userEvent.putExtra(EVENT_LATITUDE, event.getLatitude());
-                userEvent.putExtra(EVENT_LONGITUDE, event.getLongitude());
-                userEvent.putExtra(EVENT_INTEREST, event.getInterest());
-                userEvent.putExtra(EVENT_START, event.getStart());
-                userEvent.putExtra(EVENT_ADDRESS, event.getAddress());
-
-
-                startActivity(userEvent);
+                        break;
+                }
             }
         });
 
-        //initFusedLocation();
         if (savedInstanceState == null)
             navigateToCaptureFragment(new String[]{ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
 
         return rootView;
     }
 
+
     private void initGeoFire() {
-        HashSet setEvents = new HashSet();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("events");
         GeoFire geoFire = new GeoFire(ref);
         // creates a new query around [37.7832, -122.4056] with a radius of 0.6 kilometers
@@ -242,11 +227,7 @@ public class EventByInterestFragment extends Fragment
             @Override
             public void onKeyEntered(String key, GeoLocation location) {
                 Log.d(TAG, String.format("Key %s entered the search area at [%f,%f]", key, location.latitude, location.longitude));
-//                String[] tokens = key.split("\\_");
-//                String interest = tokens[0];
-//                String id = tokens[1];
-//                String title = tokens[2];
-//
+
                 Event event = mEventHashMap.get(key);
                 if (event == null) {
                     addSingeMarkerToMap(key, location);
@@ -258,13 +239,12 @@ public class EventByInterestFragment extends Fragment
                 Log.d(TAG, String.format("Key %s is no longer in the search area", key));
 
                 Event event = mEventHashMap.get(key);
-                if (event!=null){
+                if (event != null) {
                     Marker marker = event.getMarker();
                     marker.remove();
                 }
 
                 mEventHashMap.remove(key);
-                //addEventsToMap();
 
             }
 
@@ -279,10 +259,11 @@ public class EventByInterestFragment extends Fragment
 
             @Override
             public void onGeoQueryReady() {
-                //addEventsToMap();
                 Log.d(TAG, "All initial data has been loaded and events have been fired!");
-                //addEventsToMap();
-
+                addEventChangeListener();
+                LatLngBounds bounds = mBoundsBuilder.build();
+                mMap.setPadding(300, 300, 300, 300);
+                mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 10));
             }
 
             @Override
@@ -292,29 +273,35 @@ public class EventByInterestFragment extends Fragment
         });
     }
 
+    private void addEventChangeListener() {
+        Iterator it = mEventHashMap.entrySet().iterator();
+        mEventList.clear();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry) it.next();
+            Query query = mFirebaseInstance.getReference("events").child(pair.getKey().toString());
+            query.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Event event = dataSnapshot.getValue(Event.class);
+                    mEventList.add(event);
+                    Log.d(TAG,event.getTitle()+" added");
+                    //mEventsAdapter.setItems(mEventList);
+                    mEventsAdapter.notifyDataSetChanged();
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+        }
+
+
+    }
+
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    public void onDataChange(DataSnapshot dataSnapshot) {
-        if (dataSnapshot.exists()) {
-            Event event = dataSnapshot.getValue(Event.class);
-            if (!mFirebaseUser.getUid().equals(event.getOwner())) {  //skip events from owner
-                event.setDistance(mLastLocation);
-                event.setId(dataSnapshot.getKey());
-                mEventModel.addEvent(dataSnapshot.getKey(), event);
-            }
-            mEventList = new ArrayList<>(mEventModel.getEvents().values());
-            mCategoryAdapter.setItems(mEventList);
-
-        }
-    }
-
-    @Override
-    public void onCancelled(DatabaseError databaseError) {
-
     }
 
 
@@ -366,24 +353,54 @@ public class EventByInterestFragment extends Fragment
 
     @Override
     public boolean onMarkerClick(final Marker marker) {
-        Query query = mFirebaseInstance.getReference("events").child(marker.getTag().toString());
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    mCurrentSelectedEvent = dataSnapshot.getValue(Event.class);
-                    marker.setTitle(mCurrentSelectedEvent.getTitle());
-                    marker.showInfoWindow();
-                    //startActivity(userEvent);
-                }
 
-            }
+        List<String> l = new ArrayList<String>(mEventHashMap.keySet());
+        int index = l.indexOf(marker.getTag());
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+//        Query query = mFirebaseInstance.getReference("events").child(marker.getTag().toString());
+//        query.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                if (dataSnapshot.exists()) {
+//                    mCurrentSelectedEvent = dataSnapshot.getValue(Event.class);
+//                    marker.setTitle(mCurrentSelectedEvent.getTitle());
+//                    marker.showInfoWindow();
+//                    //startActivity(userEvent);
+//                }
+//
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//
+//            }
+//        });
+       // mEventsRecyclerView.getLayoutManager().scrollToPositionWithOffset(desiredindex, 0);
+        mEventsRecyclerView.smoothScrollToPosition(index);
         return false;
+    }
+
+    @Override
+    public void onClick(View view, int position) {
+        Intent userEvent = new Intent(getActivity(), ViewEventActivity.class);
+        Event event = mEventList.get(position);
+        userEvent.putExtra(EVENT_ID, event.getId());
+        userEvent.putExtra(EVENT_TITLE, event.getTitle());
+        userEvent.putExtra(EVENT_OWNER, event.getOwner());
+        userEvent.putExtra(EVENT_IMAGE, event.getImage());
+        userEvent.putExtra(EVENT_DETAILS, event.getDetails());
+        userEvent.putExtra(EVENT_LATITUDE, event.getLatitude());
+        userEvent.putExtra(EVENT_LONGITUDE, event.getLongitude());
+        userEvent.putExtra(EVENT_INTEREST, event.getInterest());
+        userEvent.putExtra(EVENT_START, event.getStart());
+        userEvent.putExtra(EVENT_ADDRESS, event.getAddress());
+
+
+        startActivity(userEvent);
+    }
+
+    @Override
+    public void onLongClick(View view, int position) {
+
     }
 }
