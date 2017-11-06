@@ -71,7 +71,7 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class EventByInterestFragment extends Fragment implements
+public class EventByInterestMapFragment extends Fragment implements
         PermissionsDialogFragment.PermissionsGrantedCallback,
         OnMapReadyCallback,
         GoogleMap.OnInfoWindowClickListener,
@@ -82,7 +82,7 @@ public class EventByInterestFragment extends Fragment implements
     private FusedLocationProviderClient mFusedLocationClient;
     private Location mLastLocation;
     private FirebaseUser mFirebaseUser;
-    final static String TAG = EventByInterestFragment.class.getSimpleName();
+    final static String TAG = EventByInterestMapFragment.class.getSimpleName();
     private LinkedHashMap<String, Event> mEventHashMap;
     private GoogleMap mMap;
     private MapView mMapView;
@@ -94,7 +94,8 @@ public class EventByInterestFragment extends Fragment implements
     private ItemTouchHelper mItemTouchHelper;
     private LatLngBounds mLatLngBounds;
     private LatLngBounds.Builder mBoundsBuilder;
-
+    private FirebaseAuth mAuth;
+    private List<String> mUserEvents;
 
 
     @Override
@@ -104,9 +105,12 @@ public class EventByInterestFragment extends Fragment implements
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance.getReference().keepSynced(true);
         mEventHashMap = new LinkedHashMap<>();
-        mEventList = new ArrayList<>();;
-        mEventsAdapter = new EventsAdapter(getContext(),mEventList);
+        mEventList = new ArrayList<>();
+        ;
+        mEventsAdapter = new EventsAdapter(getContext(), mEventList);
         mBoundsBuilder = new LatLngBounds.Builder();
+        mAuth = FirebaseAuth.getInstance();
+        mUserEvents = new ArrayList<>();
 
 
     }
@@ -138,7 +142,7 @@ public class EventByInterestFragment extends Fragment implements
     }
 
 
-    public EventByInterestFragment() {
+    public EventByInterestMapFragment() {
         // Required empty public constructor
     }
 
@@ -161,7 +165,6 @@ public class EventByInterestFragment extends Fragment implements
     }
 
 
-
     private void addSingeMarkerToMap(String id, GeoLocation location) {
         LatLng latLng = new LatLng(location.latitude, location.longitude);
         MarkerOptions markerOptions = new MarkerOptions()
@@ -179,7 +182,7 @@ public class EventByInterestFragment extends Fragment implements
 
 
         mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view_events);
-        final LinearLayoutManager  layoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, true);
+        final LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, true);
         mEventsRecyclerView.setLayoutManager(layoutManager);
         mEventsRecyclerView.setNestedScrollingEnabled(false);
         mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
@@ -199,8 +202,7 @@ public class EventByInterestFragment extends Fragment implements
                     case RecyclerView.SCROLL_STATE_IDLE:
                         int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
                         System.out.println("The RecyclerView is not scrolling " + firstVisiblePosition);
-                        if (mMap!=null)
-                        {
+                        if (mMap != null) {
                             CameraUpdate loc = CameraUpdateFactory.newLatLng(mEventList.get(firstVisiblePosition).getLatlng());
                             mMap.animateCamera(loc);
                         }
@@ -210,8 +212,7 @@ public class EventByInterestFragment extends Fragment implements
             }
         });
 
-        if (savedInstanceState == null)
-            navigateToCaptureFragment(new String[]{ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+        getAllUserEvents();
 
         return rootView;
     }
@@ -228,6 +229,8 @@ public class EventByInterestFragment extends Fragment implements
             public void onKeyEntered(String key, GeoLocation location) {
                 Log.d(TAG, String.format("Key %s entered the search area at [%f,%f]", key, location.latitude, location.longitude));
 
+                if (mUserEvents.contains(key)) return;
+
                 Event event = mEventHashMap.get(key);
                 if (event == null) {
                     addSingeMarkerToMap(key, location);
@@ -237,6 +240,8 @@ public class EventByInterestFragment extends Fragment implements
             @Override
             public void onKeyExited(String key) {
                 Log.d(TAG, String.format("Key %s is no longer in the search area", key));
+
+                if (mUserEvents.contains(key)) return;
 
                 Event event = mEventHashMap.get(key);
                 if (event != null) {
@@ -250,6 +255,8 @@ public class EventByInterestFragment extends Fragment implements
 
             @Override
             public void onKeyMoved(String key, GeoLocation location) {
+                if (mUserEvents.contains(key)) return;
+
                 Log.d(TAG, String.format("Key %s moved within the search area to [%f,%f]", key, location.latitude, location.longitude));
                 Event event = mEventHashMap.get(key);
                 Marker marker = event.getMarker();
@@ -259,11 +266,12 @@ public class EventByInterestFragment extends Fragment implements
 
             @Override
             public void onGeoQueryReady() {
-                Log.d(TAG, "All initial data has been loaded and events have been fired!");
                 addEventChangeListener();
                 LatLngBounds bounds = mBoundsBuilder.build();
                 mMap.setPadding(300, 300, 300, 300);
                 mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 10));
+                Log.d(TAG, "All initial data has been loaded and events have been fired!");
+
             }
 
             @Override
@@ -284,7 +292,7 @@ public class EventByInterestFragment extends Fragment implements
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     Event event = dataSnapshot.getValue(Event.class);
                     mEventList.add(event);
-                    Log.d(TAG,event.getTitle()+" added");
+                    Log.d(TAG, event.getTitle() + " added");
                     //mEventsAdapter.setItems(mEventList);
                     mEventsAdapter.notifyDataSetChanged();
                 }
@@ -297,6 +305,26 @@ public class EventByInterestFragment extends Fragment implements
         }
 
 
+    }
+
+    private void getAllUserEvents() {
+        Query query = mFirebaseInstance.getReference("events").orderByChild("owner").equalTo(mAuth.getCurrentUser().getUid());
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot data : dataSnapshot.getChildren()) {
+                        mUserEvents.add(data.getKey());
+                    }
+                    navigateToCaptureFragment(new String[]{ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     @Override
@@ -375,7 +403,7 @@ public class EventByInterestFragment extends Fragment implements
 //
 //            }
 //        });
-       // mEventsRecyclerView.getLayoutManager().scrollToPositionWithOffset(desiredindex, 0);
+        // mEventsRecyclerView.getLayoutManager().scrollToPositionWithOffset(desiredindex, 0);
         mEventsRecyclerView.smoothScrollToPosition(index);
         return false;
     }

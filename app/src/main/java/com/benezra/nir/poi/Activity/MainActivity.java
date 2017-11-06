@@ -1,61 +1,65 @@
 package com.benezra.nir.poi.Activity;
 
-/**
- * Created by nirb on 05/11/2017.
- */
-
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.view.View;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.benezra.nir.poi.Fragment.EventByInterestMapFragment;
-import com.benezra.nir.poi.Fragment.EventByInterestListFragment;
+import com.benezra.nir.poi.Activity.CreateEventActivity;
 import com.benezra.nir.poi.R;
+import com.benezra.nir.poi.SimpleFragmentPagerAdapter;
 
-public class EventsActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity {
+
     private DrawerLayout drawerLayout;
     private Toolbar toolbar;
-    private EventByInterestListFragment mUserEventFragment;
-    final static String TAG = EventsActivity.class.getSimpleName();
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_events);
+
+        // Set the content of the activity to use the activity_main.xml layout file
+        setContentView(R.layout.activity_main);
+
         toolbar = (Toolbar) findViewById(R.id.toolbar);
 
 
-        mUserEventFragment = (EventByInterestListFragment) getSupportFragmentManager().findFragmentByTag(EventByInterestListFragment.class.getSimpleName());
-        if (mUserEventFragment == null) {
-            Log.d(TAG, "event fragment null");
-            mUserEventFragment = new EventByInterestListFragment();
-            getSupportFragmentManager().beginTransaction().add(R.id.framelayout, mUserEventFragment, EventByInterestListFragment.class.getSimpleName()).commit();
-        }
+        // Find the view pager that will allow the user to swipe between fragments
+        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
 
+        // Create an adapter that knows which fragment should be shown on each page
+        SimpleFragmentPagerAdapter adapter = new SimpleFragmentPagerAdapter(this, getSupportFragmentManager());
 
-        setSupportActionBar(toolbar);
-        initNavigationDrawer();
+        // Set the adapter onto the view pager
+        viewPager.setAdapter(adapter);
+
+        // Give the TabLayout the ViewPager
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
+        tabLayout.setupWithViewPager(viewPager);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                getSupportFragmentManager().beginTransaction().add(R.id.framelayout, new EventByInterestMapFragment(), EventByInterestMapFragment.class.getSimpleName()).addToBackStack(null).commit();
+                Intent intent = new Intent(getApplicationContext(), CreateEventActivity.class);
+                startActivity(intent);
 
             }
         });
 
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        initNavigationDrawer();
     }
 
     public void initNavigationDrawer() {

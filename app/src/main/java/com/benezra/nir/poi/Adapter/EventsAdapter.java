@@ -15,6 +15,7 @@ import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Helper.ItemTouchHelperAdapter;
 import com.benezra.nir.poi.R;
 import com.bumptech.glide.Glide;
+import com.squareup.picasso.Picasso;
 
 import java.util.Calendar;
 import java.util.Collections;
@@ -82,7 +83,7 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
         holder.address.setText(event.getAddress());
         holder.start.setText(setStart(event.getStart()));
         //holder.distance.setText(event.getAddress());
-        Glide.with(context)
+        Picasso.with(context)
                 .load(event.getImage())
                 .placeholder(R.drawable.ic_cloud_off_red)
                 .into(holder.image);

@@ -42,7 +42,7 @@ public class SpaceGalleryActivity extends AppCompatActivity implements RecyclerT
     private FirebaseDatabase mFirebaseInstance;
     private List<String> mImageSet;
     private RecyclerView mPicturesRecyclerView;
-    private FirebaseRecyclerAdapter<String, ViewHolders.PicturesActivityViewHolder> mPicturesAdapter;
+    private FirebaseRecyclerAdapter<EventPhotos, ViewHolders.PicturesActivityViewHolder> mPicturesAdapter;
 
 
     @Override
@@ -69,16 +69,16 @@ public class SpaceGalleryActivity extends AppCompatActivity implements RecyclerT
     private void addImagesChangeListener(String eventId) {
         Query query = mFirebaseInstance.getReference("events").child(eventId).child("pictures");
         mImageSet.clear();
-        mPicturesAdapter = new FirebaseRecyclerAdapter<String, ViewHolders.PicturesActivityViewHolder>(
-                String.class, R.layout.item_photo, ViewHolders.PicturesActivityViewHolder.class, query) {
+        mPicturesAdapter = new FirebaseRecyclerAdapter<EventPhotos, ViewHolders.PicturesActivityViewHolder>(
+                EventPhotos.class, R.layout.item_photo, ViewHolders.PicturesActivityViewHolder.class, query) {
             @Override
-            protected void populateViewHolder(ViewHolders.PicturesActivityViewHolder picturesViewHolder, String model, int position) {
+            protected void populateViewHolder(ViewHolders.PicturesActivityViewHolder picturesViewHolder, EventPhotos model, int position) {
                 Glide.with(SpaceGalleryActivity.this)
-                        .load(model)
+                        .load(model.getUrl())
                         .placeholder(R.drawable.ic_cloud_off_red)
                         .into(picturesViewHolder.mPhotoImageView);
 
-                mImageSet.add(model);
+                mImageSet.add(model.getUrl());
             }
 
         };

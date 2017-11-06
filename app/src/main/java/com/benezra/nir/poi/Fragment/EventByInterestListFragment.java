@@ -50,7 +50,7 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class UserEventFragment extends Fragment implements ValueEventListener,RecyclerTouchListener.ClickListener {
+public class EventByInterestListFragment extends Fragment implements ValueEventListener,RecyclerTouchListener.ClickListener {
 
     private EventModel mEventModel;
     private FirebaseDatabase mFirebaseInstance;
@@ -124,13 +124,13 @@ public class UserEventFragment extends Fragment implements ValueEventListener,Re
 
 
     private void addEventChangeListener() {
-            Query query = mFirebaseInstance.getReference("events").orderByChild("owner").equalTo(mFirebaseUser.getUid());
+            Query query = mFirebaseInstance.getReference("events");
             query.addValueEventListener(this);
              //mListener.showDialog();
     }
 
 
-    public UserEventFragment() {
+    public EventByInterestListFragment() {
         // Required empty public constructor
     }
 
@@ -163,8 +163,12 @@ public class UserEventFragment extends Fragment implements ValueEventListener,Re
         mEventList.clear();
         if (dataSnapshot.exists()) {
             for (DataSnapshot data : dataSnapshot.getChildren()) {
-                Event event = data.getValue(Event.class);
-                   mEventList.add(event);
+                    Event event = data.getValue(Event.class);
+                if (!event.getOwner().equals(mFirebaseUser.getUid())) {
+
+                    mEventList.add(event);
+                }
+
             }
             mEventsAdapter.notifyDataSetChanged();
 
