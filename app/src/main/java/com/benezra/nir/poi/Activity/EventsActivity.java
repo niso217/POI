@@ -47,14 +47,7 @@ public class EventsActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         initNavigationDrawer();
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                getSupportFragmentManager().beginTransaction().add(R.id.framelayout, new EventByInterestMapFragment(), EventByInterestMapFragment.class.getSimpleName()).addToBackStack(null).commit();
 
-            }
-        });
 
     }
 

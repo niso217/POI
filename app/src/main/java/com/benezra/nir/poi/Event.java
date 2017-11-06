@@ -100,6 +100,11 @@ public class Event implements Parcelable , Cloneable{
         this.start = Calendar.getInstance().getTimeInMillis();
     }
 
+    public Event(String uuid,LatLng location) {
+        this.id = uuid;
+        setLatLang(location);
+    }
+
     public Event(String uuid,GeoLocation latLng,Marker marker) {
         this.id = uuid;
         this.latitude = latLng.latitude;
@@ -107,10 +112,12 @@ public class Event implements Parcelable , Cloneable{
         this.marker = marker;
 
     }
+    @Exclude
     public Map<String, User> getParticipates() {
         return participates;
     }
 
+    @Exclude
     public void setParticipates(Map<String, User> participates) {
         this.participates = participates;
     }

@@ -18,10 +18,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.benezra.nir.poi.Activity.ViewEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
 import com.benezra.nir.poi.Event;
+import com.benezra.nir.poi.Helper.MapStateManager;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.firebase.geofire.GeoFire;
@@ -35,6 +37,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -72,7 +75,7 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
  * A simple {@link Fragment} subclass.
  */
 public class EventByInterestMapFragment extends Fragment implements
-        PermissionsDialogFragment.PermissionsGrantedCallback,
+
         OnMapReadyCallback,
         GoogleMap.OnInfoWindowClickListener,
         GoogleMap.OnMarkerClickListener,
@@ -83,7 +86,6 @@ public class EventByInterestMapFragment extends Fragment implements
     private Location mLastLocation;
     private FirebaseUser mFirebaseUser;
     final static String TAG = EventByInterestMapFragment.class.getSimpleName();
-    private LinkedHashMap<String, Event> mEventHashMap;
     private GoogleMap mMap;
     private MapView mMapView;
     List<MarkerOptions> markers = new ArrayList<MarkerOptions>();
@@ -95,7 +97,6 @@ public class EventByInterestMapFragment extends Fragment implements
     private LatLngBounds mLatLngBounds;
     private LatLngBounds.Builder mBoundsBuilder;
     private FirebaseAuth mAuth;
-    private List<String> mUserEvents;
 
 
     @Override
@@ -104,42 +105,25 @@ public class EventByInterestMapFragment extends Fragment implements
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance.getReference().keepSynced(true);
-        mEventHashMap = new LinkedHashMap<>();
         mEventList = new ArrayList<>();
-        ;
-        mEventsAdapter = new EventsAdapter(getContext(), mEventList);
         mBoundsBuilder = new LatLngBounds.Builder();
         mAuth = FirebaseAuth.getInstance();
-        mUserEvents = new ArrayList<>();
 
-
-    }
-
-    private void initFusedLocation() {
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
-
-        if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        Bundle bundle = getArguments();
+        if (bundle != null) {
+            mEventList = bundle.getParcelableArrayList("event_list");
         }
-        mFusedLocationClient.getLastLocation()
-                .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            mLastLocation = location;
-                            initGeoFire();
-                        }
-                    }
-                });
+
+
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        MapStateManager mgr = new MapStateManager(getContext());
+        mgr.saveMapState(mMap);
+    }
+
 
 
     public EventByInterestMapFragment() {
@@ -161,6 +145,10 @@ public class EventByInterestMapFragment extends Fragment implements
         mMap.getUiSettings().setMapToolbarEnabled(false);
         mMap.setOnInfoWindowClickListener(this);
         mMap.setOnMarkerClickListener(this);
+        mMap.setPadding(300, 300, 300, 300);
+        addAllMarkersToMap();
+
+
 
     }
 
@@ -171,8 +159,40 @@ public class EventByInterestMapFragment extends Fragment implements
                 .position(latLng);
         Marker marker = mMap.addMarker(markerOptions);
         marker.setTag(id);
-        mEventHashMap.put(id, new Event(id, location, marker));
+        //mEventHashMap.put(id, new Event(id, location, marker));
         mBoundsBuilder.include(latLng);
+    }
+
+    private void addAllMarkersToMap(){
+        for (int i = 0; i < mEventList.size(); i++) {
+            LatLng loc = mEventList.get(i).getLatlng();
+            MarkerOptions markerOptions = new MarkerOptions()
+                    .position(loc);
+            Marker marker = mMap.addMarker(markerOptions);
+            mBoundsBuilder.include(loc);
+
+        }
+
+        MapStateManager mgr = new MapStateManager(getContext());
+        CameraPosition position = mgr.getSavedCameraPosition();
+        if (position != null) {
+            CameraUpdate update = CameraUpdateFactory.newCameraPosition(position);
+            mMap.moveCamera(update);
+
+            mMap.setMapType(mgr.getSavedMapType());
+        }
+        else{
+            if (mEventList.size()>2)
+            {
+                LatLngBounds bounds = mBoundsBuilder.build();
+                mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 10));
+            }
+            else
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mEventList.get(0).getLatlng(),10));
+        }
+
+
+
     }
 
     @Override
@@ -180,6 +200,7 @@ public class EventByInterestMapFragment extends Fragment implements
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.events_map_fragment, container, false);
 
+        mEventsAdapter = new EventsAdapter(getContext(), mEventList);
 
         mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view_events);
         final LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, true);
@@ -212,120 +233,12 @@ public class EventByInterestMapFragment extends Fragment implements
             }
         });
 
-        getAllUserEvents();
 
         return rootView;
     }
 
 
-    private void initGeoFire() {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("events");
-        GeoFire geoFire = new GeoFire(ref);
-        // creates a new query around [37.7832, -122.4056] with a radius of 0.6 kilometers
-        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 100);
 
-        geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
-            @Override
-            public void onKeyEntered(String key, GeoLocation location) {
-                Log.d(TAG, String.format("Key %s entered the search area at [%f,%f]", key, location.latitude, location.longitude));
-
-                if (mUserEvents.contains(key)) return;
-
-                Event event = mEventHashMap.get(key);
-                if (event == null) {
-                    addSingeMarkerToMap(key, location);
-                }
-            }
-
-            @Override
-            public void onKeyExited(String key) {
-                Log.d(TAG, String.format("Key %s is no longer in the search area", key));
-
-                if (mUserEvents.contains(key)) return;
-
-                Event event = mEventHashMap.get(key);
-                if (event != null) {
-                    Marker marker = event.getMarker();
-                    marker.remove();
-                }
-
-                mEventHashMap.remove(key);
-
-            }
-
-            @Override
-            public void onKeyMoved(String key, GeoLocation location) {
-                if (mUserEvents.contains(key)) return;
-
-                Log.d(TAG, String.format("Key %s moved within the search area to [%f,%f]", key, location.latitude, location.longitude));
-                Event event = mEventHashMap.get(key);
-                Marker marker = event.getMarker();
-                marker.remove();
-                addSingeMarkerToMap(key, location);
-            }
-
-            @Override
-            public void onGeoQueryReady() {
-                addEventChangeListener();
-                LatLngBounds bounds = mBoundsBuilder.build();
-                mMap.setPadding(300, 300, 300, 300);
-                mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 10));
-                Log.d(TAG, "All initial data has been loaded and events have been fired!");
-
-            }
-
-            @Override
-            public void onGeoQueryError(DatabaseError error) {
-                System.err.println("There was an error with this query: " + error);
-            }
-        });
-    }
-
-    private void addEventChangeListener() {
-        Iterator it = mEventHashMap.entrySet().iterator();
-        mEventList.clear();
-        while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry) it.next();
-            Query query = mFirebaseInstance.getReference("events").child(pair.getKey().toString());
-            query.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    Event event = dataSnapshot.getValue(Event.class);
-                    mEventList.add(event);
-                    Log.d(TAG, event.getTitle() + " added");
-                    //mEventsAdapter.setItems(mEventList);
-                    mEventsAdapter.notifyDataSetChanged();
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
-        }
-
-
-    }
-
-    private void getAllUserEvents() {
-        Query query = mFirebaseInstance.getReference("events").orderByChild("owner").equalTo(mAuth.getCurrentUser().getUid());
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    for (DataSnapshot data : dataSnapshot.getChildren()) {
-                        mUserEvents.add(data.getKey());
-                    }
-                    navigateToCaptureFragment(new String[]{ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -333,29 +246,9 @@ public class EventByInterestMapFragment extends Fragment implements
     }
 
 
-    @Override
-    public void navigateToCaptureFragment(String[] permissions) {
-        if (isPermissionGranted(permissions)) {
-            initFusedLocation();
-        } else {
-            PermissionsDialogFragment permissionsDialogFragment = (PermissionsDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
-            if (permissionsDialogFragment == null) {
-                Log.d(TAG, "opening dialog");
-                permissionsDialogFragment = PermissionsDialogFragment.newInstance();
-                permissionsDialogFragment.setPermissions(permissions);
-                permissionsDialogFragment.show(getActivity().getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
 
-            }
-        }
-    }
 
-    private boolean isPermissionGranted(String[] permissions) {
-        for (int i = 0; i < permissions.length; i++) {
-            if (ContextCompat.checkSelfPermission(getContext(), permissions[i]) == PackageManager.PERMISSION_DENIED)
-                return false;
-        }
-        return true;
-    }
+
 
     @Override
     public void onInfoWindowClick(final Marker marker) {
@@ -382,29 +275,10 @@ public class EventByInterestMapFragment extends Fragment implements
     @Override
     public boolean onMarkerClick(final Marker marker) {
 
-        List<String> l = new ArrayList<String>(mEventHashMap.keySet());
-        int index = l.indexOf(marker.getTag());
+        //List<String> l = new ArrayList<String>(mEventHashMap.keySet());
+       // int index = l.indexOf(marker.getTag());
 
-//        Query query = mFirebaseInstance.getReference("events").child(marker.getTag().toString());
-//        query.addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                if (dataSnapshot.exists()) {
-//                    mCurrentSelectedEvent = dataSnapshot.getValue(Event.class);
-//                    marker.setTitle(mCurrentSelectedEvent.getTitle());
-//                    marker.showInfoWindow();
-//                    //startActivity(userEvent);
-//                }
-//
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//
-//            }
-//        });
-        // mEventsRecyclerView.getLayoutManager().scrollToPositionWithOffset(desiredindex, 0);
-        mEventsRecyclerView.smoothScrollToPosition(index);
+      //  mEventsRecyclerView.smoothScrollToPosition(index);
         return false;
     }
 

@@ -516,7 +516,7 @@ public class CreateEventActivity extends BaseActivity
 
     private boolean isEventChanged() {
         return (!mCurrentEvent.getTitle().equals(mCurrentEventChangeFlag.getTitle()) ||
-                !mCurrentEvent.getImage().equals(mCurrentEventChangeFlag.getImage())||
+                (mCurrentEvent.getImage()!=null && !mCurrentEvent.getImage().equals(mCurrentEventChangeFlag.getImage()))||
                 !mCurrentEvent.getDetails().equals(mCurrentEventChangeFlag.getDetails()) ||
                 distance(mCurrentEvent.getLatlng(), mCurrentEventChangeFlag.getLatlng()) > 0.02 ||
                 !mCurrentEvent.getInterest().equals(mCurrentEventChangeFlag.getInterest()) ||

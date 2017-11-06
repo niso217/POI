@@ -37,6 +37,7 @@ import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Fragment.ImageCameraDialogFragmentNew;
 import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.UploadToFireBaseFragment;
+import com.benezra.nir.poi.Objects.EventPhotos;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.benezra.nir.poi.User;
@@ -74,7 +75,7 @@ public class ViewEventActivity extends BaseActivity
         ImageCameraDialogFragmentNew.ImageCameraDialogCallbackNew,
         RecyclerTouchListener.ClickListener,
         AppBarLayout.OnOffsetChangedListener,
-        CompoundButton.OnCheckedChangeListener {
+        CompoundButton.OnCheckedChangeListener,UploadToFireBaseFragment.UploadListener {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -106,7 +107,7 @@ public class ViewEventActivity extends BaseActivity
     private RecyclerView mPicturesRecyclerView;
     private RecyclerView mParticipateRecyclerView;
 
-    private FirebaseRecyclerAdapter<String, ViewHolders.PicturesViewHolder> mPicturesAdapter;
+    private FirebaseRecyclerAdapter<EventPhotos, ViewHolders.PicturesViewHolder> mPicturesAdapter;
     private FirebaseRecyclerAdapter<User, ViewHolders.ParticipatesViewHolder> mParticipateAdapter;
 
 
@@ -365,12 +366,12 @@ public class ViewEventActivity extends BaseActivity
     private void addImagesChangeListener() {
         Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("pictures");
 
-        mPicturesAdapter = new FirebaseRecyclerAdapter<String, ViewHolders.PicturesViewHolder>(
-                String.class, R.layout.grid_item_event_pic, ViewHolders.PicturesViewHolder.class, query) {
+        mPicturesAdapter = new FirebaseRecyclerAdapter<EventPhotos, ViewHolders.PicturesViewHolder>(
+                EventPhotos.class, R.layout.grid_item_event_pic, ViewHolders.PicturesViewHolder.class, query) {
             @Override
-            protected void populateViewHolder(ViewHolders.PicturesViewHolder picturesViewHolder, String model, int position) {
+            protected void populateViewHolder(ViewHolders.PicturesViewHolder picturesViewHolder, EventPhotos model, int position) {
                 Picasso.with(ViewEventActivity.this)
-                        .load(model)
+                        .load(model.getUrl())
                         .error(R.drawable.common_google_signin_btn_icon_dark)
                         .into(picturesViewHolder.imgThumbnail);
 
@@ -691,6 +692,10 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
+    @Override
+    public void onFinishDialog(String image) {
+
+    }
 }
 
 
