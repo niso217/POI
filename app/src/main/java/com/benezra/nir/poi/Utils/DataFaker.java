@@ -1,10 +1,14 @@
 package com.benezra.nir.poi.Utils;
 
+import android.location.Geocoder;
 import android.location.Location;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.benezra.nir.poi.Activity.CreateEventActivity;
 import com.benezra.nir.poi.Event;
+import com.benezra.nir.poi.Helper.AsyncGeocoder;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.User;
 import com.firebase.geofire.GeoLocation;
@@ -36,16 +40,43 @@ import static com.benezra.nir.poi.Helper.Constants.TITLE;
  * Created by nirb on 06/11/2017.
  */
 
-public class DataFaker {
+public class DataFaker extends AppCompatActivity {
+
+    Event mCurrentEvent  = new Event();
+
 
     private void saveEventToFirebase() {
 
 
-        Event mCurrentEvent  = new Event();
         mCurrentEvent.setLatLang(LocationUtil.getLocationInLatLngRad(50000,new LatLng(32.0852999,34.78176759999997)));
-        mCurrentEvent.setId(UUID.randomUUID().toString());
-        mCurrentEvent.setDetails("");
+        getAddress();
 
+
+    }
+
+    public void getAddress() {
+
+        new AsyncGeocoder(new AsyncGeocoder.onAddressFoundListener() {
+            @Override
+            public void onAddressFound(String result) {
+                mCurrentEvent.setAddress(result);
+                mCurrentEvent.setId(UUID.randomUUID().toString());
+                mCurrentEvent.setDetails("");
+
+
+            }
+        }).execute(new AsyncGeocoder.AsyncGeocoderObject(
+                new Geocoder(this), LatLongToLocation(mCurrentEvent.getLatlng())));
+    }
+
+    private Location LatLongToLocation(LatLng latLng){
+        Location loc = new Location("");
+        loc.setLatitude(latLng.latitude);
+        loc.setLongitude(latLng.longitude);
+        return loc;
+    }
+
+    private void save(){
         DatabaseReference eventReference = FirebaseDatabase.getInstance().getReference("events").child(UUID.randomUUID().toString());
 
 
@@ -78,7 +109,7 @@ public class DataFaker {
     String [] Deatils = new String [] {
             "",
             "",
-            
+
     };
 
 
