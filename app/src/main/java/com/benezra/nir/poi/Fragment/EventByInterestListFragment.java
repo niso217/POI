@@ -84,6 +84,7 @@ public class EventByInterestListFragment extends Fragment implements
     private List<String> mEventInterest;
     private Set<String> mEventHashSet;
     private FirebaseAuth mAuth;
+    private String mSelectedInterest;
 
 
     @Override
@@ -98,7 +99,7 @@ public class EventByInterestListFragment extends Fragment implements
         mUserEvents = new ArrayList<>();
         mEventHashSet = new HashSet<>();
         mAuth = FirebaseAuth.getInstance();
-
+        mSelectedInterest = getArguments().getString("interest");
 
         getAllUserEvents();
 
@@ -292,8 +293,9 @@ public class EventByInterestListFragment extends Fragment implements
                     for (DataSnapshot data : dataSnapshot.getChildren()) {
                         mUserEvents.add(data.getKey());
                     }
-                    navigateToCaptureFragment(new String[]{ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
                 }
+                navigateToCaptureFragment(new String[]{ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+
             }
 
             @Override
@@ -304,7 +306,7 @@ public class EventByInterestListFragment extends Fragment implements
     }
 
     private void getAllEventsByInterests() {
-        Query query = mFirebaseInstance.getReference("events").orderByChild("interest").equalTo("Dance");
+        Query query = mFirebaseInstance.getReference("events").orderByChild("interest").equalTo(mSelectedInterest);
         query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -313,6 +315,7 @@ public class EventByInterestListFragment extends Fragment implements
                     for (DataSnapshot data : dataSnapshot.getChildren()) {
                         if (!mUserEvents.contains(data.getKey()) && mEventHashSet.contains(data.getKey())) {
                             Event event = data.getValue(Event.class);
+                            event.setDistance(mLastLocation);
                             mEventList.add(event);
                         }
                     }

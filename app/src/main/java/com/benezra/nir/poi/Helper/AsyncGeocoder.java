@@ -43,7 +43,7 @@ public class AsyncGeocoder extends AsyncTask<AsyncGeocoder.AsyncGeocoderObject, 
     protected void onPostExecute(List<Address> addresses) {
         Log.v("onPostExecute", "location: " + addresses);
         String address;
-        if (addresses != null){
+        if (addresses != null && addresses.size()>0){
             List<String> addr = new ArrayList<>();
             if(addresses.get(0).getLocality() != null) addr.add(addresses.get(0).getLocality());
             if(addresses.get(0).getCountryName() != null) addr.add(addresses.get(0).getCountryName());

@@ -13,11 +13,15 @@ import android.view.ViewGroup;
 
 import com.benezra.nir.poi.Activity.EventsActivity;
 import com.benezra.nir.poi.Adapter.ViewHolders;
+import com.benezra.nir.poi.Objects.InterestData;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.facebook.FacebookSdk.getApplicationContext;
 
@@ -27,15 +31,17 @@ import static com.facebook.FacebookSdk.getApplicationContext;
  */
 public class MainEventFragment extends Fragment implements RecyclerTouchListener.ClickListener{
 
-    private FirebaseRecyclerAdapter<String, ViewHolders.ParticipatesViewHolder> mInterestAdapter;
+    private FirebaseRecyclerAdapter<InterestData, ViewHolders.ParticipatesViewHolder> mInterestAdapter;
     private FirebaseDatabase mFirebaseInstance;
     private RecyclerView mInteresRecyclerView;
+    private List<String> mInterestList;
 
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mFirebaseInstance = FirebaseDatabase.getInstance();
+        mInterestList = new ArrayList<>();
 
 
     }
@@ -57,15 +63,15 @@ public class MainEventFragment extends Fragment implements RecyclerTouchListener
     }
 
     private void participatesChangeListener() {
-        Query query = mFirebaseInstance.getReference("interests");
+        Query query = mFirebaseInstance.getReference("interests_data");
 
-        mInterestAdapter = new FirebaseRecyclerAdapter<String, ViewHolders.ParticipatesViewHolder>(
-                String.class, R.layout.participate_list_row, ViewHolders.ParticipatesViewHolder.class, query) {
+        mInterestAdapter = new FirebaseRecyclerAdapter<InterestData, ViewHolders.ParticipatesViewHolder>(
+                InterestData.class, R.layout.participate_list_row, ViewHolders.ParticipatesViewHolder.class, query) {
             @Override
-            protected void populateViewHolder(ViewHolders.ParticipatesViewHolder participatesViewHolder, String model, int position) {
-                if (position==0) return;
-                participatesViewHolder.name.setText(model);
-                participatesViewHolder.image.setImageResource(getResources().getIdentifier(model.toLowerCase(), "drawable", getActivity().getPackageName()));
+            protected void populateViewHolder(ViewHolders.ParticipatesViewHolder participatesViewHolder, InterestData model, int position) {
+                participatesViewHolder.name.setText(model.getInterest());
+                participatesViewHolder.image.setImageResource(getResources().getIdentifier(model.getInterest().toLowerCase(), "drawable", getActivity().getPackageName()));
+                mInterestList.add(model.getInterest());
             }
 
         };
@@ -77,8 +83,9 @@ public class MainEventFragment extends Fragment implements RecyclerTouchListener
 
     @Override
     public void onClick(View view, int position) {
-        Intent galleryIntent = new Intent(getContext(), EventsActivity.class);
-        getActivity().startActivity(galleryIntent);
+        Intent eventActivity = new Intent(getContext(), EventsActivity.class);
+        eventActivity.putExtra("interest",mInterestList.get(position));
+        getActivity().startActivity(eventActivity);
     }
 
     @Override

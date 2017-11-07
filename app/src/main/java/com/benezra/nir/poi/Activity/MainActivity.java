@@ -15,14 +15,18 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.benezra.nir.poi.Activity.CreateEventActivity;
+import com.benezra.nir.poi.Login.SignInActivity;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.SimpleFragmentPagerAdapter;
+import com.benezra.nir.poi.Utils.DataFaker;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
     private Toolbar toolbar;
+    private FirebaseAuth mAuth;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
+
+        mAuth = FirebaseAuth.getInstance();
 
 
         // Find the view pager that will allow the user to swipe between fragments
@@ -79,11 +85,14 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.settings:
                         Toast.makeText(getApplicationContext(),"Settings",Toast.LENGTH_SHORT).show();
                         break;
-                    case R.id.trash:
-                        Toast.makeText(getApplicationContext(),"Trash",Toast.LENGTH_SHORT).show();
-                        drawerLayout.closeDrawers();
+                    case R.id.fake:
+                        Intent datafaker = new Intent(MainActivity.this, DataFaker.class);
+                        startActivity(datafaker);
                         break;
                     case R.id.logout:
+                        mAuth.signOut();
+                        Intent login = new Intent(MainActivity.this, SignInActivity.class);
+                        startActivity(login);
                         finish();
 
                 }

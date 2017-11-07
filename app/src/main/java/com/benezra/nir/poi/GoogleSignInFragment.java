@@ -25,8 +25,10 @@ package com.benezra.nir.poi;
         import android.view.LayoutInflater;
         import android.view.View;
         import android.view.ViewGroup;
+        import android.widget.LinearLayout;
         import android.widget.Toast;
 
+        import com.benezra.nir.poi.Activity.MainActivity;
         import com.google.android.gms.auth.api.Auth;
         import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
         import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -71,6 +73,13 @@ public class GoogleSignInFragment extends Fragment implements
         mSignInButton.setOnClickListener(this);
 
 
+        LinearLayout login = (LinearLayout) view.findViewById(R.id.google_layout);
+        login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                signIn();
+            }
+        });
         return view;
     }
 
@@ -91,7 +100,7 @@ public class GoogleSignInFragment extends Fragment implements
                 .build();
 
         // [START initialize_auth]
-        mAuth = ((LogInActivity)getActivity()).getmAuth();
+        mAuth = FirebaseAuth.getInstance();
         // [END initialize_auth]
 
 
@@ -123,7 +132,7 @@ public class GoogleSignInFragment extends Fragment implements
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         Log.d(TAG, "firebaseAuthWithGoogle:" + acct.getId());
         // [START_EXCLUDE silent]
-        ((LogInActivity)getActivity()).showProgressDialog();
+       // ((LogInActivityOld)getActivity()).showProgressDialog();
         // [END_EXCLUDE]
 
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
@@ -135,7 +144,9 @@ public class GoogleSignInFragment extends Fragment implements
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithCredential:success");
                             FirebaseUser user = mAuth.getCurrentUser();
-                            ((LogInActivity)getActivity()).startActivity();
+                            Intent i = new Intent(getActivity(), MainActivity.class);
+                            startActivity(i);
+                            getActivity().finish();
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithCredential:failure", task.getException());
@@ -144,7 +155,7 @@ public class GoogleSignInFragment extends Fragment implements
                         }
 
                         // [START_EXCLUDE]
-                        ((LogInActivity)getActivity()).hideProgressDialog();
+                        //((LogInActivityOld)getActivity()).hideProgressDialog();
                         // [END_EXCLUDE]
                     }
 

@@ -6,7 +6,6 @@ package com.benezra.nir.poi;
 
 
 import android.content.Intent;
-import android.hardware.camera2.params.Face;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -15,15 +14,16 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.benezra.nir.poi.Activity.MainActivity;
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
-import com.facebook.FacebookSdk;
-import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
@@ -35,8 +35,6 @@ import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import static com.facebook.FacebookSdk.getApplicationContext;
-
 /**
  * Demonstrate Firebase Authentication using a Facebook access token.
  */
@@ -45,6 +43,7 @@ public class FacebookLoginFragment extends Fragment implements
         FacebookCallback<LoginResult>{
 
     private static final String TAG = "FacebookLogin";
+    LoginButton loginButton;
 
     private TextView mStatusTextView;
     private TextView mDetailTextView;
@@ -60,10 +59,22 @@ public class FacebookLoginFragment extends Fragment implements
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_facebook, container, false);
 
+        if (mAuth.getCurrentUser()==null){
+            Log.d(TAG,"user disconnected");
+            LoginManager.getInstance().logOut();
+        }
+
+        LinearLayout login = (LinearLayout) view.findViewById(R.id.facebook_layout);
+        login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                loginButton.performClick();
+            }
+        });
         // [START initialize_fblogin]
         // Initialize Facebook Login button
         mCallbackManager = CallbackManager.Factory.create();
-        LoginButton loginButton = (LoginButton)view.findViewById(R.id.sign_in_button_facebook);
+         loginButton = (LoginButton)view.findViewById(R.id.sign_in_button_facebook);
         loginButton.setFragment(this);
         loginButton.setReadPermissions("email", "public_profile");
         loginButton.registerCallback(mCallbackManager, this);
@@ -78,7 +89,7 @@ public class FacebookLoginFragment extends Fragment implements
 
         // [START initialize_auth]
         // Initialize Firebase Auth
-        mAuth = ((LogInActivity)getActivity()).getmAuth();
+        mAuth = FirebaseAuth.getInstance();
         // [END initialize_auth]
     }
 
@@ -96,7 +107,7 @@ public class FacebookLoginFragment extends Fragment implements
     private void handleFacebookAccessToken(AccessToken token) {
         Log.d(TAG, "handleFacebookAccessToken:" + token);
         // [START_EXCLUDE silent]
-        ((LogInActivity)getActivity()).showProgressDialog();
+      //  ((LogInActivityOld)getActivity()).showProgressDialog();
 
         // [END_EXCLUDE]
 
@@ -109,7 +120,9 @@ public class FacebookLoginFragment extends Fragment implements
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithCredential:success");
                             FirebaseUser user = mAuth.getCurrentUser();
-                            ((LogInActivity)getActivity()).startActivity();
+                            Intent i = new Intent(getActivity(), MainActivity.class);
+                            startActivity(i);
+                            getActivity().finish();
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithCredential:failure", task.getException());
@@ -118,7 +131,7 @@ public class FacebookLoginFragment extends Fragment implements
                         }
 
                         // [START_EXCLUDE]
-                        ((LogInActivity)getActivity()).hideProgressDialog();
+                       // ((LogInActivityOld)getActivity()).hideProgressDialog();
                         // [END_EXCLUDE]
                     }
                 });

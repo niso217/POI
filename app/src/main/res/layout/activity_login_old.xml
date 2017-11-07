@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:id="@+id/linearlayout"
+    android:layout_height="match_parent"
+    android:background="@drawable/animation_list"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="40dp">
+
+
+<android.support.design.widget.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:textColorHint="#cccccc">
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#ffff"
+            android:drawableLeft="@drawable/ic_clear_white_36dp"
+            android:hint="   Username"
+            android:inputType="textPersonName"
+            android:textColor="#cccccc"
+            android:textSize="20sp" />
+
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:textColorHint="#cccccc">
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#ffff"
+            android:drawableLeft="@drawable/ic_clear_white_36dp"
+            android:hint="   Passwoard"
+            android:inputType="textPassword"
+            android:textColor="#cccccc"
+            android:textSize="20sp" />
+    </android.support.design.widget.TextInputLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:layout_marginTop="16dp"
+        android:text="Forgot Password?"
+        android:textColor="#ffffff"
+        android:textSize="16sp" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:layout_marginTop="30dp"
+        android:background="#79a209df"
+        android:text="Log In"
+        android:textColor="#cccccc" />
+
+    <fragment
+        android:id="@+id/fragment"
+        android:name="com.benezra.nir.poi.GoogleSignInFragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp" />
+
+    <fragment
+        android:id="@+id/fragment2"
+        android:name="com.benezra.nir.poi.FacebookLoginFragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"/>
+</LinearLayout>

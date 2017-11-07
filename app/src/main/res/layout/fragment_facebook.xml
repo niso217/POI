@@ -2,17 +2,42 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal"
+    android:gravity="center_horizontal|center"
     android:orientation="vertical">
+
 
     <com.facebook.login.widget.LoginButton
         android:id="@+id/sign_in_button_facebook"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp"
-        android:layout_marginRight="5dp"
-        android:layout_marginLeft="5dp"/> />
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/facebook_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:src="@drawable/ic_facebook" />
+
+        <TextView
+            android:id="@+id/fb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Log in with Facebook"
+            android:textAlignment="center"
+            android:textColor="#ffffff"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
 
 
 </LinearLayout>

@@ -4,6 +4,7 @@ package com.benezra.nir.poi.Activity;
  * Created by nirb on 05/11/2017.
  */
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -35,11 +36,18 @@ public class EventsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_events);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
 
+        Intent intent = getIntent();
+        String interest = intent.getStringExtra("interest");
+
+
 
         mUserEventFragment = (EventByInterestListFragment) getSupportFragmentManager().findFragmentByTag(EventByInterestListFragment.class.getSimpleName());
         if (mUserEventFragment == null) {
             Log.d(TAG, "event fragment null");
+            Bundle bundle = new Bundle();
+            bundle.putString("interest",interest);
             mUserEventFragment = new EventByInterestListFragment();
+            mUserEventFragment.setArguments(bundle);
             getSupportFragmentManager().beginTransaction().add(R.id.framelayout, mUserEventFragment, EventByInterestListFragment.class.getSimpleName()).commit();
         }
 
@@ -68,7 +76,7 @@ public class EventsActivity extends AppCompatActivity {
                     case R.id.settings:
                         Toast.makeText(getApplicationContext(),"Settings",Toast.LENGTH_SHORT).show();
                         break;
-                    case R.id.trash:
+                    case R.id.fake:
                         Toast.makeText(getApplicationContext(),"Trash",Toast.LENGTH_SHORT).show();
                         drawerLayout.closeDrawers();
                         break;

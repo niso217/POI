@@ -10,8 +10,8 @@
             android:title="Settings"
             android:icon="@drawable/ic_search_white_36dp"/>
         <item
-            android:id="@+id/trash"
-            android:title="Trash"
+            android:id="@+id/fake"
+            android:title="Fake"
             android:icon="@drawable/ic_delete_white_48dp"/>
         <item
             android:id="@+id/logout"
