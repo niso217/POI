@@ -11,6 +11,7 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.widget.NestedScrollView;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -29,7 +30,6 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.benezra.nir.poi.Adapter.ViewHolders;
-import com.benezra.nir.poi.BaseActivity;
 import com.benezra.nir.poi.Bitmap.BitmapUtil;
 import com.benezra.nir.poi.Bitmap.DateUtil;
 import com.benezra.nir.poi.ChatActivity;
@@ -54,7 +54,6 @@ import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
 import java.util.Calendar;
-import java.util.Set;
 
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
@@ -69,7 +68,7 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
 import static com.benezra.nir.poi.Helper.Constants.ID;
 
 
-public class ViewEventActivity extends BaseActivity
+public class ViewEventActivity extends AppCompatActivity
         implements View.OnClickListener,
         MapFragment.MapFragmentCallback,
         ImageCameraDialogFragmentNew.ImageCameraDialogCallbackNew,

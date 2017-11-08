@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.Toast;
 
 import com.benezra.nir.poi.Activity.MainActivity;
@@ -28,7 +29,7 @@ public class SignInActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private Button btnSignup, btnLogin, btnReset;
     AnimationDrawable animationDrawable;
-    LinearLayout relativeLayout;
+    ScrollView scrollView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,9 +56,9 @@ public class SignInActivity extends AppCompatActivity {
         btnLogin = (Button) findViewById(R.id.btn_login);
         btnReset = (Button) findViewById(R.id.btn_reset_password);
 
-        relativeLayout = (LinearLayout)findViewById(R.id.linearlayout);
-        animationDrawable = (AnimationDrawable) relativeLayout.getBackground();
-        animationDrawable.setEnterFadeDuration(5000);
+        scrollView = (ScrollView) findViewById(R.id.scrollview);
+        animationDrawable = (AnimationDrawable) scrollView.getBackground();
+        animationDrawable.setEnterFadeDuration(2000);
         animationDrawable.setExitFadeDuration(2000);
 
         //Get Firebase auth instance

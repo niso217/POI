@@ -7,67 +7,66 @@
     android:fitsSystemWindows="true"
     tools:context="com.benezra.nir.poi.Login.SignInActivity">
 
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:background="@drawable/animation_list"
+        android:id="@+id/scrollview"
+        android:layout_height="match_parent">
+
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:background="@color/colorPrimaryDark"
+        android:descendantFocusability="beforeDescendants"
+        android:focusableInTouchMode="true"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="@dimen/activity_horizontal_margin">
 
 
         <ImageView
-            android:layout_width="@dimen/logo_w_h"
-            android:layout_height="@dimen/logo_w_h"
+            android:layout_width="200dp"
+            android:layout_height="150dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="30dp"
-            android:src="@mipmap/ic_launcher" />
+            app:srcCompat="@drawable/main_icon" />
 
-        <android.support.design.widget.TextInputLayout
+        <EditText
+            android:id="@+id/email"
+            style="@android:style/Widget.Button"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="48dp"
+            android:layout_marginTop="5dp"
+            android:background="@drawable/button_login_focuse"
+            android:hint="@string/hint_email"
+            android:inputType="textEmailAddress"
+            android:textColor="@android:color/white"
+            android:textColorHint="@drawable/edittext_hint" />
 
-            <EditText
-                android:id="@+id/email"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/email"
-                android:inputType="textEmailAddress"
-                android:maxLines="1"
-                android:singleLine="true"
-                android:textColor="@android:color/white" />
 
-        </android.support.design.widget.TextInputLayout>
+        <EditText
+            android:id="@+id/password"
+            style="@android:style/Widget.Button"
+            android:layout_width="fill_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="5dp"
+            android:background="@drawable/button_login_focuse"
+            android:hint="@string/hint_password"
+            android:inputType="textPassword"
+            android:textColor="@android:color/white"
+            android:textColorHint="@drawable/edittext_hint" />
 
-        <android.support.design.widget.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
 
-            <EditText
-                android:id="@+id/password"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:focusableInTouchMode="true"
-                android:hint="@string/hint_password"
-                android:imeActionId="@+id/login"
-                android:imeOptions="actionUnspecified"
-                android:inputType="textPassword"
-                android:maxLines="1"
-                android:singleLine="true"
-                android:textColor="@android:color/white" />
-
-        </android.support.design.widget.TextInputLayout>
 
         <Button
             android:id="@+id/sign_up_button"
-            style="?android:textAppearanceSmall"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="@color/colorAccent"
+            android:background="@drawable/button_login"
             android:text="@string/action_sign_in_short"
-            android:textColor="@android:color/black"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:textColor="@color/white_50_alpha" />
 
         <Button
             android:id="@+id/btn_reset_password"
@@ -92,6 +91,8 @@
             android:textColor="@color/white"
             android:textSize="15dp" />
     </LinearLayout>
+
+    </ScrollView>
 
     <ProgressBar
         android:id="@+id/progressBar"

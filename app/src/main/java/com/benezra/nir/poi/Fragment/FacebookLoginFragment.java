@@ -1,4 +1,4 @@
-package com.benezra.nir.poi;
+package com.benezra.nir.poi.Fragment;
 
 /**
  * Created by nirb on 28/09/2017.
@@ -15,11 +15,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.benezra.nir.poi.Activity.MainActivity;
+import com.benezra.nir.poi.R;
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
@@ -64,13 +66,8 @@ public class FacebookLoginFragment extends Fragment implements
             LoginManager.getInstance().logOut();
         }
 
-        LinearLayout login = (LinearLayout) view.findViewById(R.id.facebook_layout);
-        login.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                loginButton.performClick();
-            }
-        });
+        view.findViewById(R.id.fb).setOnClickListener(this);
+
         // [START initialize_fblogin]
         // Initialize Facebook Login button
         mCallbackManager = CallbackManager.Factory.create();
@@ -82,6 +79,7 @@ public class FacebookLoginFragment extends Fragment implements
 
         return view;
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -148,7 +146,8 @@ public class FacebookLoginFragment extends Fragment implements
 
     @Override
     public void onClick(View v) {
-        int i = v.getId();
+        loginButton.performClick();
+
     }
 
     @Override

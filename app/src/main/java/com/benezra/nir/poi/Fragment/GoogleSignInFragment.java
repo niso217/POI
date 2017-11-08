@@ -1,4 +1,4 @@
-package com.benezra.nir.poi;
+package com.benezra.nir.poi.Fragment;
 
 /**
  * Copyright 2016 Google Inc. All Rights Reserved.
@@ -16,6 +16,7 @@ package com.benezra.nir.poi;
  * limitations under the License.
  */
 
+        import android.app.ProgressDialog;
         import android.content.Intent;
         import android.os.Bundle;
         import android.support.annotation.NonNull;
@@ -29,6 +30,7 @@ package com.benezra.nir.poi;
         import android.widget.Toast;
 
         import com.benezra.nir.poi.Activity.MainActivity;
+        import com.benezra.nir.poi.R;
         import com.google.android.gms.auth.api.Auth;
         import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
         import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -72,14 +74,8 @@ public class GoogleSignInFragment extends Fragment implements
         mSignInButton = (SignInButton)view.findViewById(R.id.sign_in_button_google);
         mSignInButton.setOnClickListener(this);
 
+        view.findViewById(R.id.gb).setOnClickListener(this);
 
-        LinearLayout login = (LinearLayout) view.findViewById(R.id.google_layout);
-        login.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                signIn();
-            }
-        });
         return view;
     }
 
@@ -134,6 +130,8 @@ public class GoogleSignInFragment extends Fragment implements
         // [START_EXCLUDE silent]
        // ((LogInActivityOld)getActivity()).showProgressDialog();
         // [END_EXCLUDE]
+        showProgress(getString(R.string.loading), getString(R.string.please_wait));
+
 
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
         mAuth.signInWithCredential(credential)
@@ -157,6 +155,7 @@ public class GoogleSignInFragment extends Fragment implements
                         // [START_EXCLUDE]
                         //((LogInActivityOld)getActivity()).hideProgressDialog();
                         // [END_EXCLUDE]
+                        hideProgressMessage();
                     }
 
                 });
@@ -167,6 +166,24 @@ public class GoogleSignInFragment extends Fragment implements
     private void signIn() {
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
         startActivityForResult(signInIntent, RC_SIGN_IN);
+    }
+
+
+    private void showProgress(String title, String message) {
+        ProgressDialogFragment mProgressDialogFragment = (ProgressDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
+        if (mProgressDialogFragment == null) {
+            Log.d(TAG, "opening origress dialog");
+            mProgressDialogFragment = ProgressDialogFragment.newInstance(
+                    title, message, ProgressDialog.STYLE_SPINNER);
+            mProgressDialogFragment.show(getActivity().getSupportFragmentManager(), ProgressDialogFragment.class.getName());
+        }
+    }
+
+    private void hideProgressMessage() {
+        ProgressDialogFragment mProgressDialogFragment = (ProgressDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
+        if (mProgressDialogFragment != null)
+            mProgressDialogFragment.dismiss();
+
     }
 
 
@@ -209,9 +226,6 @@ public class GoogleSignInFragment extends Fragment implements
 
     @Override
     public void onClick(View v) {
-        int i = v.getId();
-        if (i == R.id.sign_in_button_google) {
-            signIn();
-        }
+        signIn();
     }
 }

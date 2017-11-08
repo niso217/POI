@@ -78,6 +78,7 @@
     <string name="no_network_title">No Network Found</string>
     <string name="no_network_message">No Network Found</string>
     <string name="loading_data_title">Loading Data</string>
+    <string name="loading">Loading</string>
     <string name="please_wait_message">Please wait...</string>
     <string name="retrieving_data_title">Retrieving Data</string>
     <string name="retrieving_data_message">failed retrieve data from the server</string>
@@ -145,7 +146,7 @@
     <string name="hint_password">Password</string>
     <string name="hint_name">Fullname</string>
     <string name="btn_login">LOGIN</string>
-    <string name="btn_link_to_register">Not a member? Get registered in Firebase now!</string>
+    <string name="btn_link_to_register">Not a member? Get registered now!</string>
     <string name="btn_link_to_login">Already registered. Login Me!</string>
     <string name="title_activity_reset_password">ResetPasswordActivity</string>
     <string name="btn_forgot_password">Forgot your password?</string>

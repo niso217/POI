@@ -1,10 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#00bcd4</color>
-    <color name="colorPrimaryDark">#0097a7</color>
+    <color name="colorPrimary">@android:color/transparent</color>
+    <color name="colorPrimaryDark">@android:color/transparent</color>
     <color name="colorAccent">#EB6CAF</color>
     <color name="year">#999999</color>
     <color name="title">#222222</color>
+
+    <!--100% — FF-->
+    <!--95% — F2-->
+    <!--90% — E6-->
+    <!--85% — D9-->
+    <!--80% — CC-->
+    <!--75% — BF-->
+    <!--70% — B3-->
+    <!--65% — A6-->
+    <!--60% — 99-->
+    <!--55% — 8C-->
+    <!--50% — 80-->
+    <!--45% — 73-->
+    <!--40% — 66-->
+    <!--35% — 59-->
+    <!--30% — 4D-->
+    <!--25% — 40-->
+    <!--20% — 33-->
+    <!--15% — 26-->
+    <!--10% — 1A-->
+    <!--5% — 0D-->
+    <!--0% — 00-->
+
+    <color name="white_80_alpha">#E6FFFFFF</color>
+    <color name="white_50_alpha">#80FFFFFF</color>
+    <color name="white_20_alpha">#66FFFFFF</color>
 
     <color name="chat_message_background_outcoming">#EB6CAF</color>
     <color name="soft_gray">#d3d3d3</color>
@@ -13,8 +39,13 @@
     <color name="deepskyblue">#00BFFF</color>
     <color name="appbar">#62D6FF</color>
 
-    <color name="purple_500">#9C27B0</color>
-    <color name="deep_purple_500">#673AB7</color>
+    <color name="purple_500">#3F51B5</color>
+    <color name="deep_purple_500">#2196F3</color>
+
+    <color name="purple_500_50">#803F51B5</color>
+    <color name="deep_purple_500_50">#802196F3</color>
+
+
     <color name="indigo_500">#3F51B5</color>
     <color name="blue_500">#2196F3</color>
     <color name="cyan_500">#00BCD4</color>
