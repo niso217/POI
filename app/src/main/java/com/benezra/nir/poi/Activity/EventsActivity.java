@@ -22,9 +22,8 @@ import com.benezra.nir.poi.Fragment.EventByInterestMapFragment;
 import com.benezra.nir.poi.Fragment.EventByInterestListFragment;
 import com.benezra.nir.poi.R;
 
-public class EventsActivity extends AppCompatActivity {
+public class EventsActivity extends BaseActivity{
     private DrawerLayout drawerLayout;
-    private Toolbar toolbar;
     private EventByInterestListFragment mUserEventFragment;
     final static String TAG = EventsActivity.class.getSimpleName();
 
@@ -34,7 +33,6 @@ public class EventsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_events);
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
 
         Intent intent = getIntent();
         String interest = intent.getStringExtra("interest");
@@ -52,60 +50,14 @@ public class EventsActivity extends AppCompatActivity {
         }
 
 
-        setSupportActionBar(toolbar);
-        initNavigationDrawer();
-
-
+       // setSupportActionBar(toolbar);
 
     }
 
-    public void initNavigationDrawer() {
-
-        NavigationView navigationView = (NavigationView)findViewById(R.id.navigation_view);
-        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(MenuItem menuItem) {
-
-                int id = menuItem.getItemId();
-
-                switch (id){
-                    case R.id.home:
-                        Toast.makeText(getApplicationContext(),"Home",Toast.LENGTH_SHORT).show();
-                        drawerLayout.closeDrawers();
-                        break;
-                    case R.id.settings:
-                        Toast.makeText(getApplicationContext(),"Settings",Toast.LENGTH_SHORT).show();
-                        break;
-                    case R.id.fake:
-                        Toast.makeText(getApplicationContext(),"Trash",Toast.LENGTH_SHORT).show();
-                        drawerLayout.closeDrawers();
-                        break;
-                    case R.id.logout:
-                        finish();
-
-                }
-                return true;
-            }
-        });
-        View header = navigationView.getHeaderView(0);
-        TextView tv_email = (TextView)header.findViewById(R.id.tv_email);
-        tv_email.setText("raj.amalw@learn2crack.com");
-        drawerLayout = (DrawerLayout)findViewById(R.id.drawer);
-
-        ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(this,drawerLayout,toolbar,R.string.drawer_open,R.string.drawer_close){
-
-            @Override
-            public void onDrawerClosed(View v){
-                super.onDrawerClosed(v);
-            }
-
-            @Override
-            public void onDrawerOpened(View v) {
-                super.onDrawerOpened(v);
-            }
-        };
-        drawerLayout.addDrawerListener(actionBarDrawerToggle);
-        actionBarDrawerToggle.syncState();
+    @Override
+    protected int getNavigationDrawerID() {
+        return 0;
     }
+
 
 }

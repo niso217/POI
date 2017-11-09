@@ -1,4 +1,4 @@
-package com.benezra.nir.poi.Login;
+package com.benezra.nir.poi.Activity;
 
 import android.content.Intent;
 import android.graphics.drawable.AnimationDrawable;
@@ -10,12 +10,12 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.Toast;
 
-import com.benezra.nir.poi.Activity.MainActivity;
+import com.benezra.nir.poi.Login.ResetPasswordActivity;
+import com.benezra.nir.poi.Login.SignupActivity;
 import com.benezra.nir.poi.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -47,7 +47,7 @@ public class SignInActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+//        setSupportActionBar(toolbar);
 
         inputEmail = (EditText) findViewById(R.id.email);
         inputPassword = (EditText) findViewById(R.id.password);

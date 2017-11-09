@@ -22,6 +22,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -82,7 +83,6 @@ public class ViewEventActivity extends AppCompatActivity
     private TextView mEventDetails;
     final static String TAG = ViewEventActivity.class.getSimpleName();
     private CollapsingToolbarLayout collapsingToolbar;
-    private ImageView mToolbarBackgroundImage;
     private FirebaseDatabase mFirebaseInstance;
     private ProgressBar mProgressBar;
     private TextView tvDatePicker, tvTimePicker;
@@ -102,7 +102,7 @@ public class ViewEventActivity extends AppCompatActivity
     private ImageButton mNavigate, mAddImage, mChat, mShare;
     private ToggleButton mJoin;
     private Toolbar mToolbar;
-    private TextView mTitle;
+    private EditText mTitle;
     private RecyclerView mPicturesRecyclerView;
     private RecyclerView mParticipateRecyclerView;
 
@@ -168,17 +168,17 @@ public class ViewEventActivity extends AppCompatActivity
 
         //Sets the Toolbar to act as the ActionBar for this Activity window.
         //Make sure the toolbar exists in the activity and is not null
-        setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+//        setSupportActionBar(mToolbar);
+        //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+       // getSupportActionBar().setDisplayShowTitleEnabled(false);
 
 
         //Setting the category name onto collapsing toolbar
         collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
 
         mHorizontalScrollView = (LinearLayout) findViewById(R.id.scrolling_icons);
-        mTitle = (TextView) findViewById(R.id.tv_title);
-
+        mTitle = (EditText) findViewById(R.id.tv_title);
+        mTitle.setEnabled(false);
         mJoin = (ToggleButton) findViewById(R.id.btn_join);
         mShare = (ImageButton) findViewById(R.id.btn_share);
         mNavigate = (ImageButton) findViewById(R.id.btn_navigate);
@@ -196,7 +196,6 @@ public class ViewEventActivity extends AppCompatActivity
         collapsingToolbar.setCollapsedTitleTextAppearance(R.style.CollapsedAppBar);
 
         //Setting the category mDialogImageView onto collapsing toolbar
-        mToolbarBackgroundImage = (ImageView) findViewById(R.id.backdrop);
 
         mAppBarLayout = (AppBarLayout) findViewById(R.id.appbar);
 
@@ -243,7 +242,7 @@ public class ViewEventActivity extends AppCompatActivity
         collapsingToolbar.setOnClickListener(this);
 
 
-        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.main_content);
+        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinatorlayout);
 
 
         if (savedInstanceState != null) {
@@ -502,7 +501,7 @@ public class ViewEventActivity extends AppCompatActivity
         if (mCurrentEvent != null) {
             mTitle.setText(mCurrentEvent.getTitle());
             mEventDetails.setText(mCurrentEvent.getDetails());
-            setImageBack();
+           // setImageBack();
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(mCurrentEvent.getStart());
             tvDatePicker.setText(DateUtil.CalendartoDate(calendar.getTime()));
@@ -514,30 +513,30 @@ public class ViewEventActivity extends AppCompatActivity
     }
 
 
-    private void setImageBack() {
-        if (mCurrentEvent.getImage() != null) {
-            mProgressBar.setVisibility(View.VISIBLE);
-            Picasso.with(this)
-                    .load(mCurrentEvent.getImage())
-                    .into(mToolbarBackgroundImage, new com.squareup.picasso.Callback() {
-                        @Override
-                        public void onSuccess() {
-                            mProgressBar.setVisibility(View.GONE);
-                        }
-
-                        @Override
-                        public void onError() {
-                            mProgressBar.setVisibility(View.GONE);
-
-                        }
-                    });
-        } else {
-            Bitmap bitmap = BitmapUtil.UriToBitmap(this, mCurrentEvent.getUri());
-            if (bitmap != null)
-                mToolbarBackgroundImage.setImageBitmap(bitmap);
-        }
-
-    }
+//    private void setImageBack() {
+//        if (mCurrentEvent.getImage() != null) {
+//            mProgressBar.setVisibility(View.VISIBLE);
+//            Picasso.with(this)
+//                    .load(mCurrentEvent.getImage())
+//                    .into(mToolbarBackgroundImage, new com.squareup.picasso.Callback() {
+//                        @Override
+//                        public void onSuccess() {
+//                            mProgressBar.setVisibility(View.GONE);
+//                        }
+//
+//                        @Override
+//                        public void onError() {
+//                            mProgressBar.setVisibility(View.GONE);
+//
+//                        }
+//                    });
+//        } else {
+//            Bitmap bitmap = BitmapUtil.UriToBitmap(this, mCurrentEvent.getUri());
+//            if (bitmap != null)
+//                mToolbarBackgroundImage.setImageBitmap(bitmap);
+//        }
+//
+//    }
 
 
 

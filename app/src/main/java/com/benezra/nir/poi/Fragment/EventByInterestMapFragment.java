@@ -169,6 +169,7 @@ public class EventByInterestMapFragment extends Fragment implements
             MarkerOptions markerOptions = new MarkerOptions()
                     .position(loc);
             Marker marker = mMap.addMarker(markerOptions);
+            marker.setTag(mEventList.get(i).getId());
             mBoundsBuilder.include(loc);
 
         }
@@ -274,11 +275,18 @@ public class EventByInterestMapFragment extends Fragment implements
 
     @Override
     public boolean onMarkerClick(final Marker marker) {
+        int index = 0;
+        for (int i = 0; i < mEventList.size(); i++) {
+            if (mEventList.get(i).getId().equals(marker.getTag()))
+            {
+                index = i;
+                break;
+            }
 
-        //List<String> l = new ArrayList<String>(mEventHashMap.keySet());
-       // int index = l.indexOf(marker.getTag());
+        }
 
-      //  mEventsRecyclerView.smoothScrollToPosition(index);
+
+        mEventsRecyclerView.smoothScrollToPosition(index);
         return false;
     }
 

@@ -53,7 +53,10 @@
             android:name="com.facebook.sdk.ApplicationId"
             android:value="@string/facebook_app_id"/>
 
-        <activity android:name=".Login.SignInActivity">
+        <activity
+            android:name=".Activity.SplashActivity"
+            android:theme="@style/SplashTheme">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -79,16 +82,18 @@
 
 
 
-        <activity android:name=".ChatActivity"></activity>
-        <activity android:name=".Activity.MainActivity"></activity>
-        <activity android:name=".Activity.CreateEventActivity"></activity>
-        <activity android:name=".Activity.ViewEventActivity"></activity>
-        <activity android:name=".Activity.SpaceGalleryActivity"></activity>
-        <activity android:name=".Activity.SpacePhotoActivity"></activity>
-        <activity android:name=".Activity.EventsActivity"></activity>
-        <activity android:name=".Utils.DataFaker"></activity>
-        <activity android:name=".Login.ResetPasswordActivity"></activity>
-        <activity android:name=".Login.SignupActivity"></activity>
+        <activity android:name=".ChatActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Activity.MainActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Activity.CreateEventActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Activity.ViewEventActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Activity.SpaceGalleryActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Activity.SpacePhotoActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Activity.EventsActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Utils.DataFaker" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Login.ResetPasswordActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Login.SignupActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Activity.TutorialActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Activity.SignInActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
 
 
     </application>

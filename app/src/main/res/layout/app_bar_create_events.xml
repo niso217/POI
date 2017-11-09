@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/coordinatorlayout"
+    tools:context=".Activity.CreateEventActivity">
+
+    <include layout="@layout/toolbar_collapsing"/>
+
+    <include layout="@layout/content_create_event" />
+
+
+    <LinearLayout
+        android:id="@+id/scrolling_icons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:background="@android:color/transparent"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal"
+        android:scrollbars="none"
+        app:layout_anchor="@id/appbar"
+        app:layout_anchorGravity="bottom|right|end">
+
+        <ImageButton
+            android:id="@+id/btn_delete"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginLeft="@dimen/icons_margin"
+            android:background="@drawable/delete_button"
+            android:contentDescription="@string/share"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/btn_share"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginLeft="@dimen/icons_margin"
+            android:background="@drawable/share_button"
+            android:contentDescription="@string/share" />
+
+        <ImageButton
+            android:id="@+id/btn_add_image"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginLeft="@dimen/icons_margin"
+            android:background="@drawable/image_button"
+            android:contentDescription="@string/add_image" />
+
+        <ImageButton
+            android:id="@+id/btn_chat"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginLeft="@dimen/icons_margin"
+            android:background="@drawable/chat_button"
+            android:contentDescription="@string/chat" />
+
+        <ImageButton
+            android:id="@+id/btn_save"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginLeft="@dimen/icons_margin"
+            android:background="@drawable/save_button"
+            android:contentDescription="@string/chat" />
+
+
+    </LinearLayout>
+
+</android.support.design.widget.CoordinatorLayout>

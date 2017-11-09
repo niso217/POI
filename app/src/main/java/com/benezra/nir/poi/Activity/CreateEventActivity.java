@@ -142,7 +142,6 @@ public class CreateEventActivity extends AppCompatActivity
     private Event mCurrentEventChangeFlag;
     final static String TAG = CreateEventActivity.class.getSimpleName();
     private CollapsingToolbarLayout collapsingToolbar;
-    private ImageView mToolbarBackgroundImage;
     private Calendar mEventTime;
     private FirebaseDatabase mFirebaseInstance;
     private Spinner mspinnerCustom;
@@ -187,24 +186,29 @@ public class CreateEventActivity extends AppCompatActivity
         setContentView(R.layout.activity_create_event);
 
 
+
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventTime = Calendar.getInstance();
+
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar.setBackgroundColor(getResources().getColor(R.color.deepskyblue));
+
 
         mHorizontalScrollView = (LinearLayout) findViewById(R.id.scrolling_icons);
         mPicturesKeys = new HashSet<>();
 
         //Using the ToolBar as ActionBar
         //Find the toolbar view inside the activity layout
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        //mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        //setSupportActionBar(mToolbar);
+//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        //getSupportActionBar().setDisplayShowTitleEnabled(false);
 
 
         //Setting the category name onto collapsing toolbar
         collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
-        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.main_content);
+        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinatorlayout);
 
         mShare = (ImageButton) findViewById(R.id.btn_share);
         mAddImage = (ImageButton) findViewById(R.id.btn_add_image);
@@ -240,7 +244,6 @@ public class CreateEventActivity extends AppCompatActivity
         collapsingToolbar.setCollapsedTitleTextAppearance(R.style.CollapsedAppBar);
 
         //Setting the category mDialogImageView onto collapsing toolbar
-        mToolbarBackgroundImage = (ImageView) findViewById(R.id.backdrop);
 
         mAppBarLayout = (AppBarLayout) findViewById(R.id.appbar);
 
