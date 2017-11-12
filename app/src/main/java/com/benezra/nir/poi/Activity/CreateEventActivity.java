@@ -547,7 +547,12 @@ public class CreateEventActivity extends AppCompatActivity
                 if (action == ACTION_REMOVE)
                     delete();
                 else
+                {
+                    Intent intent = new Intent(this, MainActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
                     finish();
+                }
                 break;
             case BUTTON_NEGATIVE:
                 break;

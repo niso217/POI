@@ -18,6 +18,7 @@ import com.benezra.nir.poi.Activity.CreateEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.EventModel;
+import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -53,12 +54,12 @@ public class MyEventFragment extends Fragment implements ValueEventListener,Recy
     private FusedLocationProviderClient mFusedLocationClient;
     private Location mLastLocation;
     private FirebaseUser mFirebaseUser;
-    private UserEventFragmentCallback mListener;
-    private Context mContext;
     private RecyclerView mEventsRecyclerView;
     private List<Event> mEventList;
     private EventsAdapter mEventsAdapter;
     private ItemTouchHelper mItemTouchHelper;
+    private Context mContext;
+    private FragmentDataCallBackInterface mListener;
 
 
 
@@ -68,8 +69,9 @@ public class MyEventFragment extends Fragment implements ValueEventListener,Recy
     public void onAttach(Context context) {
         super.onAttach(context);
         this.mContext = context;
-        if (context instanceof UserEventFragmentCallback) {
-            mListener = (UserEventFragmentCallback) context;
+        if (context instanceof FragmentDataCallBackInterface) {
+            mListener = (FragmentDataCallBackInterface) context;
+
         }
     }
 
@@ -98,11 +100,6 @@ public class MyEventFragment extends Fragment implements ValueEventListener,Recy
 
     }
 
-    public interface UserEventFragmentCallback {
-        void showDialog();
-        void hideDialog();
-
-    }
 
 
     @Override
@@ -120,9 +117,9 @@ public class MyEventFragment extends Fragment implements ValueEventListener,Recy
 
 
     private void addEventChangeListener() {
-            Query query = mFirebaseInstance.getReference("events").orderByChild("owner").equalTo(mFirebaseUser.getUid());
+        mListener.startLoadingData();
+        Query query = mFirebaseInstance.getReference("events").orderByChild("owner").equalTo(mFirebaseUser.getUid());
             query.addValueEventListener(this);
-             //mListener.showDialog();
     }
 
 
@@ -162,6 +159,7 @@ public class MyEventFragment extends Fragment implements ValueEventListener,Recy
                    mEventList.add(event);
             }
             mEventsAdapter.notifyDataSetChanged();
+            mListener.finishLoadingData();
 
         }
 

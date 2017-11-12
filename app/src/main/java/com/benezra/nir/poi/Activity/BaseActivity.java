@@ -17,6 +17,7 @@
 
 package com.benezra.nir.poi.Activity;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -31,11 +32,17 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.R;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.squareup.picasso.Picasso;
 
 
 /**
@@ -56,6 +63,9 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
     // Navigation drawer:
     private DrawerLayout mDrawerLayout;
     private NavigationView mNavigationView;
+    private static final String TAG = BaseActivity.class.getSimpleName();
+    private FirebaseUser mFirebaseUser;
+
 
     // Helper
     private Handler mHandler;
@@ -64,9 +74,11 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mHandler = new Handler();
+
+
 
         overridePendingTransition(0, 0);
     }
@@ -152,22 +164,19 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
         Intent intent;
 
         switch(itemId) {
-            case R.id.nav_main:
-                intent = new Intent(this, MainActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
+            case R.id.nav_add_event:
+                intent = new Intent(this, CreateEventActivity.class);
+                intent.setAction(TutorialActivity.ACTION_SHOW_ANYWAYS);
+                createBackStack(intent);
+
                 break;
-            case R.id.nav_logout:
+            case R.id.nav_log_out:
                 intent = new Intent(this, SignInActivity.class);
                 FirebaseAuth.getInstance().signOut();
-                //intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
                 finish();
-                //createBackStack(intent);
-                //intent = new Intent(this, GameActivity.class);
-                //createBackStack(intent);
                 break;
-            case R.id.nav_tutorial:
+            case R.id.nav_help:
                 intent = new Intent(this, TutorialActivity.class);
                 intent.setAction(TutorialActivity.ACTION_SHOW_ANYWAYS);
                 createBackStack(intent);
@@ -176,7 +185,7 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
                // intent = new Intent(this, AboutActivity.class);
                // createBackStack(intent);
                 break;
-            case R.id.nav_help:
+            case R.id.nav_share:
                /// intent = new Intent(this, HelpActivity.class);
                // createBackStack(intent);
                 break;
@@ -187,6 +196,7 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
                // createBackStack(intent);
                 break;
             default:
+                finish();
         }
     }
 
@@ -207,6 +217,13 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
 
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
+        View headerView = mNavigationView.inflateHeaderView(R.layout.nav_header_main);
+
+        TextView name = (TextView) headerView.findViewById(R.id.tv_name);
+        ImageView image = (ImageView) headerView.findViewById(R.id.iv_profile);
+
+        name.setText(getString(R.string.hello) +" " + mFirebaseUser.getDisplayName());
+        Picasso.with(this).load(mFirebaseUser.getPhotoUrl().toString()).into(image);
 
         selectNavigationItem(getNavigationDrawerID());
 
@@ -215,6 +232,23 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
             mainContent.setAlpha(0);
             mainContent.animate().alpha(1).setDuration(MAIN_CONTENT_FADEIN_DURATION);
         }
+    }
+
+    public void showProgress(String title, String message) {
+        ProgressDialogFragment mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
+        if (mProgressDialogFragment == null) {
+            Log.d(TAG, "opening origress dialog");
+            mProgressDialogFragment = ProgressDialogFragment.newInstance(
+                    title, message, ProgressDialog.STYLE_SPINNER);
+            mProgressDialogFragment.show(getSupportFragmentManager(), ProgressDialogFragment.class.getName());
+        }
+    }
+
+    public void hideProgressMessage() {
+        ProgressDialogFragment mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
+        if (mProgressDialogFragment != null)
+            mProgressDialogFragment.dismiss();
+
     }
 
 

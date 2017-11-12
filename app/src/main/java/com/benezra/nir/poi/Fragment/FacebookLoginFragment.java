@@ -5,6 +5,7 @@ package com.benezra.nir.poi.Fragment;
  */
 
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -14,13 +15,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import com.benezra.nir.poi.Activity.MainActivity;
+import com.benezra.nir.poi.Interface.LoginCallBackInterface;
 import com.benezra.nir.poi.R;
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
@@ -35,7 +31,6 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 /**
  * Demonstrate Firebase Authentication using a Facebook access token.
@@ -46,9 +41,8 @@ public class FacebookLoginFragment extends Fragment implements
 
     private static final String TAG = "FacebookLogin";
     LoginButton loginButton;
-
-    private TextView mStatusTextView;
-    private TextView mDetailTextView;
+    private Context mContext;
+    private LoginCallBackInterface mListener;
 
     // [START declare_auth]
     private FirebaseAuth mAuth;
@@ -80,15 +74,20 @@ public class FacebookLoginFragment extends Fragment implements
         return view;
     }
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        this.mContext = context;
+        if (context instanceof LoginCallBackInterface) {
+            mListener = (LoginCallBackInterface) context;
+        }
+    }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // [START initialize_auth]
-        // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
-        // [END initialize_auth]
     }
 
 
@@ -104,10 +103,6 @@ public class FacebookLoginFragment extends Fragment implements
     // [START auth_with_facebook]
     private void handleFacebookAccessToken(AccessToken token) {
         Log.d(TAG, "handleFacebookAccessToken:" + token);
-        // [START_EXCLUDE silent]
-      //  ((LogInActivityOld)getActivity()).showProgressDialog();
-
-        // [END_EXCLUDE]
 
         AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
         mAuth.signInWithCredential(credential)
@@ -117,35 +112,22 @@ public class FacebookLoginFragment extends Fragment implements
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithCredential:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            Intent i = new Intent(getActivity(), MainActivity.class);
-                            startActivity(i);
-                            getActivity().finish();
+                            mListener.login(true);
+
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithCredential:failure", task.getException());
-                            Toast.makeText(getActivity(), "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
+                            mListener.login(false);
+
                         }
 
-                        // [START_EXCLUDE]
-                       // ((LogInActivityOld)getActivity()).hideProgressDialog();
-                        // [END_EXCLUDE]
                     }
                 });
     }
-    // [END auth_with_facebook]
-
-    public void signOut() {
-        mAuth.signOut();
-        LoginManager.getInstance().logOut();
-
-    }
-
-
 
     @Override
     public void onClick(View v) {
+        mListener.startLogin();
         loginButton.performClick();
 
     }
@@ -159,14 +141,15 @@ public class FacebookLoginFragment extends Fragment implements
     @Override
     public void onCancel() {
         Log.d(TAG, "facebook:onCancel");
-        // [START_EXCLUDE]
-        // [END_EXCLUDE]
+        mListener.login(false);
+
     }
 
     @Override
     public void onError(FacebookException error) {
+        mListener.login(false);
+
         Log.d(TAG, "facebook:onError", error);
-        // [START_EXCLUDE]
-        // [END_EXCLUDE]
+
     }
 }

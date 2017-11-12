@@ -1,6 +1,7 @@
 package com.benezra.nir.poi.Fragment;
 
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -13,6 +14,7 @@ import android.view.ViewGroup;
 
 import com.benezra.nir.poi.Activity.EventsActivity;
 import com.benezra.nir.poi.Adapter.ViewHolders;
+import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.Objects.InterestData;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
@@ -35,6 +37,19 @@ public class MainEventFragment extends Fragment implements RecyclerTouchListener
     private FirebaseDatabase mFirebaseInstance;
     private RecyclerView mInteresRecyclerView;
     private List<String> mInterestList;
+    private Context mContext;
+    private FragmentDataCallBackInterface mListener;
+
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        this.mContext = context;
+        if (context instanceof FragmentDataCallBackInterface) {
+            mListener = (FragmentDataCallBackInterface) context;
+
+        }
+    }
 
 
     @Override
@@ -42,8 +57,6 @@ public class MainEventFragment extends Fragment implements RecyclerTouchListener
         super.onCreate(savedInstanceState);
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mInterestList = new ArrayList<>();
-
-
     }
 
 
@@ -73,6 +86,7 @@ public class MainEventFragment extends Fragment implements RecyclerTouchListener
                 participatesViewHolder.image.setImageResource(getResources().getIdentifier(model.getInterest().toLowerCase(), "drawable", getActivity().getPackageName()));
                 mInterestList.add(model.getInterest());
             }
+
 
         };
 

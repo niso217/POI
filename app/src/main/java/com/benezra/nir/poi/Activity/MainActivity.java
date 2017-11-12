@@ -13,14 +13,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
+import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.SimpleFragmentPagerAdapter;
 import com.google.firebase.auth.FirebaseAuth;
 
-public class MainActivity extends BaseActivity {
+public class MainActivity extends BaseActivity implements FragmentDataCallBackInterface {
 
     private DrawerLayout drawerLayout;
     private Toolbar mToolbar;
+    TabLayout mTabLayout;
     private FirebaseAuth mAuth;
 
 
@@ -49,18 +51,19 @@ public class MainActivity extends BaseActivity {
         viewPager.setAdapter(adapter);
 
         // Give the TabLayout the ViewPager
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
-        tabLayout.setupWithViewPager(viewPager);
+        mTabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
+        mTabLayout.setupWithViewPager(viewPager);
+        setupTabIcons();
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(), CreateEventActivity.class);
-                startActivity(intent);
-
-            }
-        });
+//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+//        fab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Intent intent = new Intent(getApplicationContext(), CreateEventActivity.class);
+//                startActivity(intent);
+//
+//            }
+//        });
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
@@ -73,6 +76,18 @@ public class MainActivity extends BaseActivity {
         mToolbar.setLayoutParams(layoutParams);
 //        setSupportActionBar(mToolbar);
         //getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    private void setupTabIcons() {
+        mTabLayout.getTabAt(0).setIcon(R.drawable.ic_explore_white_48dp);
+        mTabLayout.getTabAt(1).setIcon(R.drawable.ic_favorite_white_48dp);
+        mTabLayout.getTabAt(2).setIcon(R.drawable.ic_thumb_up_white_48dp);
     }
 
     public int dpToPx(int dp) {
@@ -82,8 +97,19 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected int getNavigationDrawerID() {
-        return R.id.nav_main;
+        return 0;
     }
 
 
+    @Override
+    public void startLoadingData() {
+        showProgress(getString(R.string.loading), getString(R.string.please_wait));
+
+    }
+
+    @Override
+    public void finishLoadingData() {
+        hideProgressMessage();
+
+    }
 }

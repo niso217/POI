@@ -449,11 +449,15 @@ public class ViewEventActivity extends AppCompatActivity
 
     private void JoinEvent() {
         mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates").child(mFirebaseUser.getUid()).setValue(getUser());
+        mFirebaseInstance.getReference("users").child(mFirebaseUser.getUid()).child("events").child(mCurrentEvent.getId()).setValue(true);
+
     }
 
 
     private void LeaveEvent() {
         mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates").child(mFirebaseUser.getUid()).removeValue();
+        mFirebaseInstance.getReference("users").child(mFirebaseUser.getUid()).child("events").child(mCurrentEvent.getId()).removeValue();
+
     }
 
     private User getUser() {

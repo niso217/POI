@@ -16,7 +16,7 @@ package com.benezra.nir.poi.Fragment;
  * limitations under the License.
  */
 
-        import android.app.ProgressDialog;
+        import android.content.Context;
         import android.content.Intent;
         import android.os.Bundle;
         import android.support.annotation.NonNull;
@@ -26,10 +26,8 @@ package com.benezra.nir.poi.Fragment;
         import android.view.LayoutInflater;
         import android.view.View;
         import android.view.ViewGroup;
-        import android.widget.LinearLayout;
-        import android.widget.Toast;
 
-        import com.benezra.nir.poi.Activity.MainActivity;
+        import com.benezra.nir.poi.Interface.LoginCallBackInterface;
         import com.benezra.nir.poi.R;
         import com.google.android.gms.auth.api.Auth;
         import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -38,14 +36,11 @@ package com.benezra.nir.poi.Fragment;
         import com.google.android.gms.common.ConnectionResult;
         import com.google.android.gms.common.SignInButton;
         import com.google.android.gms.common.api.GoogleApiClient;
-        import com.google.android.gms.common.api.ResultCallback;
-        import com.google.android.gms.common.api.Status;
         import com.google.android.gms.tasks.OnCompleteListener;
         import com.google.android.gms.tasks.Task;
         import com.google.firebase.auth.AuthCredential;
         import com.google.firebase.auth.AuthResult;
         import com.google.firebase.auth.FirebaseAuth;
-        import com.google.firebase.auth.FirebaseUser;
         import com.google.firebase.auth.GoogleAuthProvider;
 
 /**
@@ -57,6 +52,8 @@ public class GoogleSignInFragment extends Fragment implements
 
     private static final String TAG = "GoogleActivity";
     private static final int RC_SIGN_IN = 9001;
+    private Context mContext;
+    private LoginCallBackInterface mListener;
 
     // [START declare_auth]
     private FirebaseAuth mAuth;
@@ -65,6 +62,15 @@ public class GoogleSignInFragment extends Fragment implements
     private GoogleApiClient mGoogleApiClient;
     private SignInButton mSignInButton;
 
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        this.mContext = context;
+        if (context instanceof LoginCallBackInterface) {
+            mListener = (LoginCallBackInterface) context;
+        }
+    }
 
     @Nullable
     @Override
@@ -130,7 +136,6 @@ public class GoogleSignInFragment extends Fragment implements
         // [START_EXCLUDE silent]
        // ((LogInActivityOld)getActivity()).showProgressDialog();
         // [END_EXCLUDE]
-        showProgress(getString(R.string.loading), getString(R.string.please_wait));
 
 
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
@@ -141,21 +146,17 @@ public class GoogleSignInFragment extends Fragment implements
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithCredential:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            Intent i = new Intent(getActivity(), MainActivity.class);
-                            startActivity(i);
-                            getActivity().finish();
+                            mListener.login(true);
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithCredential:failure", task.getException());
-                            Toast.makeText(getActivity(), "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
+                            mListener.login(false);
+
                         }
 
                         // [START_EXCLUDE]
                         //((LogInActivityOld)getActivity()).hideProgressDialog();
                         // [END_EXCLUDE]
-                        hideProgressMessage();
                     }
 
                 });
@@ -169,63 +170,19 @@ public class GoogleSignInFragment extends Fragment implements
     }
 
 
-    private void showProgress(String title, String message) {
-        ProgressDialogFragment mProgressDialogFragment = (ProgressDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
-        if (mProgressDialogFragment == null) {
-            Log.d(TAG, "opening origress dialog");
-            mProgressDialogFragment = ProgressDialogFragment.newInstance(
-                    title, message, ProgressDialog.STYLE_SPINNER);
-            mProgressDialogFragment.show(getActivity().getSupportFragmentManager(), ProgressDialogFragment.class.getName());
-        }
-    }
-
-    private void hideProgressMessage() {
-        ProgressDialogFragment mProgressDialogFragment = (ProgressDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
-        if (mProgressDialogFragment != null)
-            mProgressDialogFragment.dismiss();
-
-    }
-
-
-    // [END signin]
-
-    private void signOut() {
-        // Firebase sign out
-        mAuth.signOut();
-
-        // Google sign out
-        Auth.GoogleSignInApi.signOut(mGoogleApiClient).setResultCallback(
-                new ResultCallback<Status>() {
-                    @Override
-                    public void onResult(@NonNull Status status) {
-                    }
-                });
-    }
-
-    private void revokeAccess() {
-        // Firebase sign out
-        mAuth.signOut();
-
-        // Google revoke access
-        Auth.GoogleSignInApi.revokeAccess(mGoogleApiClient).setResultCallback(
-                new ResultCallback<Status>() {
-                    @Override
-                    public void onResult(@NonNull Status status) {
-                    }
-                });
-    }
-
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         // An unresolvable error has occurred and Google APIs (including Sign-In) will not
         // be available.
         Log.d(TAG, "onConnectionFailed:" + connectionResult);
-        Toast.makeText(getActivity(), "Google Play Services error.", Toast.LENGTH_SHORT).show();
+        mListener.login(false);
+
     }
 
     @Override
     public void onClick(View v) {
+        mListener.startLogin();
         signIn();
     }
 }
