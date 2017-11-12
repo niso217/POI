@@ -20,13 +20,13 @@ import android.widget.Toast;
 
 import com.benezra.nir.poi.Fragment.EventByInterestMapFragment;
 import com.benezra.nir.poi.Fragment.EventByInterestListFragment;
+import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.R;
 
-public class EventsActivity extends BaseActivity{
+public class EventsActivity extends BaseActivity implements FragmentDataCallBackInterface {
     private DrawerLayout drawerLayout;
     private EventByInterestListFragment mUserEventFragment;
     final static String TAG = EventsActivity.class.getSimpleName();
-
 
 
     @Override
@@ -38,19 +38,18 @@ public class EventsActivity extends BaseActivity{
         String interest = intent.getStringExtra("interest");
 
 
-
         mUserEventFragment = (EventByInterestListFragment) getSupportFragmentManager().findFragmentByTag(EventByInterestListFragment.class.getSimpleName());
         if (mUserEventFragment == null) {
             Log.d(TAG, "event fragment null");
             Bundle bundle = new Bundle();
-            bundle.putString("interest",interest);
+            bundle.putString("interest", interest);
             mUserEventFragment = new EventByInterestListFragment();
             mUserEventFragment.setArguments(bundle);
             getSupportFragmentManager().beginTransaction().add(R.id.framelayout, mUserEventFragment, EventByInterestListFragment.class.getSimpleName()).commit();
         }
 
 
-       // setSupportActionBar(toolbar);
+        // setSupportActionBar(toolbar);
 
     }
 
@@ -60,4 +59,14 @@ public class EventsActivity extends BaseActivity{
     }
 
 
+    @Override
+    public void startLoadingData() {
+        showProgress(getString(R.string.loading), getString(R.string.please_wait));
+
+    }
+
+    @Override
+    public void finishLoadingData() {
+        hideProgressMessage();
+    }
 }

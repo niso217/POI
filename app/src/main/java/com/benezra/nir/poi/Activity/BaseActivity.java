@@ -40,6 +40,7 @@ import android.widget.TextView;
 
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.R;
+import com.benezra.nir.poi.Settings.SettingsActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.squareup.picasso.Picasso;
@@ -190,10 +191,8 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
                // createBackStack(intent);
                 break;
             case R.id.nav_settings:
-               // intent = new Intent(this, SettingsActivity.class);
-               // intent.putExtra( PreferenceActivity.EXTRA_SHOW_FRAGMENT, SettingsActivity.GeneralPreferenceFragment.class.getName() );
-               // intent.putExtra( PreferenceActivity.EXTRA_NO_HEADERS, true );
-               // createBackStack(intent);
+                intent = new Intent(this, SettingsActivity.class);
+                createBackStack(intent);
                 break;
             default:
                 finish();

@@ -118,7 +118,7 @@ import static com.benezra.nir.poi.Helper.Constants.START;
 import static com.benezra.nir.poi.Helper.Constants.TITLE;
 
 
-public class CreateEventActivity extends AppCompatActivity
+public class CreateEventActivity extends BaseActivity
         implements View.OnClickListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
         RecyclerTouchListener.ClickListener,
@@ -686,6 +686,11 @@ public class CreateEventActivity extends AppCompatActivity
 
     }
 
+    @Override
+    protected int getNavigationDrawerID() {
+        return 0;
+    }
+
     private void getEventIntent(Intent intent) {
         //showDialog();
 
@@ -929,22 +934,6 @@ public class CreateEventActivity extends AppCompatActivity
 
     }
 
-    private void showProgress(String title, String message) {
-        mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
-        if (mProgressDialogFragment == null) {
-            Log.d(TAG, "opening origress dialog");
-            mProgressDialogFragment = ProgressDialogFragment.newInstance(
-                    title, message, ProgressDialog.STYLE_HORIZONTAL);
-            mProgressDialogFragment.show(getSupportFragmentManager(), ProgressDialogFragment.class.getName());
-        }
-    }
-
-    private void hideProgressMessage() {
-        mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
-        if (mProgressDialogFragment != null)
-            mProgressDialogFragment.dismiss();
-
-    }
 
 
     private Map<String, User> setOwnerAsParticipate() {

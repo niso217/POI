@@ -69,7 +69,7 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
 import static com.benezra.nir.poi.Helper.Constants.ID;
 
 
-public class ViewEventActivity extends AppCompatActivity
+public class ViewEventActivity extends BaseActivity
         implements View.OnClickListener,
         MapFragment.MapFragmentCallback,
         ImageCameraDialogFragmentNew.ImageCameraDialogCallbackNew,
@@ -270,6 +270,11 @@ public class ViewEventActivity extends AppCompatActivity
         participatesChangeListener();
 
 
+    }
+
+    @Override
+    protected int getNavigationDrawerID() {
+        return 0;
     }
 
     private void setCoordinatorLayoutBehavior() {

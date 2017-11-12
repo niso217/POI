@@ -23,6 +23,7 @@ import com.benezra.nir.poi.Activity.ViewEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.EventModel;
+import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.firebase.geofire.GeoFire;
@@ -73,7 +74,7 @@ public class EventByInterestListFragment extends Fragment implements
     private FusedLocationProviderClient mFusedLocationClient;
     private Location mLastLocation;
     private FirebaseUser mFirebaseUser;
-    private UserEventFragmentCallback mListener;
+    private FragmentDataCallBackInterface mListener;
     private Context mContext;
     private RecyclerView mEventsRecyclerView;
     private ArrayList<Event> mEventList;
@@ -110,8 +111,8 @@ public class EventByInterestListFragment extends Fragment implements
     public void onAttach(Context context) {
         super.onAttach(context);
         this.mContext = context;
-        if (context instanceof UserEventFragmentCallback) {
-            mListener = (UserEventFragmentCallback) context;
+        if (context instanceof FragmentDataCallBackInterface) {
+            mListener = (FragmentDataCallBackInterface) context;
         }
     }
 
@@ -143,6 +144,7 @@ public class EventByInterestListFragment extends Fragment implements
     @Override
     public void navigateToCaptureFragment(String[] permissions) {
         if (isPermissionGranted(permissions)) {
+            mListener.startLoadingData();
             initFusedLocation();
         } else {
             PermissionsDialogFragment permissionsDialogFragment = (PermissionsDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
@@ -164,12 +166,6 @@ public class EventByInterestListFragment extends Fragment implements
         return true;
     }
 
-    public interface UserEventFragmentCallback {
-        void showDialog();
-
-        void hideDialog();
-
-    }
 
 
     public EventByInterestListFragment() {
@@ -321,6 +317,8 @@ public class EventByInterestListFragment extends Fragment implements
                     }
                     mEventsAdapter.notifyDataSetChanged();
                 }
+                mListener.finishLoadingData();
+
             }
 
             @Override
