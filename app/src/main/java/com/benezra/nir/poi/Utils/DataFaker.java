@@ -293,7 +293,7 @@ public class DataFaker extends AppCompatActivity implements
 
     @Override
     public void LocationPermission() {
-        
+
     }
 
     @Override
