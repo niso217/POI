@@ -44,6 +44,7 @@
 
     <color name="aliceblue">#F0F8FF</color>
     <color name="deepskyblue">#00BFFF</color>
+    <color name="deepskybluealpha">#8000BFFF</color>
     <color name="appbar">#62D6FF</color>
 
     <color name="purple_500">#3F51B5</color>
