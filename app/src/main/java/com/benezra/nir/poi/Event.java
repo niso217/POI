@@ -4,6 +4,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.benezra.nir.poi.Bitmap.DateUtil;
@@ -23,7 +24,7 @@ import java.util.Map;
  */
 
 @IgnoreExtraProperties
-public class Event implements Parcelable , Cloneable{
+public class Event implements Parcelable , Cloneable,Comparable{
 
     private String interest;
     private double latitude;
@@ -49,6 +50,11 @@ public class Event implements Parcelable , Cloneable{
     @Exclude
     public Marker getMarker() {
         return marker;
+    }
+
+    @Exclude
+    public void setMarker(Marker marker) {
+        this.marker = marker;
     }
 
     @Exclude
@@ -271,4 +277,15 @@ public class Event implements Parcelable , Cloneable{
             return new Event[size];
         }
     };
+
+    @Override
+    public int compareTo(@NonNull Object o) {
+        if(((Event)o).getDistance() > distance){
+            return -1;
+        }if(((Event)o).getDistance() == distance){
+            return 0;
+        }else{
+            return 1;
+        }
+    }
 }

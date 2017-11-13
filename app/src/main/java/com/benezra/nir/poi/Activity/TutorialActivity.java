@@ -35,8 +35,8 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.R;
-import com.benezra.nir.poi.tutorial.PrefManager;
 
 /**
  * Class structure taken from tutorial at http://www.androidhive.info/2016/05/android-build-intro-slider-app/
@@ -53,20 +53,20 @@ public class TutorialActivity extends AppCompatActivity {
     private TextView[] dots;
     private int[] layouts;
     private Button btnSkip, btnNext;
-    private PrefManager prefManager;
 
     private static final String TAG = TutorialActivity.class.getSimpleName();
     public static final String ACTION_SHOW_ANYWAYS = TAG + ".ACTION_SHOW_ANYWAYS";
+    private static final String IS_FIRST_TIME_LAUNCH = "IsFirstTimeLaunch";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // Checking for first time launch - before calling setContentView()
-        prefManager = new PrefManager(this);
         Intent i = getIntent();
 
-        if (!prefManager.isFirstTimeLaunch() && (i == null || !ACTION_SHOW_ANYWAYS.equals(i.getAction()))) {
+        if (!SharePref.getInstance(this).getBoolean(IS_FIRST_TIME_LAUNCH,true) && (i == null || !ACTION_SHOW_ANYWAYS.equals(i.getAction()))) {
             launchHomeScreen();
             return;
         }
@@ -171,7 +171,7 @@ public class TutorialActivity extends AppCompatActivity {
     }
 
     private void launchHomeScreen() {
-        prefManager.setFirstTimeLaunch(false);
+        SharePref.getInstance(this).putBoolean(IS_FIRST_TIME_LAUNCH, false);
         Intent intent = new Intent(TutorialActivity.this, SignInActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);

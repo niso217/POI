@@ -1,8 +1,10 @@
 package com.benezra.nir.poi.Activity;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
@@ -10,6 +12,7 @@ import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -37,6 +40,7 @@ import com.benezra.nir.poi.ChatActivity;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Fragment.ImageCameraDialogFragmentNew;
 import com.benezra.nir.poi.Fragment.MapFragment;
+import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Fragment.UploadToFireBaseFragment;
 import com.benezra.nir.poi.Objects.EventPhotos;
 import com.benezra.nir.poi.R;
@@ -54,8 +58,10 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
+import java.util.Arrays;
 import java.util.Calendar;
 
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
@@ -75,7 +81,9 @@ public class ViewEventActivity extends BaseActivity
         ImageCameraDialogFragmentNew.ImageCameraDialogCallbackNew,
         RecyclerTouchListener.ClickListener,
         AppBarLayout.OnOffsetChangedListener,
-        CompoundButton.OnCheckedChangeListener,UploadToFireBaseFragment.UploadListener {
+        CompoundButton.OnCheckedChangeListener,
+        UploadToFireBaseFragment.UploadListener ,
+        PermissionsDialogFragment.PermissionsGrantedCallback{
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -134,9 +142,49 @@ public class ViewEventActivity extends BaseActivity
                 startActivity(i);
                 break;
             case R.id.btn_add_image:
-                buildImageAndTitleChooser();
+                navigateToCaptureFragment(new String[]{Manifest.permission.CAMERA});
                 break;
         }
+    }
+
+
+    @Override
+    public void navigateToCaptureFragment(String[] permissions) {
+
+        if (isPermissionGranted(permissions)) {
+
+
+            if (Arrays.asList(permissions).contains(ACCESS_FINE_LOCATION)) {
+                mapFragment.initFusedLocation();
+            }
+            if (Arrays.asList(permissions).contains(Manifest.permission.CAMERA)) {
+                buildImageAndTitleChooser();
+
+            }
+        } else {
+            PermissionsDialogFragment dialogFragment = (PermissionsDialogFragment) getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
+            if (dialogFragment == null) {
+                Log.d(TAG, "opening dialog");
+                PermissionsDialogFragment permissionsDialogFragment = PermissionsDialogFragment.newInstance();
+                permissionsDialogFragment.setPermissions(permissions);
+                permissionsDialogFragment.show(getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
+
+            }
+        }
+    }
+
+
+    private boolean isPermissionGranted(String[] permissions) {
+        for (int i = 0; i < permissions.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, permissions[i]) == PackageManager.PERMISSION_DENIED)
+                return false;
+        }
+        return true;
+    }
+
+    @Override
+    public void UserIgnoredPermissionDialog() {
+
     }
 
     @Override
@@ -565,6 +613,11 @@ public class ViewEventActivity extends BaseActivity
     @Override
     public void onEventLocationChanged(LatLng latLng,String address) {
 
+    }
+
+    @Override
+    public void LocationPermission() {
+        navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
     }
 
 

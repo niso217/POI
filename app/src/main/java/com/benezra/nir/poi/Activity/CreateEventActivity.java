@@ -9,6 +9,7 @@ import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -25,6 +26,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
@@ -399,12 +401,7 @@ public class CreateEventActivity extends BaseActivity
                 navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
                 break;
             case R.id.btn_share:
-                Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
-                sharingIntent.setType("text/plain");
-                String shareBodyText = "Check it out. Your message goes here";
-                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Subject here");
-                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBodyText);
-                startActivity(Intent.createChooser(sharingIntent, "Shearing Option"));
+
                 break;
             case R.id.btn_save:
                 checkEvent();
@@ -751,6 +748,11 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
+    @Override
+    public void LocationPermission() {
+
+    }
+
 
     private void addImagesChangeListener() {
         Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("pictures");
@@ -875,6 +877,11 @@ public class CreateEventActivity extends BaseActivity
 
             }
         }
+    }
+
+    @Override
+    public void UserIgnoredPermissionDialog() {
+
     }
 
     private boolean isPermissionGranted(String[] permissions) {

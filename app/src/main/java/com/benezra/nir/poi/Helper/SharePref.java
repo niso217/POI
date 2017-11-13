@@ -14,6 +14,8 @@ public class SharePref {
     private static SharedPreferences.Editor editor;
 
     private static final String IMAGE = "image";
+    private static final String IS_FIRST_TIME_LAUNCH = "IsFirstTimeLaunch";
+
 
     private SharePref() {} //prevent creating multiple instances by making the constructor private
 
@@ -26,23 +28,41 @@ public class SharePref {
         return sharePref;
     }
 
-    public void saveImage(String image) {
-        editor.putString(IMAGE, image);
+    public void putFloat(String key, float value){
+        editor.putFloat(key,value);
         editor.commit();
     }
 
-    public String getImage() {
-        return sharedPreferences.getString(IMAGE, "");
-    }
-
-    public void removeImage() {
-        editor.remove(IMAGE);
+    public void putInt(String key, int value){
+        editor.putInt(key,value);
         editor.commit();
     }
 
-    public void clearAll() {
-        editor.clear();
+    public void putString(String key, String value) {
+        editor.putString(key, value);
         editor.commit();
+    }
+
+    public void putBoolean(String key, boolean value) {
+        editor.putBoolean(key, value);
+        editor.commit();
+    }
+
+
+    public boolean getBoolean(String key,boolean defValue) {
+        return sharedPreferences.getBoolean(key, defValue);
+    }
+
+    public int getInt(String key,int defValue) {
+        return sharedPreferences.getInt(key,defValue);
+    }
+
+    public String getString(String key,String defValue) {
+        return sharedPreferences.getString(key,defValue);
+    }
+
+    public float getFloat(String key, float defValue) {
+        return sharedPreferences.getFloat(key,defValue);
     }
 
 }

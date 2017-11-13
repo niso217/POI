@@ -172,6 +172,7 @@ public class PermissionsDialogFragment extends DialogFragment {
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
+                        listener.UserIgnoredPermissionDialog();
                         dismiss();
                     }
                 }).setCancelable(false).create();
@@ -192,6 +193,7 @@ public class PermissionsDialogFragment extends DialogFragment {
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
+                        listener.UserIgnoredPermissionDialog();
                         dismiss();
                     }
                 }).setCancelable(false).create();
@@ -201,6 +203,7 @@ public class PermissionsDialogFragment extends DialogFragment {
 
     public interface PermissionsGrantedCallback {
         void navigateToCaptureFragment(String[] permissions);
+        void UserIgnoredPermissionDialog();
     }
 
     private boolean isPermissionGranted() {

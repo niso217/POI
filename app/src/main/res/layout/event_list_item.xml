@@ -36,6 +36,7 @@
 
             <TextView
                 android:id="@+id/tv_title"
+                android:singleLine="true"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.5"
@@ -43,6 +44,7 @@
 
             <TextView
                 android:id="@+id/tv_distance"
+                android:singleLine="true"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.5"
@@ -52,6 +54,7 @@
 
         <TextView
             android:id="@+id/tv_theme"
+            android:singleLine="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
@@ -59,6 +62,7 @@
 
         <TextView
             android:id="@+id/tv_start"
+            android:singleLine="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
@@ -66,6 +70,7 @@
 
         <TextView
             android:id="@+id/tv_address"
+            android:singleLine="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"

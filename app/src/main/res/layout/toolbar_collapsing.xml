@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:descendantFocusability="beforeDescendants"
     android:focusableInTouchMode="true"
+    android:elevation="0dp"
     android:theme="@style/AppTheme.AppBarOverlay">
 
     <android.support.design.widget.CollapsingToolbarLayout

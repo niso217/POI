@@ -136,13 +136,13 @@ public class MapFragment extends Fragment implements
         mTabSelectedIndex = tab.getPosition();
         switch (mTabSelectedIndex) {
             case DRIVING_TAB:
-                initFusedLocation();
+                mListener.LocationPermission();
                 break;
             case WALKING_TAB:
-                initFusedLocation();
+                mListener.LocationPermission();
                 break;
             case CYCLING_TAB:
-                initFusedLocation();
+                mListener.LocationPermission();
                 break;
             case EVENT_LOC_TAB:
                 getAddress(mEventLocation);
@@ -289,8 +289,8 @@ public class MapFragment extends Fragment implements
         if (mPolyline != null) mPolyline.remove();
         mPolyline = this.mMap.addPolyline(lineOptions);
 
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         setMyLocationEnabled(true);
@@ -369,12 +369,14 @@ public class MapFragment extends Fragment implements
 
         void onEventLocationChanged(LatLng latLng,String address);
 
+        void LocationPermission();
+
     }
 
     public void initFusedLocation() {
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(mContext);
 
-        if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(mContext, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         mFusedLocationClient.getLastLocation()
@@ -403,7 +405,7 @@ public class MapFragment extends Fragment implements
                                     break;
 
                             }
-                            VolleyHelper.getInstance(getContext()).get(directions, null, MapFragment.this, MapFragment.this);
+                            VolleyHelper.getInstance(mContext).get(directions, null, MapFragment.this, MapFragment.this);
 
                         }
 
@@ -423,7 +425,7 @@ public class MapFragment extends Fragment implements
 
             }
         }).execute(new AsyncGeocoder.AsyncGeocoderObject(
-                new Geocoder(getContext()), LatLongToLocation(latLng)));
+                new Geocoder(mContext), LatLongToLocation(latLng)));
     }
 
     private Location LatLongToLocation(LatLng latLng){
@@ -455,8 +457,8 @@ public class MapFragment extends Fragment implements
 
 
     public void setMyLocationEnabled(boolean Enabled) {
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding

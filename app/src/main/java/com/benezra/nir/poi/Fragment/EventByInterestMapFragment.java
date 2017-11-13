@@ -37,6 +37,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -88,15 +89,16 @@ public class EventByInterestMapFragment extends Fragment implements
     final static String TAG = EventByInterestMapFragment.class.getSimpleName();
     private GoogleMap mMap;
     private MapView mMapView;
-    List<MarkerOptions> markers = new ArrayList<MarkerOptions>();
     private Event mCurrentSelectedEvent;
     private RecyclerView mEventsRecyclerView;
-    private List<Event> mEventList;
+    private ArrayList<Event> mEventList;
     private EventsAdapter mEventsAdapter;
     private ItemTouchHelper mItemTouchHelper;
     private LatLngBounds mLatLngBounds;
     private LatLngBounds.Builder mBoundsBuilder;
     private FirebaseAuth mAuth;
+    private Marker lastClicked = null;
+    private int mLastSelectedIndex;
 
 
     @Override
@@ -110,11 +112,24 @@ public class EventByInterestMapFragment extends Fragment implements
         mAuth = FirebaseAuth.getInstance();
 
         Bundle bundle = getArguments();
-        if (bundle != null) {
+        if (bundle != null && savedInstanceState==null) {
             mEventList = bundle.getParcelableArrayList("event_list");
+
+        }
+        else{
+            mLastSelectedIndex = savedInstanceState.getInt("index",0);
+            mEventList = savedInstanceState.getParcelableArrayList("event_list");
+
         }
 
 
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList("event_list",mEventList);
+        outState.putInt("index",mLastSelectedIndex);
     }
 
     @Override
@@ -123,7 +138,6 @@ public class EventByInterestMapFragment extends Fragment implements
         MapStateManager mgr = new MapStateManager(getContext());
         mgr.saveMapState(mMap);
     }
-
 
 
     public EventByInterestMapFragment() {
@@ -148,28 +162,21 @@ public class EventByInterestMapFragment extends Fragment implements
         mMap.setPadding(300, 300, 300, 300);
         addAllMarkersToMap();
 
-
+        if (!mEventList.isEmpty())
+        PaintSelectedEvent(mEventList.get(mLastSelectedIndex).getMarker());
 
     }
 
 
-    private void addSingeMarkerToMap(String id, GeoLocation location) {
-        LatLng latLng = new LatLng(location.latitude, location.longitude);
-        MarkerOptions markerOptions = new MarkerOptions()
-                .position(latLng);
-        Marker marker = mMap.addMarker(markerOptions);
-        marker.setTag(id);
-        //mEventHashMap.put(id, new Event(id, location, marker));
-        mBoundsBuilder.include(latLng);
-    }
 
-    private void addAllMarkersToMap(){
+    private void addAllMarkersToMap() {
         for (int i = 0; i < mEventList.size(); i++) {
             LatLng loc = mEventList.get(i).getLatlng();
             MarkerOptions markerOptions = new MarkerOptions()
                     .position(loc);
             Marker marker = mMap.addMarker(markerOptions);
             marker.setTag(mEventList.get(i).getId());
+            mEventList.get(i).setMarker(marker);
             mBoundsBuilder.include(loc);
 
         }
@@ -181,17 +188,13 @@ public class EventByInterestMapFragment extends Fragment implements
             mMap.moveCamera(update);
 
             mMap.setMapType(mgr.getSavedMapType());
-        }
-        else{
-            if (mEventList.size()>2)
-            {
+        } else {
+            if (mEventList.size() > 2) {
                 LatLngBounds bounds = mBoundsBuilder.build();
                 mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 10));
-            }
-            else
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mEventList.get(0).getLatlng(),10));
+            } else
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mEventList.get(0).getLatlng(), 10));
         }
-
 
 
     }
@@ -222,10 +225,11 @@ public class EventByInterestMapFragment extends Fragment implements
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 switch (newState) {
                     case RecyclerView.SCROLL_STATE_IDLE:
-                        int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
-                        System.out.println("The RecyclerView is not scrolling " + firstVisiblePosition);
+                        mLastSelectedIndex = layoutManager.findFirstVisibleItemPosition();
+                        System.out.println("The RecyclerView is not scrolling " + mLastSelectedIndex);
                         if (mMap != null) {
-                            CameraUpdate loc = CameraUpdateFactory.newLatLng(mEventList.get(firstVisiblePosition).getLatlng());
+                            CameraUpdate loc = CameraUpdateFactory.newLatLng(mEventList.get(mLastSelectedIndex).getLatlng());
+                            PaintSelectedEvent(mEventList.get(mLastSelectedIndex).getMarker());
                             mMap.animateCamera(loc);
                         }
 
@@ -237,16 +241,6 @@ public class EventByInterestMapFragment extends Fragment implements
 
         return rootView;
     }
-
-
-
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-    }
-
-
 
 
 
@@ -276,18 +270,26 @@ public class EventByInterestMapFragment extends Fragment implements
     @Override
     public boolean onMarkerClick(final Marker marker) {
         int index = 0;
+
         for (int i = 0; i < mEventList.size(); i++) {
-            if (mEventList.get(i).getId().equals(marker.getTag()))
-            {
+            if (mEventList.get(i).getId().equals(marker.getTag())) {
                 index = i;
                 break;
             }
 
         }
 
+        PaintSelectedEvent(marker);
 
         mEventsRecyclerView.smoothScrollToPosition(index);
         return false;
+    }
+
+    private void PaintSelectedEvent(Marker marker){
+        if (lastClicked != null)
+            lastClicked.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+        lastClicked = marker;
     }
 
     @Override

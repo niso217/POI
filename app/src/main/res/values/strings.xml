@@ -118,6 +118,9 @@
     <string name="delete_event_title">Delete</string>
     <string name="delete_event_message">Are you sure you want to delte the event?</string>
 
+    <string name="no_permission_title">No location permission</string>
+    <string name="no_permission_message">The system will not be able to work without location services approval</string>
+
     <!--Progress Dialog Titles-->
     <string name="updating_event">Updating event</string>
     <string name="creating_event">Creating event</string>

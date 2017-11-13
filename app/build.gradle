@@ -30,7 +30,6 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.google.firebase:firebase-core:11.4.0'
     compile 'com.google.firebase:firebase-auth:11.4.0'
-    compile 'com.google.android.gms:play-services-auth:11.4.0'
     compile 'com.google.firebase:firebase-database:11.4.0'
     compile 'com.google.firebase:firebase-storage:11.4.0'
 
@@ -44,7 +43,11 @@ dependencies {
     compile 'com.google.android.gms:play-services-maps:11.4.0'
     compile 'com.google.android.gms:play-services-location:11.4.0'
     compile 'com.google.android.gms:play-services-places:11.4.0'
+    compile 'com.google.android.gms:play-services:11.4.0'
+    compile 'com.google.android.gms:play-services-auth:11.4.0'
 
+
+    compile 'com.xw.repo:bubbleseekbar:3.8'
 
     // Facebook Android SDK (only required for Facebook Login)
     // Used in FacebookLoginActivity. This is only compiled into the minSdkJellybean variant of this
@@ -57,6 +60,7 @@ dependencies {
     compile 'com.firebaseui:firebase-ui:0.6.0'
     compile 'com.firebaseui:firebase-ui-database:2.1.1'
     compile 'com.github.bumptech.glide:glide:3.7.0'
+
 
 
 

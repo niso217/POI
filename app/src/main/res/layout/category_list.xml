@@ -8,54 +8,48 @@
     tools:context="com.benezra.nir.poi.Activity.EventsActivity">
     <!--tools:showIn="@layout/activity_events">-->
 
-    <!--<android.support.design.widget.AppBarLayout-->
-        <!--android:id="@+id/materialup.appbar"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:background="@android:color/transparent"-->
-        <!--android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">-->
-        <!--​-->
 
-        <!--<android.support.design.widget.CollapsingToolbarLayout-->
-            <!--android:id="@+id/main.collapsing"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="200dp"-->
-            <!--app:expandedTitleMarginEnd="64dp"-->
-            <!--app:expandedTitleMarginStart="48dp"-->
-            <!--app:layout_scrollFlags="scroll|exitUntilCollapsed">-->
-            <!--​-->
-
-            <!--<ImageView-->
-                <!--android:id="@+id/materialup.profile_backdrop"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="match_parent"-->
-                <!--android:scaleType="centerCrop"-->
-                <!--android:src="@drawable/sunset"-->
-                <!--app:layout_collapseMode="parallax" />-->
-        <!--</android.support.design.widget.CollapsingToolbarLayout>-->
-        <!--​​-->
-        <!--​-->
-        <!--​-->
-
-    <!--</android.support.design.widget.AppBarLayout>-->
-    ​
-    <!--<include layout="@layout/toolbar"/>-->
-
-    ​
-
-    <android.support.v4.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:orientation="vertical"
+        android:layout_height="match_parent">
+
+        ​
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPrimary">
+
+            <com.xw.repo.BubbleSeekBar
+                android:id="@+id/sb_km"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_marginBottom="10dp"
+                app:bsb_bubble_color="@color/deepskyblue"
+                app:bsb_bubble_text_color="@color/white"
+                app:bsb_max="100"
+                app:bsb_min="0"
+                app:bsb_progress="30"
+                app:bsb_second_track_color="@color/deepskyblue"
+                app:bsb_thumb_color="@color/white"
+                app:bsb_thumb_radius="10dp"
+                app:bsb_thumb_text_color="@color/white"
+                android:layout_margin="10dp"
+                app:bsb_track_color="@color/white" />
+        </LinearLayout>​
+
+    ​
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/events_recycler_view"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:scrollbars="none" />
 
-    </android.support.v4.widget.NestedScrollView>
+
+    </LinearLayout>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
@@ -66,4 +60,5 @@
         android:clickable="true"
         android:elevation="8dp"
         android:src="@android:drawable/ic_dialog_map" />
+
 </android.support.design.widget.CoordinatorLayout>

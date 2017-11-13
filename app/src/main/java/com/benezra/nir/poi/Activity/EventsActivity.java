@@ -5,9 +5,12 @@ package com.benezra.nir.poi.Activity;
  */
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -15,17 +18,31 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.MenuItem;
+import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.benezra.nir.poi.Fragment.AlertDialogFragment;
 import com.benezra.nir.poi.Fragment.EventByInterestMapFragment;
 import com.benezra.nir.poi.Fragment.EventByInterestListFragment;
+import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.R;
 
-public class EventsActivity extends BaseActivity implements FragmentDataCallBackInterface {
+import java.util.HashMap;
+
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.content.DialogInterface.BUTTON_NEUTRAL;
+import static android.content.DialogInterface.BUTTON_POSITIVE;
+import static com.benezra.nir.poi.Helper.Constants.ACTION_REMOVE;
+
+public class EventsActivity extends BaseActivity implements
+        FragmentDataCallBackInterface,
+        PermissionsDialogFragment.PermissionsGrantedCallback
+        {
     private DrawerLayout drawerLayout;
     private EventByInterestListFragment mUserEventFragment;
+    private AlertDialogFragment alertDialog;
     final static String TAG = EventsActivity.class.getSimpleName();
 
 
@@ -36,6 +53,8 @@ public class EventsActivity extends BaseActivity implements FragmentDataCallBack
 
         Intent intent = getIntent();
         String interest = intent.getStringExtra("interest");
+
+
 
 
         mUserEventFragment = (EventByInterestListFragment) getSupportFragmentManager().findFragmentByTag(EventByInterestListFragment.class.getSimpleName());
@@ -54,6 +73,13 @@ public class EventsActivity extends BaseActivity implements FragmentDataCallBack
     }
 
     @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        navigateToCaptureFragment(new String[]{ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+
+    }
+
+    @Override
     protected int getNavigationDrawerID() {
         return 0;
     }
@@ -68,5 +94,42 @@ public class EventsActivity extends BaseActivity implements FragmentDataCallBack
     @Override
     public void finishLoadingData() {
         hideProgressMessage();
+    }
+
+
+
+    @Override
+    public void UserIgnoredPermissionDialog() {
+        finish();
+    }
+
+
+
+
+    @Override
+    public void navigateToCaptureFragment(String[] permissions) {
+        if(alertDialog!=null && alertDialog.isVisible()) return;
+
+        if (isPermissionGranted(permissions)) {
+            if (mUserEventFragment!=null)
+                mUserEventFragment.getAllUserEvents();
+        } else {
+            PermissionsDialogFragment permissionsDialogFragment = (PermissionsDialogFragment) getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
+            if (permissionsDialogFragment == null) {
+                Log.d(TAG, "opening dialog");
+                permissionsDialogFragment = PermissionsDialogFragment.newInstance();
+                permissionsDialogFragment.setPermissions(permissions);
+                permissionsDialogFragment.show(getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
+
+            }
+        }
+    }
+
+    private boolean isPermissionGranted(String[] permissions) {
+        for (int i = 0; i < permissions.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, permissions[i]) == PackageManager.PERMISSION_DENIED)
+                return false;
+        }
+        return true;
     }
 }

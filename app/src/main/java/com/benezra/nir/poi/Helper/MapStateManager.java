@@ -19,45 +19,42 @@ public class MapStateManager {
     private static final String BEARING = "bearing";
     private static final String TILT = "tilt";
     private static final String MAPTYPE = "MAPTYPE";
+    private SharePref sharePref;
 
-    private static final String PREFS_NAME ="mapCameraState";
-
-    private SharedPreferences mapStatePrefs;
 
     public MapStateManager(Context context) {
-        mapStatePrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+         sharePref = SharePref.getInstance(context);
     }
 
     public void saveMapState(GoogleMap mapMie) {
-        SharedPreferences.Editor editor = mapStatePrefs.edit();
+
         CameraPosition position = mapMie.getCameraPosition();
 
-        editor.putFloat(LATITUDE, (float) position.target.latitude);
-        editor.putFloat(LONGITUDE, (float) position.target.longitude);
-        editor.putFloat(ZOOM, position.zoom);
-        editor.putFloat(TILT, position.tilt);
-        editor.putFloat(BEARING, position.bearing);
-        editor.putInt(MAPTYPE, mapMie.getMapType());
-        editor.commit();
+        sharePref.putFloat(LATITUDE, (float) position.target.latitude);
+        sharePref.putFloat(LONGITUDE, (float) position.target.longitude);
+        sharePref.putFloat(ZOOM, position.zoom);
+        sharePref.putFloat(TILT, position.tilt);
+        sharePref.putFloat(BEARING, position.bearing);
+        sharePref.putInt(MAPTYPE, mapMie.getMapType());
     }
 
     public CameraPosition getSavedCameraPosition() {
-        double latitude = mapStatePrefs.getFloat(LATITUDE, 0);
+        double latitude = sharePref.getFloat(LATITUDE, 0);
         if (latitude == 0) {
             return null;
         }
-        double longitude = mapStatePrefs.getFloat(LONGITUDE, 0);
+        double longitude = sharePref.getFloat(LONGITUDE, 0);
         LatLng target = new LatLng(latitude, longitude);
 
-        float zoom = mapStatePrefs.getFloat(ZOOM, 0);
-        float bearing = mapStatePrefs.getFloat(BEARING, 0);
-        float tilt = mapStatePrefs.getFloat(TILT, 0);
+        float zoom = sharePref.getFloat(ZOOM, 0);
+        float bearing = sharePref.getFloat(BEARING, 0);
+        float tilt = sharePref.getFloat(TILT, 0);
 
         CameraPosition position = new CameraPosition(target, zoom, tilt, bearing);
         return position;
     }
 
     public int getSavedMapType() {
-        return mapStatePrefs.getInt(MAPTYPE, GoogleMap.MAP_TYPE_NORMAL);
+        return sharePref.getInt(MAPTYPE, GoogleMap.MAP_TYPE_NORMAL);
     }
 }

@@ -292,6 +292,11 @@ public class DataFaker extends AppCompatActivity implements
     }
 
     @Override
+    public void LocationPermission() {
+        
+    }
+
+    @Override
     public void onPlaceSelected(Place place) {
         mCurrentPin = place.getLatLng();
 

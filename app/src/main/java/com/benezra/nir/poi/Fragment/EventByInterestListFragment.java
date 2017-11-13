@@ -42,14 +42,21 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.xw.repo.BubbleSeekBar;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.content.DialogInterface.BUTTON_NEGATIVE;
+import static android.content.DialogInterface.BUTTON_NEUTRAL;
+import static android.content.DialogInterface.BUTTON_POSITIVE;
+import static com.benezra.nir.poi.Helper.Constants.ACTION_REMOVE;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
 import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
@@ -66,8 +73,8 @@ import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
  */
 public class EventByInterestListFragment extends Fragment implements
 
-        RecyclerTouchListener.ClickListener,
-        PermissionsDialogFragment.PermissionsGrantedCallback {
+        RecyclerTouchListener.ClickListener
+         {
 
     private EventModel mEventModel;
     private FirebaseDatabase mFirebaseInstance;
@@ -86,6 +93,7 @@ public class EventByInterestListFragment extends Fragment implements
     private Set<String> mEventHashSet;
     private FirebaseAuth mAuth;
     private String mSelectedInterest;
+    private BubbleSeekBar mBbubbleSeekBar;
 
 
     @Override
@@ -101,8 +109,6 @@ public class EventByInterestListFragment extends Fragment implements
         mEventHashSet = new HashSet<>();
         mAuth = FirebaseAuth.getInstance();
         mSelectedInterest = getArguments().getString("interest");
-
-        getAllUserEvents();
 
     }
 
@@ -141,37 +147,16 @@ public class EventByInterestListFragment extends Fragment implements
 
     }
 
-    @Override
-    public void navigateToCaptureFragment(String[] permissions) {
-        if (isPermissionGranted(permissions)) {
-            mListener.startLoadingData();
-            initFusedLocation();
-        } else {
-            PermissionsDialogFragment permissionsDialogFragment = (PermissionsDialogFragment) getActivity().getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
-            if (permissionsDialogFragment == null) {
-                Log.d(TAG, "opening dialog");
-                permissionsDialogFragment = PermissionsDialogFragment.newInstance();
-                permissionsDialogFragment.setPermissions(permissions);
-                permissionsDialogFragment.show(getActivity().getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
-
-            }
-        }
-    }
-
-    private boolean isPermissionGranted(String[] permissions) {
-        for (int i = 0; i < permissions.length; i++) {
-            if (ContextCompat.checkSelfPermission(getContext(), permissions[i]) == PackageManager.PERMISSION_DENIED)
-                return false;
-        }
-        return true;
-    }
-
-
-
     public EventByInterestListFragment() {
         // Required empty public constructor
     }
 
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.d(TAG,"onSaveInstanceState");
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -198,6 +183,29 @@ public class EventByInterestListFragment extends Fragment implements
             }
         });
 
+         mBbubbleSeekBar = (BubbleSeekBar) rootView.findViewById(R.id.sb_km);
+
+
+        mBbubbleSeekBar.setOnProgressChangedListener(new BubbleSeekBar.OnProgressChangedListener() {
+            @Override
+            public void onProgressChanged(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat) {
+                Log.d(TAG,progress+" Changed");
+            }
+
+            @Override
+            public void getProgressOnActionUp(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat) {
+                Log.d(TAG,progress+" UP");
+                initGeoFire(progress);
+
+            }
+
+            @Override
+            public void getProgressOnFinally(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat) {
+                Log.d(TAG,progress+" Finally");
+
+            }
+        });
+
 //        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mEventsAdapter);
 //        mItemTouchHelper = new ItemTouchHelper(callback);
 //        mItemTouchHelper.attachToRecyclerView(mEventsRecyclerView);
@@ -207,12 +215,14 @@ public class EventByInterestListFragment extends Fragment implements
     }
 
 
-    private void initFusedLocation() {
+
+    public void initFusedLocation() {
+        mListener.startLoadingData();
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
         if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
+
         }
         mFusedLocationClient.getLastLocation()
                 .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
@@ -221,18 +231,19 @@ public class EventByInterestListFragment extends Fragment implements
                         // Got last known location. In some rare situations this can be null.
                         if (location != null) {
                             mLastLocation = location;
-                            initGeoFire();
+                            initGeoFire(30);
                         }
                     }
                 });
     }
 
 
-    private void initGeoFire() {
+    private void initGeoFire(int radius) {
+        mEventHashSet.clear();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("events");
         GeoFire geoFire = new GeoFire(ref);
         // creates a new query around [37.7832, -122.4056] with a radius of 0.6 kilometers
-        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 100);
+        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()), radius);
 
         geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
             @Override
@@ -280,7 +291,7 @@ public class EventByInterestListFragment extends Fragment implements
     }
 
 
-    private void getAllUserEvents() {
+    public void getAllUserEvents() {
         Query query = mFirebaseInstance.getReference("events").orderByChild("owner").equalTo(mAuth.getCurrentUser().getUid());
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -290,7 +301,7 @@ public class EventByInterestListFragment extends Fragment implements
                         mUserEvents.add(data.getKey());
                     }
                 }
-                navigateToCaptureFragment(new String[]{ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+                initFusedLocation();
 
             }
 
@@ -316,6 +327,7 @@ public class EventByInterestListFragment extends Fragment implements
                         }
                     }
                     mEventsAdapter.notifyDataSetChanged();
+                    Collections.sort(mEventList);
                 }
                 mListener.finishLoadingData();
 

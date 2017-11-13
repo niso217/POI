@@ -17,9 +17,12 @@
 
 package com.benezra.nir.poi.Activity;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -32,6 +35,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -40,10 +44,17 @@ import android.widget.TextView;
 
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.R;
+import com.benezra.nir.poi.Settings.AboutActivity;
 import com.benezra.nir.poi.Settings.SettingsActivity;
+import com.facebook.Profile;
+import com.facebook.share.ShareApi;
+import com.facebook.share.model.ShareLinkContent;
+import com.facebook.share.widget.ShareDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.squareup.picasso.Picasso;
+import com.google.android.gms.plus.PlusShare;
+
 
 
 /**
@@ -60,6 +71,8 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
     // different Activities of the app through the Nav Drawer
     static final int MAIN_CONTENT_FADEOUT_DURATION = 150;
     static final int MAIN_CONTENT_FADEIN_DURATION = 250;
+    public static final int REQ_START_SHARE = 2;
+
 
     // Navigation drawer:
     private DrawerLayout mDrawerLayout;
@@ -183,10 +196,11 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
                 createBackStack(intent);
                 break;
             case R.id.nav_about:
-               // intent = new Intent(this, AboutActivity.class);
-               // createBackStack(intent);
+                intent = new Intent(this, AboutActivity.class);
+                createBackStack(intent);
                 break;
             case R.id.nav_share:
+                shareApp();
                /// intent = new Intent(this, HelpActivity.class);
                // createBackStack(intent);
                 break;
@@ -248,6 +262,53 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
         if (mProgressDialogFragment != null)
             mProgressDialogFragment.dismiss();
 
+    }
+
+
+    /**
+     *
+     * @param subject - the subject of the post
+     * @param body - the body of the post
+     * @param url - link inside the post
+     */
+    public void PostOnGoogle(String subject, String body, String url) {
+        Intent shareIntent = new PlusShare.Builder(this)
+                .setType("text/plain")
+                .setText(subject + "" + body)
+                .setContentUrl(Uri.parse(url))
+                .getIntent();
+        startActivityForResult(shareIntent, 0);
+    }
+
+
+    public void GooglePostPhoto(Intent intent){
+        try {
+            Uri selectedImage = intent.getData();
+            ContentResolver cr = getContentResolver();
+            String mime = cr.getType(selectedImage);
+
+            PlusShare.Builder share = new PlusShare.Builder(this);
+            share.setText(getResources().getString(R.string.app_name));
+            share.addStream(selectedImage);
+            share.setType(mime);
+           startActivityForResult(share.getIntent(), REQ_START_SHARE);
+        }
+        catch (NullPointerException e){
+            Log.e(TAG,e.getMessage());
+        }catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+        }
+
+
+    }
+
+    private void shareApp(){
+        String textToShare = "Visit <a href=\"http://www.google.com\">google</a> for more info.";
+        Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+        sharingIntent.setType("text/html");
+        sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Subject here");
+        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT,  Html.fromHtml(textToShare));
+        startActivity(Intent.createChooser(sharingIntent, "Shearing Option"));
     }
 
 
