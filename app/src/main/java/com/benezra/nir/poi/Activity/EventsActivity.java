@@ -53,6 +53,7 @@ public class EventsActivity extends BaseActivity implements
 
         Intent intent = getIntent();
         String interest = intent.getStringExtra("interest");
+        String image = intent.getStringExtra("image");
 
 
 
@@ -62,6 +63,7 @@ public class EventsActivity extends BaseActivity implements
             Log.d(TAG, "event fragment null");
             Bundle bundle = new Bundle();
             bundle.putString("interest", interest);
+            bundle.putString("image", image);
             mUserEventFragment = new EventByInterestListFragment();
             mUserEventFragment.setArguments(bundle);
             getSupportFragmentManager().beginTransaction().add(R.id.framelayout, mUserEventFragment, EventByInterestListFragment.class.getSimpleName()).commit();

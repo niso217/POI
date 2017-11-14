@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,8 +22,10 @@ import com.benezra.nir.poi.RecyclerTouchListener;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static com.facebook.FacebookSdk.getApplicationContext;
@@ -37,6 +40,10 @@ public class MainEventFragment extends Fragment implements RecyclerTouchListener
     private FirebaseDatabase mFirebaseInstance;
     private RecyclerView mInteresRecyclerView;
     private List<String> mInterestList;
+    private List<String> mImagesUrl;
+    final static String TAG = MainEventFragment.class.getSimpleName();
+
+
     private Context mContext;
     private FragmentDataCallBackInterface mListener;
 
@@ -57,6 +64,7 @@ public class MainEventFragment extends Fragment implements RecyclerTouchListener
         super.onCreate(savedInstanceState);
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mInterestList = new ArrayList<>();
+        mImagesUrl = new ArrayList<>();
     }
 
 
@@ -83,8 +91,13 @@ public class MainEventFragment extends Fragment implements RecyclerTouchListener
             @Override
             protected void populateViewHolder(ViewHolders.ParticipatesViewHolder participatesViewHolder, InterestData model, int position) {
                 participatesViewHolder.name.setText(model.getInterest());
-                participatesViewHolder.image.setImageResource(getResources().getIdentifier(model.getInterest().toLowerCase(), "drawable", getActivity().getPackageName()));
+                if (!model.getImage().equals(""))
+                Picasso.with(getContext()).load(model.getImage()).into(participatesViewHolder.image);
+                //participatesViewHolder.image.setImageResource(getResources().getIdentifier(model.getInterest().toLowerCase(), "drawable", getActivity().getPackageName()));
                 mInterestList.add(model.getInterest());
+                mImagesUrl.add(model.getImage());
+                Log.d(TAG,mInterestList.size()+"");
+
             }
 
 
@@ -99,6 +112,8 @@ public class MainEventFragment extends Fragment implements RecyclerTouchListener
     public void onClick(View view, int position) {
         Intent eventActivity = new Intent(getContext(), EventsActivity.class);
         eventActivity.putExtra("interest",mInterestList.get(position));
+        eventActivity.putExtra("image",mImagesUrl.get(position));
+
         getActivity().startActivity(eventActivity);
     }
 

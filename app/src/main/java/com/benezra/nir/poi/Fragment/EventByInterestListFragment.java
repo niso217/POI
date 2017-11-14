@@ -18,6 +18,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import com.benezra.nir.poi.Activity.ViewEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
@@ -42,6 +43,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 import com.xw.repo.BubbleSeekBar;
 
 import java.util.ArrayList;
@@ -94,6 +96,7 @@ public class EventByInterestListFragment extends Fragment implements
     private FirebaseAuth mAuth;
     private String mSelectedInterest;
     private BubbleSeekBar mBbubbleSeekBar;
+    private String mImageUrl;
 
 
     @Override
@@ -109,7 +112,7 @@ public class EventByInterestListFragment extends Fragment implements
         mEventHashSet = new HashSet<>();
         mAuth = FirebaseAuth.getInstance();
         mSelectedInterest = getArguments().getString("interest");
-
+        mImageUrl = getArguments().getString("image");
     }
 
 
@@ -169,6 +172,10 @@ public class EventByInterestListFragment extends Fragment implements
         mEventsRecyclerView.setNestedScrollingEnabled(false);
         mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
         mEventsRecyclerView.setAdapter(mEventsAdapter);
+
+        ImageView background = (ImageView) rootView.findViewById(R.id.backdrop);
+        if (!mImageUrl.equals(""))
+        Picasso.with(getContext()).load(mImageUrl).into(background);
 
         FloatingActionButton fab = (FloatingActionButton) rootView.findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
