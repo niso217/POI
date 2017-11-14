@@ -92,10 +92,12 @@ public class MainEventFragment extends Fragment implements RecyclerTouchListener
             protected void populateViewHolder(ViewHolders.ParticipatesViewHolder participatesViewHolder, InterestData model, int position) {
                 participatesViewHolder.name.setText(model.getInterest());
                 if (!model.getImage().equals(""))
-                Picasso.with(getContext()).load(model.getImage()).into(participatesViewHolder.image);
+                Picasso.with(getContext()).load(model.getImage()).resize(50,50).into(participatesViewHolder.image);
                 //participatesViewHolder.image.setImageResource(getResources().getIdentifier(model.getInterest().toLowerCase(), "drawable", getActivity().getPackageName()));
+                if (!mInterestList.contains(model.getInterest()))
                 mInterestList.add(model.getInterest());
-                mImagesUrl.add(model.getImage());
+                if (!mImagesUrl.contains(model.getInterest()))
+                    mImagesUrl.add(model.getImage());
                 Log.d(TAG,mInterestList.size()+"");
 
             }

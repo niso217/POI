@@ -937,6 +937,7 @@ public class CreateEventActivity extends BaseActivity
                 initView();
 
             }
+
         });
 
     }
