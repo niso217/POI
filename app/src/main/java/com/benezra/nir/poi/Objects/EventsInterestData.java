@@ -2,20 +2,31 @@ package com.benezra.nir.poi.Objects;
 
 import com.google.firebase.database.IgnoreExtraProperties;
 
+import java.util.List;
+
 /**
  * Created by nirb on 07/11/2017.
  */
 
 @IgnoreExtraProperties
-public class InterestData {
+public class EventsInterestData {
 
     private String interest;
     private String image;
     private String title;
     private String details;
+    private String categories;
 
 
-    public InterestData() {
+    public String getCategories() {
+        return categories;
+    }
+
+    public void setCategories(String categories) {
+        this.categories = categories;
+    }
+
+    public EventsInterestData() {
     }
 
     public String getInterest() {

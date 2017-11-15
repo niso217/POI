@@ -159,7 +159,7 @@ public class EventByInterestMapFragment extends Fragment implements
         mMap.getUiSettings().setMapToolbarEnabled(false);
         mMap.setOnInfoWindowClickListener(this);
         mMap.setOnMarkerClickListener(this);
-        mMap.setPadding(300, 300, 300, 300);
+        //mMap.setPadding(0, 300, 300, 300);
         addAllMarkersToMap();
 
         if (!mEventList.isEmpty())

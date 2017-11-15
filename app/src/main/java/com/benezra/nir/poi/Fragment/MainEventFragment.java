@@ -12,20 +12,26 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.SearchView;
 
 import com.benezra.nir.poi.Activity.EventsActivity;
+import com.benezra.nir.poi.Adapter.EventsInterestsAdapter;
 import com.benezra.nir.poi.Adapter.ViewHolders;
+import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
-import com.benezra.nir.poi.Objects.InterestData;
+import com.benezra.nir.poi.Objects.EventsInterestData;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 
 import static com.facebook.FacebookSdk.getApplicationContext;
@@ -34,14 +40,15 @@ import static com.facebook.FacebookSdk.getApplicationContext;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class MainEventFragment extends Fragment implements RecyclerTouchListener.ClickListener{
+public class MainEventFragment extends Fragment implements
+        RecyclerTouchListener.ClickListener,SearchView.OnQueryTextListener {
 
-    private FirebaseRecyclerAdapter<InterestData, ViewHolders.ParticipatesViewHolder> mInterestAdapter;
     private FirebaseDatabase mFirebaseInstance;
     private RecyclerView mInteresRecyclerView;
-    private List<String> mInterestList;
-    private List<String> mImagesUrl;
+    private ArrayList<EventsInterestData> mEventsInterestDataList;
     final static String TAG = MainEventFragment.class.getSimpleName();
+    private EventsInterestsAdapter mEventsInterestsAdapter;
+    private SearchView mSearchView;
 
 
     private Context mContext;
@@ -63,8 +70,9 @@ public class MainEventFragment extends Fragment implements RecyclerTouchListener
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mFirebaseInstance = FirebaseDatabase.getInstance();
-        mInterestList = new ArrayList<>();
-        mImagesUrl = new ArrayList<>();
+        mEventsInterestDataList = new ArrayList<>();
+        mEventsInterestsAdapter = new EventsInterestsAdapter(getContext(), mEventsInterestDataList);
+
     }
 
 
@@ -73,48 +81,64 @@ public class MainEventFragment extends Fragment implements RecyclerTouchListener
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.main_event, container, false);
 
+        mSearchView = (SearchView) rootView.findViewById(R.id.search_view);
 
         RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getContext(), 4);
         mInteresRecyclerView = (RecyclerView) rootView.findViewById(R.id.main_event_list);
         mInteresRecyclerView.setLayoutManager(layoutManager);
         mInteresRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mInteresRecyclerView, this));
-
-        participatesChangeListener();
+        mInteresRecyclerView.setAdapter(mEventsInterestsAdapter);
+        getAllInterests();
+        setupSearchView();
         return rootView;
     }
 
-    private void participatesChangeListener() {
+
+    private void getAllInterests() {
         Query query = mFirebaseInstance.getReference("interests_data");
-
-        mInterestAdapter = new FirebaseRecyclerAdapter<InterestData, ViewHolders.ParticipatesViewHolder>(
-                InterestData.class, R.layout.participate_list_row, ViewHolders.ParticipatesViewHolder.class, query) {
+        query.addValueEventListener(new ValueEventListener() {
             @Override
-            protected void populateViewHolder(ViewHolders.ParticipatesViewHolder participatesViewHolder, InterestData model, int position) {
-                participatesViewHolder.name.setText(model.getInterest());
-                if (!model.getImage().equals(""))
-                Picasso.with(getContext()).load(model.getImage()).resize(50,50).into(participatesViewHolder.image);
-                //participatesViewHolder.image.setImageResource(getResources().getIdentifier(model.getInterest().toLowerCase(), "drawable", getActivity().getPackageName()));
-                if (!mInterestList.contains(model.getInterest()))
-                mInterestList.add(model.getInterest());
-                if (!mImagesUrl.contains(model.getInterest()))
-                    mImagesUrl.add(model.getImage());
-                Log.d(TAG,mInterestList.size()+"");
-
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                mEventsInterestDataList.clear();
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot data : dataSnapshot.getChildren()) {
+                        EventsInterestData eventsInterestData = data.getValue(EventsInterestData.class);
+                        mEventsInterestDataList.add(eventsInterestData);
+                    }
+                }
+                mEventsInterestsAdapter.filter("");
             }
 
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
 
-        };
+            }
+        });
+    }
 
-        mInteresRecyclerView.setAdapter(mInterestAdapter);
+    private void setupSearchView() {
+        mSearchView.setIconifiedByDefault(false);
+        mSearchView.setOnQueryTextListener(this);
+        mSearchView.setSubmitButtonEnabled(true);
+        mSearchView.setQueryHint("Search Here");
+    }
 
+    public boolean onQueryTextChange(String newText) {
+        mEventsInterestsAdapter.filter(newText);
+        return true;
+    }
+
+    public boolean onQueryTextSubmit(String query) {
+        return false;
     }
 
 
     @Override
     public void onClick(View view, int position) {
+
         Intent eventActivity = new Intent(getContext(), EventsActivity.class);
-        eventActivity.putExtra("interest",mInterestList.get(position));
-        eventActivity.putExtra("image",mImagesUrl.get(position));
+        eventActivity.putExtra("interest", mEventsInterestsAdapter.getFilterList().get(position).getInterest());
+        eventActivity.putExtra("image", mEventsInterestsAdapter.getFilterList().get(position).getImage());
 
         getActivity().startActivity(eventActivity);
     }
@@ -124,4 +148,4 @@ public class MainEventFragment extends Fragment implements RecyclerTouchListener
 
     }
 }
-    //;
+//;

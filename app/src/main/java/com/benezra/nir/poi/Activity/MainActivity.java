@@ -1,22 +1,20 @@
 package com.benezra.nir.poi.Activity;
 
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
 import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
-import com.benezra.nir.poi.Objects.InterestData;
+import com.benezra.nir.poi.Objects.EventsInterestData;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.SimpleFragmentPagerAdapter;
 import com.google.firebase.auth.FirebaseAuth;
@@ -25,14 +23,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends BaseActivity implements FragmentDataCallBackInterface {
+public class MainActivity extends BaseActivity implements
+        FragmentDataCallBackInterface  {
 
     private DrawerLayout drawerLayout;
     private Toolbar mToolbar;
@@ -50,6 +47,7 @@ public class MainActivity extends BaseActivity implements FragmentDataCallBackIn
         setContentView(R.layout.activity_main);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
+
 
 
         mToolbar.setTitle("");
@@ -142,10 +140,12 @@ public class MainActivity extends BaseActivity implements FragmentDataCallBackIn
         return list;
     }
 
+
+
     class RetrieveFeedTask extends AsyncTask<String, Void, Void> {
 
         private Exception exception;
-        List<InterestData> list = new ArrayList<>();
+        List<EventsInterestData> list = new ArrayList<>();
 
 
         protected Void doInBackground(String... urls) {
@@ -170,31 +170,46 @@ public class MainActivity extends BaseActivity implements FragmentDataCallBackIn
                                     //can iterate through to get the links in the
                                     //geography section
                                     Elements elements = nextsib.select("a[href][title]");
-                                    if (elements.size()>3)
-                                    {
-                                        for (Element el : elements)
-                                        {
-                                            String title =el.text();
-                                            if (!title.equals(""))
-                                            {
+                                    if (elements.size() > 3) {
+                                        for (Element el : elements) {
+                                            String title = el.text();
+                                            if (!title.equals("")) {
                                                 String replaceText = title.replace(' ', '_');
-                                                Document tempdoc = Jsoup.connect("https://en.wikipedia.org/wiki/" +replaceText).timeout(5000).get();
+                                                Document tempdoc = Jsoup.connect("https://en.wikipedia.org/wiki/" + replaceText).timeout(5000).get();
+
+                                                Elements categories = tempdoc.select("div#mw-normal-catlinks");
+                                                Elements cat_list = new Elements();
+                                                cat_list = categories.select("a[href][title]");
+
+                                                String categories_list = "";
+                                                for (int i = 1; i < cat_list.size(); i++) {
+                                                    String cat = cat_list.get(i).text();
+                                                    if (!cat.equals("")) {
+                                                        if (i!=cat_list.size()-1)
+                                                        categories_list = categories_list + cat.toLowerCase() +",";
+                                                        else
+                                                            categories_list = categories_list + cat.toLowerCase();
+
+                                                    }
+                                                }
+
+
                                                 //Element masthead = tempdoc.select("div#mw-content-text").first();
                                                 Elements paragraphs = tempdoc.select("p:not(:has(#coordinates))");
                                                 Elements metaOgImage = tempdoc.select("meta[property=og:image]");
-                                                InterestData temp = new InterestData();
+                                                EventsInterestData temp = new EventsInterestData();
                                                 temp.setTitle(title);
                                                 temp.setInterest(title);
-                                                temp.setImage(metaOgImage==null? "" : metaOgImage.attr("content"));
-                                                temp.setDetails(paragraphs==null? "" : paragraphs.text());
+                                                temp.setCategories(categories_list);
+                                                temp.setImage(metaOgImage == null ? "" : metaOgImage.attr("content"));
+                                                temp.setDetails(paragraphs == null ? "" : paragraphs.text());
                                                 list.add(temp);
-                                                Log.d("Added","==========" + title  +"===============");
+                                                Log.d("Added", "==========" + title + "===============");
 
                                             }
-                                                //list.add(title);
+                                            //list.add(title);
                                         }
                                     }
-
 
 
                                     nextsib = nextsib.nextElementSibling();
@@ -212,15 +227,15 @@ public class MainActivity extends BaseActivity implements FragmentDataCallBackIn
 
                 return null;
             }
-          FirebaseDatabase.getInstance().getReference("interests_data").setValue(list);
-            Log.d("Finsish","==========finish===============");
+             FirebaseDatabase.getInstance().getReference("interests_data").setValue(list);
+            Log.d("Finsish", "==========finish===============");
             return null;
         }
     }
 
-        protected void onPostExecute(ArrayList<String> feed) {
-            // TODO: check this.exception
-            // TODO: do something with the feed
-        }
+    protected void onPostExecute(ArrayList<String> feed) {
+        // TODO: check this.exception
+        // TODO: do something with the feed
     }
+}
 

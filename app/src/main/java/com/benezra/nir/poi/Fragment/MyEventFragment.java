@@ -159,9 +159,10 @@ public class MyEventFragment extends Fragment implements ValueEventListener,Recy
                    mEventList.add(event);
             }
             mEventsAdapter.notifyDataSetChanged();
-            mListener.finishLoadingData();
 
         }
+            mListener.finishLoadingData();
+
 
     }
 

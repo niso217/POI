@@ -4,18 +4,15 @@ import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.DatePickerDialog;
-import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -26,13 +23,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
@@ -56,6 +51,7 @@ import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Adapter.CustomSpinnerAdapter;
 import com.benezra.nir.poi.Fragment.UploadToFireBaseFragment;
 import com.benezra.nir.poi.Objects.EventPhotos;
+import com.benezra.nir.poi.Objects.EventsInterestData;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.benezra.nir.poi.User;
@@ -75,7 +71,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
@@ -134,7 +129,7 @@ public class CreateEventActivity extends BaseActivity
         AlertDialogFragment.DialogListenerCallback,
         MapFragment.MapFragmentCallback,
         PlaceSelectionListener,
-        View.OnFocusChangeListener,UploadToFireBaseFragment.UploadListener {
+        View.OnFocusChangeListener, UploadToFireBaseFragment.UploadListener {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -186,7 +181,6 @@ public class CreateEventActivity extends BaseActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_event);
-
 
 
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -500,7 +494,7 @@ public class CreateEventActivity extends BaseActivity
 
     private boolean isEventChanged() {
         return (!mCurrentEvent.getTitle().equals(mCurrentEventChangeFlag.getTitle()) ||
-                (mCurrentEvent.getImage()!=null && !mCurrentEvent.getImage().equals(mCurrentEventChangeFlag.getImage()))||
+                (mCurrentEvent.getImage() != null && !mCurrentEvent.getImage().equals(mCurrentEventChangeFlag.getImage())) ||
                 !mCurrentEvent.getDetails().equals(mCurrentEventChangeFlag.getDetails()) ||
                 distance(mCurrentEvent.getLatlng(), mCurrentEventChangeFlag.getLatlng()) > 0.02 ||
                 !mCurrentEvent.getInterest().equals(mCurrentEventChangeFlag.getInterest()) ||
@@ -543,8 +537,7 @@ public class CreateEventActivity extends BaseActivity
             case BUTTON_POSITIVE:
                 if (action == ACTION_REMOVE)
                     delete();
-                else
-                {
+                else {
                     Intent intent = new Intent(this, MainActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(intent);
@@ -804,12 +797,16 @@ public class CreateEventActivity extends BaseActivity
 
 
     private void addInterestsChangeListener() {
-        mFirebaseInstance.getReference("interests").addValueEventListener(new ValueEventListener() {
+        mInterestsList.clear();
+        mFirebaseInstance.getReference("interests_data").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                GenericTypeIndicator<ArrayList<String>> t = new GenericTypeIndicator<ArrayList<String>>() {
-                };
-                mInterestsList = snapshot.getValue(t);
+
+                for (DataSnapshot data : snapshot.getChildren()) {
+                    EventsInterestData interestData = data.getValue(EventsInterestData.class);
+                    mInterestsList.add(interestData.getInterest());
+                }
+
                 if (mInterestsList != null) {
                     mCustomSpinnerAdapter.updateInterestList(new ArrayList<String>(mInterestsList));
                     mspinnerCustom.setSelection(mCustomSpinnerAdapter.getPosition(mCurrentEvent.getInterest()));
@@ -941,7 +938,6 @@ public class CreateEventActivity extends BaseActivity
         });
 
     }
-
 
 
     private Map<String, User> setOwnerAsParticipate() {

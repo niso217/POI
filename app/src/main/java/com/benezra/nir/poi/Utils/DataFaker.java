@@ -12,13 +12,11 @@ import android.widget.Button;
 import android.widget.NumberPicker;
 import android.widget.Toast;
 
-import com.benezra.nir.poi.Activity.CreateEventActivity;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Helper.AsyncGeocoder;
-import com.benezra.nir.poi.Objects.InterestData;
+import com.benezra.nir.poi.Objects.EventsInterestData;
 import com.benezra.nir.poi.R;
-import com.benezra.nir.poi.User;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.core.GeoHash;
 import com.google.android.gms.common.api.Status;
@@ -35,17 +33,13 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
@@ -59,7 +53,6 @@ import static com.benezra.nir.poi.Helper.Constants.INTEREST;
 import static com.benezra.nir.poi.Helper.Constants.LATITUDE;
 import static com.benezra.nir.poi.Helper.Constants.LONGITUDE;
 import static com.benezra.nir.poi.Helper.Constants.OWNER;
-import static com.benezra.nir.poi.Helper.Constants.PARTICIPATES;
 import static com.benezra.nir.poi.Helper.Constants.START;
 import static com.benezra.nir.poi.Helper.Constants.TITLE;
 
@@ -73,7 +66,7 @@ public class DataFaker extends AppCompatActivity implements
 
 
 
-    ArrayList<InterestData> mInterestData;
+    ArrayList<EventsInterestData> mInterestData;
     Random mRandom;
     MapFragment mapFragment;
     final static String TAG = DataFaker.class.getSimpleName();
@@ -261,7 +254,7 @@ public class DataFaker extends AppCompatActivity implements
                     if (dataSnapshot.exists()) {
                         // dataSnapshot is the "issue" node with all children with id 0
                         for (DataSnapshot data : dataSnapshot.getChildren()) {
-                            InterestData event_data = data.getValue(InterestData.class);
+                            EventsInterestData event_data = data.getValue(EventsInterestData.class);
                             if (event_data!=null)
                                 mInterestData.add(event_data);
                         }
