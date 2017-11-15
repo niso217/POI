@@ -162,7 +162,8 @@ public class MainActivity extends BaseActivity implements
 
                 for (Element h2 : doc.body().select("h2")) {
                     if (h2.select("span").size() == 4) {
-                        if (h2.select("span").get(0).text().equals("Outdoor hobbies")) {
+                        if (h2.select("span").get(0).text().equals("Outdoor hobbies") ||
+                                h2.select("span").get(0).text().equals("Indoor hobbies")) {
                             Element nextsib = h2.nextElementSibling();
                             while (nextsib != null) {
                                 if (nextsib.tagName().equals("div")) {
@@ -175,8 +176,7 @@ public class MainActivity extends BaseActivity implements
                                             String title = el.text();
                                             if (!title.equals("")) {
                                                 String replaceText = title.replace(' ', '_');
-                                                Document tempdoc = Jsoup.connect("https://en.wikipedia.org/wiki/" + replaceText).timeout(5000).get();
-
+                                                Document tempdoc = Jsoup.connect(el.attr("abs:href")).timeout(5000).get();
                                                 Elements categories = tempdoc.select("div#mw-normal-catlinks");
                                                 Elements cat_list = new Elements();
                                                 cat_list = categories.select("a[href][title]");
