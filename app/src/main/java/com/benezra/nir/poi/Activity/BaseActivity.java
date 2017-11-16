@@ -46,6 +46,7 @@ import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Settings.AboutActivity;
 import com.benezra.nir.poi.Settings.SettingsActivity;
+import com.benezra.nir.poi.Utils.DataFaker;
 import com.facebook.Profile;
 import com.facebook.share.ShareApi;
 import com.facebook.share.model.ShareLinkContent;
@@ -208,6 +209,10 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
                 intent = new Intent(this, SettingsActivity.class);
                 createBackStack(intent);
                 break;
+            case R.id.fake_data:
+                intent = new Intent(this, DataFaker.class);
+                createBackStack(intent);
+                break;
             default:
                 finish();
         }
@@ -260,7 +265,7 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
     public void hideProgressMessage() {
         ProgressDialogFragment mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
         if (mProgressDialogFragment != null)
-            mProgressDialogFragment.dismiss();
+            mProgressDialogFragment.dismissAllowingStateLoss();
 
     }
 

@@ -4,6 +4,7 @@ package com.benezra.nir.poi.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
@@ -12,11 +13,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.SearchView;
 
 import com.benezra.nir.poi.Activity.EventsActivity;
 import com.benezra.nir.poi.Adapter.EventsInterestsAdapter;
 import com.benezra.nir.poi.Adapter.ViewHolders;
+import com.benezra.nir.poi.DataBase.AppDatabase;
+import com.benezra.nir.poi.DataBase.DatabaseInitializer;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.Objects.EventsInterestData;
@@ -41,14 +45,15 @@ import static com.facebook.FacebookSdk.getApplicationContext;
  * A simple {@link Fragment} subclass.
  */
 public class MainEventFragment extends Fragment implements
-        RecyclerTouchListener.ClickListener,SearchView.OnQueryTextListener {
+        RecyclerTouchListener.ClickListener, SearchView.OnQueryTextListener {
 
     private FirebaseDatabase mFirebaseInstance;
     private RecyclerView mInteresRecyclerView;
-    private ArrayList<EventsInterestData> mEventsInterestDataList;
+    private List<EventsInterestData> mEventsInterestDataList;
     final static String TAG = MainEventFragment.class.getSimpleName();
     private EventsInterestsAdapter mEventsInterestsAdapter;
     private SearchView mSearchView;
+    private ProgressBar mProgressBar;
 
 
     private Context mContext;
@@ -70,8 +75,12 @@ public class MainEventFragment extends Fragment implements
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mFirebaseInstance = FirebaseDatabase.getInstance();
+        setRetainInstance(true);
         mEventsInterestDataList = new ArrayList<>();
         mEventsInterestsAdapter = new EventsInterestsAdapter(getContext(), mEventsInterestDataList);
+
+        mEventsInterestDataList.addAll(DatabaseInitializer.populateSync(AppDatabase.getAppDatabase(getApplicationContext())));
+
 
     }
 
@@ -82,30 +91,50 @@ public class MainEventFragment extends Fragment implements
         View rootView = inflater.inflate(R.layout.main_event, container, false);
 
         mSearchView = (SearchView) rootView.findViewById(R.id.search_view);
-
+        mProgressBar = (ProgressBar) rootView.findViewById(R.id.pb);
         RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getContext(), 4);
         mInteresRecyclerView = (RecyclerView) rootView.findViewById(R.id.main_event_list);
         mInteresRecyclerView.setLayoutManager(layoutManager);
         mInteresRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mInteresRecyclerView, this));
         mInteresRecyclerView.setAdapter(mEventsInterestsAdapter);
-        getAllInterests();
+
         setupSearchView();
+
+        if (mEventsInterestDataList.size() == 0) {
+            mProgressBar.setVisibility(View.VISIBLE);
+            getAllInterests(true); //update database
+        } else {
+            mProgressBar.setVisibility(View.GONE);
+            getAllInterests(false); //update database
+
+        }
+
+
         return rootView;
     }
 
 
-    private void getAllInterests() {
+    private void getAllInterests(final boolean flag) { //flag=false - first run flag=true - update database
         Query query = mFirebaseInstance.getReference("interests_data");
         query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                mEventsInterestDataList.clear();
+                List<EventsInterestData> eventsInterestDataList = new ArrayList<>();
+                if (flag)
+                    mEventsInterestDataList.clear();
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot data : dataSnapshot.getChildren()) {
                         EventsInterestData eventsInterestData = data.getValue(EventsInterestData.class);
-                        mEventsInterestDataList.add(eventsInterestData);
+                        eventsInterestDataList.add(eventsInterestData);
+                        if (flag) {
+                            mEventsInterestDataList.add(eventsInterestData);
+                        }
                     }
+
+                    DatabaseInitializer.updateInterests(AppDatabase.getAppDatabase(getApplicationContext()), eventsInterestDataList);
+
                 }
+                mProgressBar.setVisibility(View.GONE);
                 mEventsInterestsAdapter.filter("");
             }
 
@@ -114,6 +143,9 @@ public class MainEventFragment extends Fragment implements
 
             }
         });
+
+        mEventsInterestsAdapter.filter("");
+
     }
 
     private void setupSearchView() {

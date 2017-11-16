@@ -13,6 +13,7 @@ import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import com.benezra.nir.poi.Activity.CreateEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
@@ -60,6 +61,8 @@ public class MyEventFragment extends Fragment implements ValueEventListener,Recy
     private ItemTouchHelper mItemTouchHelper;
     private Context mContext;
     private FragmentDataCallBackInterface mListener;
+    private ProgressBar mProgressBar;
+
 
 
 
@@ -112,12 +115,10 @@ public class MyEventFragment extends Fragment implements ValueEventListener,Recy
         mEventList = new ArrayList<>();;
         mEventsAdapter = new EventsAdapter(getContext(),mEventList);
 
-        addEventChangeListener();
     }
 
 
     private void addEventChangeListener() {
-        mListener.startLoadingData();
         Query query = mFirebaseInstance.getReference("events").orderByChild("owner").equalTo(mFirebaseUser.getUid());
             query.addValueEventListener(this);
     }
@@ -133,7 +134,7 @@ public class MyEventFragment extends Fragment implements ValueEventListener,Recy
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.my_events, container, false);
 
-
+        mProgressBar = (ProgressBar) rootView.findViewById(R.id.pb);
         mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.my_events_list);
         mEventsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
@@ -142,7 +143,8 @@ public class MyEventFragment extends Fragment implements ValueEventListener,Recy
 //        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mEventsAdapter);
 //        mItemTouchHelper = new ItemTouchHelper(callback);
 //        mItemTouchHelper.attachToRecyclerView(mEventsRecyclerView);
-
+        mProgressBar.setVisibility(View.VISIBLE);
+        addEventChangeListener();
 
         return rootView;
     }
@@ -158,10 +160,11 @@ public class MyEventFragment extends Fragment implements ValueEventListener,Recy
                 Event event = data.getValue(Event.class);
                    mEventList.add(event);
             }
-            mEventsAdapter.notifyDataSetChanged();
-
         }
-            mListener.finishLoadingData();
+
+        mEventsAdapter.notifyDataSetChanged();
+        mProgressBar.setVisibility(View.GONE);
+
 
 
     }

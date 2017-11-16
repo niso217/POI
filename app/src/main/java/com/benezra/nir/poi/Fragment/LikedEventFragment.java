@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import com.benezra.nir.poi.Activity.CreateEventActivity;
 import com.benezra.nir.poi.Activity.ViewEventActivity;
@@ -59,6 +60,7 @@ public class LikedEventFragment extends Fragment implements RecyclerTouchListene
     private List<Event> mEventList;
     private EventsAdapter mEventsAdapter;
     private FragmentDataCallBackInterface mListener;
+    private ProgressBar mProgressBar;
 
 
     @Override
@@ -107,7 +109,6 @@ public class LikedEventFragment extends Fragment implements RecyclerTouchListene
         ;
         mEventsAdapter = new EventsAdapter(getContext(), mEventList);
 
-        getUserEventsChangeListener();
     }
 
 
@@ -122,10 +123,14 @@ public class LikedEventFragment extends Fragment implements RecyclerTouchListene
         View rootView = inflater.inflate(R.layout.my_events, container, false);
 
 
+        mProgressBar = (ProgressBar) rootView.findViewById(R.id.pb);
+
         mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.my_events_list);
         mEventsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
         mEventsRecyclerView.setAdapter(mEventsAdapter);
+        mProgressBar.setVisibility(View.VISIBLE);
+        getUserEventsChangeListener();
 
 //        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mEventsAdapter);
 //        mItemTouchHelper = new ItemTouchHelper(callback);
@@ -150,6 +155,7 @@ public class LikedEventFragment extends Fragment implements RecyclerTouchListene
 
                     }
                     mEventsAdapter.notifyDataSetChanged();
+                    mProgressBar.setVisibility(View.GONE);
 
                 }
 

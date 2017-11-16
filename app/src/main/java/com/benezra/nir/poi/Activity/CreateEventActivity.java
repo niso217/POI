@@ -13,6 +13,7 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -171,6 +172,7 @@ public class CreateEventActivity extends BaseActivity
     private final static int TITLE_FOCUS = 1;
     private int mFocusedEditText;
     private Set<String> mPicturesKeys;
+    private NestedScrollView mNestedScrollView;
 
 
     private FirebaseRecyclerAdapter<EventPhotos, ViewHolders.PicturesViewHolder> mPicturesAdapter;
@@ -186,7 +188,7 @@ public class CreateEventActivity extends BaseActivity
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventTime = Calendar.getInstance();
-
+        mNestedScrollView = (NestedScrollView)findViewById(R.id.nested);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         mToolbar.setBackgroundColor(getResources().getColor(R.color.deepskyblue));
 
@@ -443,6 +445,7 @@ public class CreateEventActivity extends BaseActivity
         mAppBarLayout.post(new Runnable() {
             @Override
             public void run() {
+                //mNestedScrollView.scrollTo(0,500);
                 CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
                 AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) params.getBehavior();
                 behavior.onNestedFling(mCoordinatorLayout, mAppBarLayout, null, 0, mAppBarLayout.getTotalScrollRange() * 2, false);

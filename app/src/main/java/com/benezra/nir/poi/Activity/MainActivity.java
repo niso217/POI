@@ -20,16 +20,20 @@ import com.benezra.nir.poi.SimpleFragmentPagerAdapter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
 
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.IOException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends BaseActivity implements
-        FragmentDataCallBackInterface  {
+        FragmentDataCallBackInterface {
 
     private DrawerLayout drawerLayout;
     private Toolbar mToolbar;
@@ -41,13 +45,12 @@ public class MainActivity extends BaseActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //new RetrieveFeedTask().execute();
+       // new RetrieveFeedTask().execute();
 
         // Set the content of the activity to use the activity_main.xml layout file
         setContentView(R.layout.activity_main);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
-
 
 
         mToolbar.setTitle("");
@@ -57,7 +60,7 @@ public class MainActivity extends BaseActivity implements
 
         // Find the view pager that will allow the user to swipe between fragments
         ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
-
+        viewPager.setOffscreenPageLimit(3);
         // Create an adapter that knows which fragment should be shown on each page
         SimpleFragmentPagerAdapter adapter = new SimpleFragmentPagerAdapter(this, getSupportFragmentManager());
 
@@ -127,20 +130,6 @@ public class MainActivity extends BaseActivity implements
 
     }
 
-    protected ArrayList<String> getBlogStats() throws Exception {
-        // get html document structure
-        Document document = Jsoup.connect("https://en.wikipedia.org/wiki/List_of_hobbies").get();
-        // selector query
-        Elements nodeBlogStats = document.select("div-col columns column-width");
-        // check results
-        ArrayList<String> list = new ArrayList<String>();
-        for (Element e : nodeBlogStats) {
-            list.add(e.text());
-        }
-        return list;
-    }
-
-
 
     class RetrieveFeedTask extends AsyncTask<String, Void, Void> {
 
@@ -150,7 +139,7 @@ public class MainActivity extends BaseActivity implements
 
         protected Void doInBackground(String... urls) {
             try {
-                Document doc = Jsoup.connect("https://en.wikipedia.org/wiki/List_of_hobbies").timeout(5000).get();
+                Document doc = Jsoup.connect("https://en.wikipedia.org/wiki/List_of_hobbies").timeout(10000).get();
 
 
                 Element intro = doc.body().select("p").first();
@@ -160,13 +149,17 @@ public class MainActivity extends BaseActivity implements
                     intro = intro.nextElementSibling();
                 }
 
-                for (Element h2 : doc.body().select("h2")) {
-                    if (h2.select("span").size() == 4) {
-                        if (h2.select("span").get(0).text().equals("Outdoor hobbies") ||
-                                h2.select("span").get(0).text().equals("Indoor hobbies")) {
+                for (Element h2 : doc.body().select("h2,h3")) {
+                    if (h2.select("span").size() == 4 || h2.select("span").size() == 3) {
+                        String main = h2.select("span").get(0).text();
+                        if (main.equals("Outdoor hobbies") ||
+                                main.equals("Indoor hobbies") ||
+                                main.equals("Collection hobbies") ||
+                                main.equals("Competitive hobbies") ||
+                                main.equals("Observation hobbies")) {
                             Element nextsib = h2.nextElementSibling();
                             while (nextsib != null) {
-                                if (nextsib.tagName().equals("div")) {
+                                if (nextsib.tagName().equals("div") || nextsib.tagName().equals("ul")) {
                                     //here you will get an Elements object which you
                                     //can iterate through to get the links in the
                                     //geography section
@@ -174,37 +167,61 @@ public class MainActivity extends BaseActivity implements
                                     if (elements.size() > 3) {
                                         for (Element el : elements) {
                                             String title = el.text();
-                                            if (!title.equals("")) {
-                                                String replaceText = title.replace(' ', '_');
-                                                Document tempdoc = Jsoup.connect(el.attr("abs:href")).timeout(5000).get();
-                                                Elements categories = tempdoc.select("div#mw-normal-catlinks");
-                                                Elements cat_list = new Elements();
-                                                cat_list = categories.select("a[href][title]");
+                                            if (title.equals("Volleyball"))
+                                            {
+                                                Log.d("nir","");
+                                            }
+                                            if (title.equals("Water Polo"))
+                                            {
+                                                Log.d("nir","");
+                                            }
+                                            if (!title.equals("") && !isListContainsInterest(list,title))  {
 
-                                                String categories_list = "";
-                                                for (int i = 1; i < cat_list.size(); i++) {
-                                                    String cat = cat_list.get(i).text();
-                                                    if (!cat.equals("")) {
-                                                        if (i!=cat_list.size()-1)
-                                                        categories_list = categories_list + cat.toLowerCase() +",";
-                                                        else
-                                                            categories_list = categories_list + cat.toLowerCase();
+                                                Document tempdoc = null;
+                                                try {
+                                                    tempdoc = Jsoup.connect(el.attr("abs:href")).timeout(20000).get();
 
-                                                    }
+                                                } catch (NullPointerException e) {
+                                                    // TODO Auto-generated catch block
+                                                    e.printStackTrace();
+                                                } catch (HttpStatusException e) {
+                                                    e.printStackTrace();
+                                                } catch (IOException e) {
+                                                    // TODO Auto-generated catch block
+                                                    e.printStackTrace();
                                                 }
 
+                                                if (tempdoc != null) {
+                                                    Elements categories = tempdoc.select("div#mw-normal-catlinks");
+                                                    Elements cat_list = new Elements();
+                                                    cat_list = categories.select("a[href][title]");
 
-                                                //Element masthead = tempdoc.select("div#mw-content-text").first();
-                                                Elements paragraphs = tempdoc.select("p:not(:has(#coordinates))");
-                                                Elements metaOgImage = tempdoc.select("meta[property=og:image]");
-                                                EventsInterestData temp = new EventsInterestData();
-                                                temp.setTitle(title);
-                                                temp.setInterest(title);
-                                                temp.setCategories(categories_list);
-                                                temp.setImage(metaOgImage == null ? "" : metaOgImage.attr("content"));
-                                                temp.setDetails(paragraphs == null ? "" : paragraphs.text());
-                                                list.add(temp);
-                                                Log.d("Added", "==========" + title + "===============");
+                                                    String categories_list = "";
+                                                    for (int i = 1; i < cat_list.size(); i++) {
+                                                        String cat = cat_list.get(i).text();
+                                                        if (!cat.equals("")) {
+                                                            if (i != cat_list.size() - 1)
+                                                                categories_list = categories_list + cat.toLowerCase() + ",";
+                                                            else
+                                                                categories_list = categories_list + cat.toLowerCase();
+
+                                                        }
+                                                    }
+
+
+                                                    //Element masthead = tempdoc.select("div#mw-content-text").first();
+                                                    Elements paragraphs = tempdoc.select("p:not(:has(#coordinates))");
+                                                    Elements metaOgImage = tempdoc.select("meta[property=og:image]");
+                                                    EventsInterestData temp = new EventsInterestData();
+                                                    temp.setTitle(title);
+                                                    temp.setInterest(title);
+                                                    temp.setCategories(categories_list);
+                                                    temp.setImage(metaOgImage == null ? "" : metaOgImage.attr("content"));
+                                                    temp.setDetails(paragraphs == null ? "" : paragraphs.text());
+                                                    list.add(temp);
+                                                    Log.d("Added", "==========" + title + "===============");
+                                                }
+
 
                                             }
                                             //list.add(title);
@@ -225,12 +242,19 @@ public class MainActivity extends BaseActivity implements
             } catch (Exception e) {
                 this.exception = e;
 
-                return null;
+                //return null;
             }
-             FirebaseDatabase.getInstance().getReference("interests_data").setValue(list);
+            FirebaseDatabase.getInstance().getReference("interests_data").setValue(list);
             Log.d("Finsish", "==========finish===============");
             return null;
         }
+    }
+
+    private boolean isListContainsInterest(List<EventsInterestData> list,String interest){
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).getInterest().equals(interest)) return true;
+        }
+        return false;
     }
 
     protected void onPostExecute(ArrayList<String> feed) {

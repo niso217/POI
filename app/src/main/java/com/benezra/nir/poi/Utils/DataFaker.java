@@ -1,5 +1,6 @@
 package com.benezra.nir.poi.Utils;
 
+import android.content.Intent;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.widget.Button;
 import android.widget.NumberPicker;
 import android.widget.Toast;
 
+import com.benezra.nir.poi.Activity.MainActivity;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Helper.AsyncGeocoder;
@@ -304,6 +306,15 @@ public class DataFaker extends AppCompatActivity implements
 
     @Override
     public void onError(Status status) {
+
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        finish();
 
     }
 }
