@@ -98,7 +98,6 @@ public class ViewEventActivity extends BaseActivity
     private Menu mMenu;
     private LinearLayout mPrivateLinearLayout;
 
-    private NestedScrollView mNestedScrollView;
     private MapFragment mapFragment;
     private CoordinatorLayout mCoordinatorLayout;
     private AppBarLayout mAppBarLayout;
@@ -252,7 +251,6 @@ public class ViewEventActivity extends BaseActivity
 
 
         mPrivateLinearLayout = (LinearLayout) findViewById(R.id.private_layout);
-        mNestedScrollView = (NestedScrollView) findViewById(R.id.nested_scrollview);
 
 
         tvDatePicker = (TextView) findViewById(R.id.tv_date);
@@ -361,13 +359,13 @@ public class ViewEventActivity extends BaseActivity
         return Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
     }
 
-    private void setNestedScrollViewOverlayTop(int n) {
-        CoordinatorLayout.LayoutParams params =
-                (CoordinatorLayout.LayoutParams) mNestedScrollView.getLayoutParams();
-        AppBarLayout.ScrollingViewBehavior behavior =
-                (AppBarLayout.ScrollingViewBehavior) params.getBehavior();
-        behavior.setOverlayTop(dpToPx(n)); // Note: in pixels
-    }
+//    private void setNestedScrollViewOverlayTop(int n) {
+//        CoordinatorLayout.LayoutParams params =
+//                (CoordinatorLayout.LayoutParams) mNestedScrollView.getLayoutParams();
+//        AppBarLayout.ScrollingViewBehavior behavior =
+//                (AppBarLayout.ScrollingViewBehavior) params.getBehavior();
+//        behavior.setOverlayTop(dpToPx(n)); // Note: in pixels
+//    }
 
 
     private void setAppBarOffset() {

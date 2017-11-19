@@ -172,7 +172,6 @@ public class CreateEventActivity extends BaseActivity
     private final static int TITLE_FOCUS = 1;
     private int mFocusedEditText;
     private Set<String> mPicturesKeys;
-    private NestedScrollView mNestedScrollView;
 
 
     private FirebaseRecyclerAdapter<EventPhotos, ViewHolders.PicturesViewHolder> mPicturesAdapter;
@@ -188,7 +187,6 @@ public class CreateEventActivity extends BaseActivity
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventTime = Calendar.getInstance();
-        mNestedScrollView = (NestedScrollView)findViewById(R.id.nested);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         mToolbar.setBackgroundColor(getResources().getColor(R.color.deepskyblue));
 

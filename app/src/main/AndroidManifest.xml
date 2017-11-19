@@ -96,6 +96,7 @@
         <activity android:name=".Activity.SignInActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity android:name=".Settings.SettingsActivity"></activity>
         <activity android:name=".Settings.AboutActivity"></activity>
+        <activity android:name=".BlaBlaActivity"></activity>
 
 
     </application>

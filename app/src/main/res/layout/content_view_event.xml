@@ -1,30 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 
-<android.support.v4.widget.NestedScrollView
-    android:id="@+id/nested_scrollview"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:showIn="@layout/app_bar_view_events"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+    android:id="@+id/buttons_linear_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
 
     <LinearLayout
-        android:id="@+id/buttons_linear_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="30dp"
+        android:background="@android:color/transparent"
         android:orientation="vertical">
 
-
-        <LinearLayout
+        <android.support.v7.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="30dp"
-            android:background="@android:color/transparent"
+            android:layout_marginBottom="@dimen/card_margin"
+            android:layout_marginLeft="@dimen/card_margin"
+            android:layout_marginRight="@dimen/card_margin">
+
+            <LinearLayout
+                style="@style/Widget.CardContent"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/img_clock"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="0.1"
+                        app:srcCompat="@android:drawable/ic_menu_recent_history" />
+
+                    <TextView
+                        android:id="@+id/tv_date"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="0.6" />
+
+                    <TextView
+                        android:id="@+id/tv_time"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="0.3"
+                        android:text="1:00"
+                        android:visibility="visible" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:paddingTop="10dp">
+
+                    <TextView
+                        android:id="@+id/first_paragraph"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:padding="0dp"
+                        android:paddingTop="0dp"
+                        android:text="@string/event_details"
+                        android:textColor="#333" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </android.support.v7.widget.CardView>
+
+        <LinearLayout
+            android:id="@+id/private_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:orientation="vertical">
+
 
             <android.support.v7.widget.CardView
                 android:layout_width="match_parent"
@@ -33,113 +94,40 @@
                 android:layout_marginLeft="@dimen/card_margin"
                 android:layout_marginRight="@dimen/card_margin">
 
-                <LinearLayout
-                    style="@style/Widget.CardContent"
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/recycler_view_pictures"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    android:layout_height="match_parent"
+                    android:scrollbars="none" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:id="@+id/img_clock"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_weight="0.1"
-                            app:srcCompat="@android:drawable/ic_menu_recent_history" />
-
-                        <TextView
-                            android:id="@+id/tv_date"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_weight="0.6" />
-
-                        <TextView
-                            android:id="@+id/tv_time"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_weight="0.3"
-                            android:text="1:00"
-                            android:visibility="visible" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="horizontal"
-                        android:paddingTop="10dp">
-
-                        <TextView
-                            android:id="@+id/first_paragraph"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:padding="0dp"
-                            android:paddingTop="0dp"
-                            android:text="@string/event_details"
-                            android:textColor="#333" />
-                    </LinearLayout>
-
-                </LinearLayout>
 
             </android.support.v7.widget.CardView>
 
-            <LinearLayout
-                android:id="@+id/private_layout"
+
+            <android.support.v7.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:layout_marginBottom="@dimen/card_margin"
+                android:layout_marginLeft="@dimen/card_margin"
+                android:layout_marginRight="@dimen/card_margin">
 
 
-                <android.support.v7.widget.CardView
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/participate_recycler_view"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginBottom="@dimen/card_margin"
-                    android:layout_marginLeft="@dimen/card_margin"
-                    android:layout_marginRight="@dimen/card_margin">
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none" />
+            </android.support.v7.widget.CardView>
 
-
-                    <android.support.v7.widget.RecyclerView
-                        android:id="@+id/recycler_view_pictures"
-                        android:layout_width="match_parent"
-                        android:scrollbars="none"
-                        android:layout_height="match_parent" />
-
-
-                </android.support.v7.widget.CardView>
-
-
-                <android.support.v7.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginBottom="@dimen/card_margin"
-                    android:layout_marginLeft="@dimen/card_margin"
-                    android:layout_marginRight="@dimen/card_margin">
-
-
-                    <android.support.v7.widget.RecyclerView
-                        android:id="@+id/participate_recycler_view"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:scrollbars="none" />
-                </android.support.v7.widget.CardView>
-
-
-            </LinearLayout>
 
         </LinearLayout>
-
 
     </LinearLayout>
 
 
-</android.support.v4.widget.NestedScrollView>
+</LinearLayout>
+
 
 
 

@@ -42,6 +42,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.benezra.nir.poi.BlaBlaActivity;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Settings.AboutActivity;
@@ -210,7 +211,7 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
                 createBackStack(intent);
                 break;
             case R.id.fake_data:
-                intent = new Intent(this, DataFaker.class);
+                intent = new Intent(this, BlaBlaActivity.class);
                 createBackStack(intent);
                 break;
             default:
