@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.AppBarLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/appbar"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -9,22 +9,12 @@
     android:elevation="0dp"
     android:theme="@style/AppTheme.AppBarOverlay">
 
-    <android.support.design.widget.CollapsingToolbarLayout
-        android:id="@+id/collapsing_toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:contentScrim="@color/deepskyblue"
-        app:expandedTitleTextAppearance="@android:color/transparent"
-        app:layout_scrollFlags="scroll|exitUntilCollapsed">
-        <!--app:expandedTitleTextAppearance="@style/TextAppearance.AppCompat.Display1">-->
-
 
         <FrameLayout
             android:id="@+id/framelayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            app:layout_collapseMode="parallax" />
+            android:scaleType="centerCrop" />
 
 
         <ProgressBar
@@ -35,30 +25,6 @@
             android:layout_gravity="center_vertical|center_horizontal"
             android:visibility="gone" />
 
-
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/deepskyblue"
-            android:gravity="center_horizontal"
-            app:layout_collapseMode="pin"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
-
-            <EditText
-                android:id="@+id/tv_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:backgroundTint="@android:color/transparent"
-                android:hint="@string/collapsingtoolbar_title"
-                android:textAlignment="center"
-                android:textColor="@android:color/white"
-                android:textColorHighlight="@android:color/white"
-                android:textColorHint="@drawable/edittext_hint"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-        </android.support.v7.widget.Toolbar>
 
         <LinearLayout
             android:id="@+id/place_autocomplete_layout"
@@ -101,7 +67,6 @@
         </LinearLayout>
 
 
-    </android.support.design.widget.CollapsingToolbarLayout>
 
 
-</android.support.design.widget.AppBarLayout>
+</RelativeLayout>

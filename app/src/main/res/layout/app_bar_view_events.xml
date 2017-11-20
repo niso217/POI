@@ -24,9 +24,9 @@
         android:background="@android:color/transparent"
         android:gravity="center_horizontal"
         android:orientation="horizontal"
-        android:scrollbars="none"
-        app:layout_anchor="@id/appbar"
-        app:layout_anchorGravity="bottom|right|end">
+        android:scrollbars="none">
+        <!--app:layout_anchor="@id/appbar"-->
+        <!--app:layout_anchorGravity="bottom|right|end">-->
 
 
         <ImageButton

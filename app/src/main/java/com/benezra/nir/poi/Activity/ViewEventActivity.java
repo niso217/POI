@@ -221,10 +221,10 @@ public class ViewEventActivity extends BaseActivity
 
 
         //Setting the category name onto collapsing toolbar
-        collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
+        //collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
 
         mHorizontalScrollView = (LinearLayout) findViewById(R.id.scrolling_icons);
-        mTitle = (EditText) findViewById(R.id.tv_title);
+        //mTitle = (EditText) findViewById(R.id.tv_title);
         mTitle.setEnabled(false);
         mJoin = (ToggleButton) findViewById(R.id.btn_join);
         mShare = (ImageButton) findViewById(R.id.btn_share);
