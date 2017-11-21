@@ -55,7 +55,7 @@ public class GoogleMapsBottomSheetBehavior<V extends View> extends CoordinatorLa
     /**
      * Callback for monitoring events about bottom sheets.
      */
-    public abstract static class BottomSheetCallback {
+    public interface   BottomSheetCallback {
 
         /**
          * Called when the bottom sheet changes its state.
@@ -65,7 +65,7 @@ public class GoogleMapsBottomSheetBehavior<V extends View> extends CoordinatorLa
          *                    {@link #STATE_SETTLING}, {@link #STATE_EXPANDED},
          *                    {@link #STATE_COLLAPSED}, or {@link #STATE_HIDDEN}.
          */
-        public abstract void onStateChanged(@NonNull View bottomSheet, @State int newState);
+          void onStateChanged(@NonNull View bottomSheet, @State int newState);
 
         /**
          * Called when the bottom sheet is being dragged.
@@ -76,7 +76,7 @@ public class GoogleMapsBottomSheetBehavior<V extends View> extends CoordinatorLa
          *                    is between collapsed and expanded states and from -1 to 0 it is
          *                    between hidden and collapsed states.
          */
-        public abstract void onSlide(@NonNull View bottomSheet, float slideOffset);
+          void onSlide(@NonNull View bottomSheet, float slideOffset);
     }
 
     /**

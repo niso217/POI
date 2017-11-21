@@ -83,7 +83,7 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
         holder.address.setText(event.getAddress());
         holder.start.setText(setStart(event.getStart()));
         holder.distance.setText(event.getDistance()+"");
-        if (!event.getImage().equals(""))
+        if (event.getImage()!=null && !event.getImage().equals(""))
         Picasso.with(context)
                 .load(event.getImage())
                 .placeholder(R.drawable.ic_cloud_off_red)

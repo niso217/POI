@@ -60,6 +60,8 @@
     <string name="GoogleMapsBottomSheetBehavior">com.benezra.nir.poi.GoogleMapsBottomSheetBehavior</string>
     <string name="BackDropBottomSheetBehavior">com.benezra.nir.poi.BackdropBottomSheetBehavior</string>
 
+    <string name="empty_view">empty view</string>
+
     <string name="navigate_button">Navigate Now</string>
     <string name="facebook_share_button">Share on Facebook</string>
 

@@ -26,7 +26,7 @@ public class ViewHolders {
 
         public PicturesViewHolder(View itemView) {
             super(itemView);
-            imgThumbnail = (ImageView) itemView.findViewById(R.id.img_thumbnail);
+            imgThumbnail = (ImageView) itemView.findViewById(R.id.event_image);
         }
 
 

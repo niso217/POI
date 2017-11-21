@@ -5,6 +5,7 @@
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/imageView"
-        android:scaleType="centerCrop"/>
+        android:id="@+id/event_image"
+        android:background="@color/colorPrimary"
+        android:scaleType="fitXY"/>
 </LinearLayout>

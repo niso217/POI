@@ -1,0 +1,73 @@
+package com.benezra.nir.poi.Adapter;
+
+import android.content.Context;
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+
+import com.benezra.nir.poi.Bitmap.DateUtil;
+import com.benezra.nir.poi.R;
+import com.squareup.picasso.Picasso;
+
+import java.util.Calendar;
+import java.util.List;
+
+public class EventImagesAdapter extends RecyclerView.Adapter<EventImagesAdapter.EventsViewHolder>  {
+
+    private List<String> eventsImagesList;
+    private Context context;
+
+
+    public class EventsViewHolder extends RecyclerView.ViewHolder {
+        public ImageView image;
+
+        public EventsViewHolder(View view) {
+            super(view);
+            image = view.findViewById(R.id.event_image);
+
+        }
+    }
+
+
+    public EventImagesAdapter(Context context, List<String> events) {
+        this.context = context;
+        this.eventsImagesList = events;
+
+    }
+
+
+    public void setItems(List<String> events) {
+        this.eventsImagesList = events;
+    }
+
+    @Override
+    public EventsViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View itemView = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.event_image_item, parent, false);
+
+
+
+        return new EventsViewHolder(itemView);
+    }
+
+    @Override
+    public void onBindViewHolder(EventsViewHolder holder, int position) {
+        String image = eventsImagesList.get(position);
+
+        if (!image.equals(""))
+        Picasso.with(context)
+                .load(image)
+                .placeholder(R.drawable.ic_cloud_off_red)
+                .into(holder.image);
+
+
+    }
+
+
+    @Override
+    public int getItemCount() {
+        return eventsImagesList.size();
+    }
+}

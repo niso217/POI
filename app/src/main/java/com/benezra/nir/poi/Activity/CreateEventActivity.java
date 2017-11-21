@@ -7,20 +7,21 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewPager;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PagerSnapHelper;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.SnapHelper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.Menu;
+import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -29,7 +30,6 @@ import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -42,8 +42,7 @@ import android.widget.Toast;
 import java.util.Arrays;
 import java.util.Calendar;
 
-import com.benezra.nir.poi.Adapter.ClickableViewPager;
-import com.benezra.nir.poi.Adapter.ItemPagerAdapter;
+import com.benezra.nir.poi.Adapter.EventImagesAdapter;
 import com.benezra.nir.poi.Adapter.ViewHolders;
 import com.benezra.nir.poi.Bitmap.DateUtil;
 import com.benezra.nir.poi.ChatActivity;
@@ -51,7 +50,6 @@ import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Fragment.AlertDialogFragment;
 import com.benezra.nir.poi.Fragment.ImageCameraDialogFragmentNew;
 import com.benezra.nir.poi.Fragment.MapFragment;
-import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Adapter.CustomSpinnerAdapter;
 import com.benezra.nir.poi.Fragment.UploadToFireBaseFragment;
@@ -140,7 +138,12 @@ public class CreateEventActivity extends BaseActivity
         AlertDialogFragment.DialogListenerCallback,
         MapFragment.MapFragmentCallback,
         PlaceSelectionListener,
-        View.OnFocusChangeListener, UploadToFireBaseFragment.UploadListener {
+        View.OnFocusChangeListener,
+        UploadToFireBaseFragment.UploadListener,
+        GoogleMapsBottomSheetBehavior.BottomSheetCallback,
+        ViewTreeObserver.OnGlobalLayoutListener
+
+{
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -149,53 +152,33 @@ public class CreateEventActivity extends BaseActivity
     private Event mCurrentEvent;
     private Event mCurrentEventChangeFlag;
     final static String TAG = CreateEventActivity.class.getSimpleName();
-    //private CollapsingToolbarLayout collapsingToolbar;
     private Calendar mEventTime;
     private FirebaseDatabase mFirebaseInstance;
     private Spinner mspinnerCustom;
     private ArrayList<String> mInterestsList;
     private CustomSpinnerAdapter mCustomSpinnerAdapter;
-    private EditText mEventDetails; //mTitle;
-    //private ParticipatesAdapter mParticipatesAdapterAdapter;
+    private EditText mEventDetails, mTitle;
     private ProgressBar mProgressBar;
-    private ProgressDialogFragment mProgressDialogFragment;
     private boolean mMode; //true = new | false = edit
     private FusedLocationProviderClient mFusedLocationClient;
-    private RecyclerView mRecyclerView;
     private ArrayList<User> mParticipates;
-    private Menu mMenu;
     private ImageButton mAddImage, mChat, mShare, mLocation, mClear, mSave, mDelete;
     private MapFragment mapFragment;
-    private boolean mCanDrag = true;
-    private AppBarLayout mAppBarLayout;
-    private CoordinatorLayout mCoordinatorLayout;
     private RecyclerView mPicturesRecyclerView;
     private RecyclerView mParticipateRecyclerView;
-    //private boolean mTouchEventFired;
-    private int mScrollDirection;
-    private int mCurrentOffset;
     private LinearLayout mHorizontalScrollView;
     private PlaceAutocompleteFragment mPlaceAutocompleteFragment;
     private LinearLayout mPlaceAutoCompleteLayout;
-    private Toolbar mToolbar;
     private final static int DETAILS_FOCUS = 0;
     private final static int TITLE_FOCUS = 1;
     private int mFocusedEditText;
     private Set<String> mPicturesKeys;
     private GoogleMapsBottomSheetBehavior behavior;
-    private ClickableViewPager viewPager;
+    private NestedScrollView mNestedScrollView;
+    private EventImagesAdapter mEventImagesAdapter;
+    private ArrayList<String> mEventImagesList;
 
 
-    int[] mDrawables = {
-            R.drawable.alcohol_party_dark,
-            R.drawable.amateur_radio,
-            R.drawable.archery,
-            R.drawable.backpacking,
-            R.drawable.baking_back,
-            R.drawable.beekeeping_back
-    };
-
-    private FirebaseRecyclerAdapter<EventPhotos, ViewHolders.PicturesViewHolder> mPicturesAdapter;
     private FirebaseRecyclerAdapter<User, ViewHolders.ParticipatesViewHolder> mParticipateAdapter;
 
 
@@ -208,189 +191,21 @@ public class CreateEventActivity extends BaseActivity
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventTime = Calendar.getInstance();
+        mEventImagesList = new ArrayList<>();
+        mEventImagesAdapter = new EventImagesAdapter(this, mEventImagesList);
 
-        mHorizontalScrollView = findViewById(R.id.scrolling_icons);
         mPicturesKeys = new HashSet<>();
 
-        //Using the ToolBar as ActionBar
-        //Find the toolbar view inside the activity layout
-        //mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        //setSupportActionBar(mToolbar);
-//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        //getSupportActionBar().setDisplayShowTitleEnabled(false);
-        viewPager =  findViewById(R.id.pager);
-        ItemPagerAdapter adapter = new ItemPagerAdapter(this,mDrawables);
-        viewPager.setAdapter(adapter);
 
-        viewPager.setOnItemClickListener(new ClickableViewPager.OnItemClickListener() {
-            @Override
-            public void onItemClick(int position) {
-                behavior.setState(STATE_COLLAPSED);
+        initView();
 
-            }
-        });
+        initParticipatesRecycleView();
 
-        CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
-        final View bottomSheet = coordinatorLayout.findViewById(R.id.bottomsheet);
-        behavior = GoogleMapsBottomSheetBehavior.from(bottomSheet);
-        //parallax = findViewById(R.id.parallax);
-//        behavior.setParallax(parallax);
-         behavior.anchorView(mHorizontalScrollView);
+        initImageRecycleView();
 
-        behavior.setParallax(viewPager);
-        behavior.setAnchorHeight(900);
-        behavior.setHideable(false);
-//        bottomSheet.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-//            @Override
-//            public void onGlobalLayout() {
-//                // set the height of the parallax to fill the gap between the anchor and the top of the screen
-//                CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(viewPager.getMeasuredWidth(), behavior.getAnchorOffset() / 2);
-//                viewPager.setLayoutParams(layoutParams);
-//                bottomSheet.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-//            }
-//        });
+        inflateMapFragment();
 
-        behavior.setBottomSheetCallback(new GoogleMapsBottomSheetBehavior.BottomSheetCallback() {
-            @Override
-            public void onStateChanged(@NonNull View bottomSheet, @GoogleMapsBottomSheetBehavior.State int newState) {
-                // each time the bottomsheet changes position, animate the camera to keep the pin in view
-                // normally this would be a little more complex (getting the pin location and such),
-                // but for the purpose of an example this is enough to show how to stay centered on a pin
-                switch(newState)
-                {
-                    case STATE_DRAGGING:
-                        Log.d("state" , "STATE_DRAGGING");
-                        setVisibility(mHorizontalScrollView, 1.0f,200);
-                        //setVisibility(viewPager, 1.0f,200);
-
-                        break;
-                    case STATE_SETTLING:
-                        setVisibility(mHorizontalScrollView, 1.0f,200);
-                        Log.d("state" , "STATE_SETTLING");
-                        break;
-                    case STATE_EXPANDED:
-                        setVisibility(mHorizontalScrollView, 0.0f,200);
-                        Log.d("state" , "STATE_EXPANDED");
-                        break;
-                    case STATE_COLLAPSED:
-                       // setVisibility(viewPager, 0.0f,200);
-                        Log.d("state" , "STATE_COLLAPSED");
-                        break;
-                    case STATE_HIDDEN:
-                        Log.d("state" , "STATE_HIDDEN");
-                        break;
-                    case STATE_ANCHORED:
-                       // setVisibility(viewPager, 1.0f,200);
-                        Log.d("state" , "STATE_ANCHORED");
-                        break;
-
-
-                }
-            }
-
-            @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                Log.d("slideOffset" , slideOffset+"");
-
-
-            }
-        });
-
-//        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(viewPager.getMeasuredWidth(), behavior.getAnchorOffset());
-//        viewPager.setLayoutParams(layoutParams);
-
-        behavior.setState(STATE_ANCHORED);
-
-
-        //Setting the category name onto collapsing toolbar
-        //collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
-       // mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinatorlayout);
-
-        mShare = (ImageButton) findViewById(R.id.btn_share);
-        mShare.setNestedScrollingEnabled(false);
-        mAddImage = (ImageButton) findViewById(R.id.btn_add_image);
-        mChat = (ImageButton) findViewById(R.id.btn_chat);
-        mLocation = (ImageButton) findViewById(R.id.btn_location);
-        mClear = (ImageButton) findViewById(R.id.btn_clear);
-        mSave = (ImageButton) findViewById(R.id.btn_save);
-        mDelete = (ImageButton) findViewById(R.id.btn_delete);
-
-        mShare.setOnClickListener(this);
-        mAddImage.setOnClickListener(this);
-        mChat.setOnClickListener(this);
-        mSave.setOnClickListener(this);
-        mClear.setOnClickListener(this);
-        mDelete.setOnClickListener(this);
-
-
-        mLocation.setOnClickListener(this);
-
-
-        mPlaceAutoCompleteLayout = (LinearLayout) findViewById(R.id.place_autocomplete_layout);
-
-
-        if (mPlaceAutocompleteFragment == null) {
-            mPlaceAutocompleteFragment = (PlaceAutocompleteFragment)
-                    getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
-
-            mPlaceAutocompleteFragment.setOnPlaceSelectedListener(this);
-        }
-
-        //Setting the styles to expanded and collapsed toolbar
-        //collapsingToolbar.setExpandedTitleTextAppearance(R.style.ExpandedAppBar);
-        //collapsingToolbar.setCollapsedTitleTextAppearance(R.style.CollapsedAppBar);
-
-        //Setting the category mDialogImageView onto collapsing toolbar
-
-        //mAppBarLayout = (AppBarLayout) findViewById(R.id.appbar);
-
-        //Setting the paragraph text onto TextView
-        mEventDetails = (EditText) findViewById(R.id.tv_desciption);
-        //mTitle = (EditText) findViewById(R.id.tv_title);
-
-        mEventDetails.setOnFocusChangeListener(this);
-        //mTitle.setOnFocusChangeListener(this);
-
-
-        tvDatePicker = (TextView) findViewById(R.id.tv_date);
-        tvDatePicker.setText(DateUtil.CalendartoDate(Calendar.getInstance().getTime()));
-        tvTimePicker = (TextView) findViewById(R.id.tv_time);
-
-        mspinnerCustom = (Spinner) findViewById(R.id.spinnerCustom);
-        mProgressBar = (ProgressBar) findViewById(R.id.pb_loading);
-
-        mSwitch = (Switch) findViewById(R.id.tgl_allday);
-
-
-        //mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-
-
-        mPicturesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view_pictures);
-        mPicturesRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
-        mPicturesRecyclerView.setNestedScrollingEnabled(false);
-        mPicturesRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mPicturesRecyclerView, this));
-        //mPicturesRecyclerView.setHasFixedSize(true);
-
-
-        mParticipateRecyclerView = (RecyclerView) findViewById(R.id.participate_recycler_view);
-        mParticipateRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
-        mParticipateRecyclerView.setNestedScrollingEnabled(false);
-        //mParticipateRecyclerView.setHasFixedSize(true);
-
-
-        mapFragment = (MapFragment) getSupportFragmentManager().findFragmentByTag(MapFragment.class.getSimpleName());
-        if (mapFragment == null) {
-            Log.d(TAG, "map fragment null");
-            mapFragment = new MapFragment();
-            getSupportFragmentManager().beginTransaction().add(R.id.framelayout, mapFragment, MapFragment.class.getSimpleName()).commit();
-        }
-
-
-        tvDatePicker.setOnClickListener(this);
-        tvTimePicker.setOnClickListener(this);
-        mSwitch.setOnCheckedChangeListener(this);
-        //collapsingToolbar.setOnClickListener(this);
-        mspinnerCustom.setOnItemSelectedListener(this);
+        inflateMapAutoCompleteFragment();
 
 
         if (savedInstanceState != null) {
@@ -399,7 +214,6 @@ public class CreateEventActivity extends BaseActivity
             mInterestsList = savedInstanceState.getStringArrayList("interests");
             mParticipates = savedInstanceState.getParcelableArrayList("participates");
             mMode = savedInstanceState.getBoolean("mode");
-            //mTouchEventFired = savedInstanceState.getBoolean("touch");
 
             setEventFields();
 
@@ -416,25 +230,185 @@ public class CreateEventActivity extends BaseActivity
                 mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
 
             }
-            //setAppBarOffset();
 
 
         }
-        initView();
+        initMode();
         initCustomSpinner();
-        addInterestsChangeListener();
-        //setCoordinatorLayoutBehavior();
-        addImagesChangeListener();
-        participatesChangeListener();
 
-        mEventDetails.addTextChangedListener(this);
-        //mTitle.addTextChangedListener(this);
+        initListeners();
+
+
+        behavior.setParallax(mPicturesRecyclerView);
+        behavior.setAnchorHeight(900);
+        behavior.setHideable(false);
+
+        behavior.setState(STATE_ANCHORED);
 
 
     }
 
-
     private void initView() {
+        mHorizontalScrollView = findViewById(R.id.scrolling_icons);
+        mShare = findViewById(R.id.btn_share);
+        mAddImage = findViewById(R.id.btn_add_image);
+        mChat = findViewById(R.id.btn_chat);
+        mLocation = findViewById(R.id.btn_location);
+        mClear = findViewById(R.id.btn_clear);
+        mSave = findViewById(R.id.btn_save);
+        mDelete = findViewById(R.id.btn_delete);
+        mPlaceAutoCompleteLayout = findViewById(R.id.place_autocomplete_layout);
+        mEventDetails = findViewById(R.id.tv_desciption);
+        mTitle = findViewById(R.id.tv_title);
+        tvDatePicker = findViewById(R.id.tv_date);
+        tvDatePicker.setText(DateUtil.CalendartoDate(Calendar.getInstance().getTime()));
+        tvTimePicker = findViewById(R.id.tv_time);
+        mspinnerCustom = findViewById(R.id.spinnerCustom);
+        mProgressBar = findViewById(R.id.pb_loading);
+        mSwitch = findViewById(R.id.tgl_allday);
+        mNestedScrollView = findViewById(R.id.nestedscrollview);
+        behavior = GoogleMapsBottomSheetBehavior.from(mNestedScrollView);
+
+    }
+
+    private void initListeners() {
+        tvDatePicker.setOnClickListener(this);
+        tvTimePicker.setOnClickListener(this);
+        mSwitch.setOnCheckedChangeListener(this);
+        mspinnerCustom.setOnItemSelectedListener(this);
+        mShare.setOnClickListener(this);
+        mAddImage.setOnClickListener(this);
+        mChat.setOnClickListener(this);
+        mSave.setOnClickListener(this);
+        mClear.setOnClickListener(this);
+        mDelete.setOnClickListener(this);
+        mLocation.setOnClickListener(this);
+        mEventDetails.setOnFocusChangeListener(this);
+        mTitle.setOnFocusChangeListener(this);
+        mEventDetails.addTextChangedListener(this);
+        mNestedScrollView.getViewTreeObserver().addOnGlobalLayoutListener(this);
+        behavior.setBottomSheetCallback(this);
+        mTitle.addTextChangedListener(this);
+        addInterestsChangeListener();
+        getAllEventImages();
+        participatesChangeListener();
+    }
+
+    @Override
+    public void onStateChanged(@NonNull View bottomSheet, int newState) {
+        switch (newState) {
+            case STATE_DRAGGING:
+                Log.d("state", "STATE_DRAGGING");
+                setVisibility(mHorizontalScrollView, 1.0f, 200, true);
+
+                break;
+            case STATE_SETTLING:
+                setVisibility(mHorizontalScrollView, 1.0f, 200, true);
+                Log.d("state", "STATE_SETTLING");
+                break;
+            case STATE_EXPANDED:
+                setVisibility(mHorizontalScrollView, 0.0f, 200, true);
+                setVisibility(mPlaceAutoCompleteLayout, 0.0f, 200, true);
+                Log.d("state", "STATE_EXPANDED");
+                break;
+            case STATE_COLLAPSED:
+                setVisibility(mPlaceAutoCompleteLayout, 1.0f, 200, false);
+
+                Log.d("state", "STATE_OLLAPSED");
+                break;
+            case STATE_HIDDEN:
+                Log.d("state", "STATE_HIDDEN");
+                break;
+            case STATE_ANCHORED:
+                Log.d("state", "STATE_ANCHORED");
+                setVisibility(mPlaceAutoCompleteLayout, 0.0f, 200, true);
+
+                break;
+
+
+        }
+    }
+
+    @Override
+    public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+
+    }
+
+    @Override
+    public void onGlobalLayout() {
+        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(mPicturesRecyclerView.getMeasuredWidth(), behavior.getAnchorOffset());
+        mPicturesRecyclerView.setLayoutParams(layoutParams);
+        mNestedScrollView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+    }
+
+
+    private void initParticipatesRecycleView() {
+        mParticipateRecyclerView = findViewById(R.id.participate_recycler_view);
+        mParticipateRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
+        mParticipateRecyclerView.setNestedScrollingEnabled(false);
+
+    }
+
+
+    private void initImageRecycleView() {
+        mPicturesRecyclerView = findViewById(R.id.recycler_view_pictures);
+        mPicturesRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
+        mPicturesRecyclerView.setNestedScrollingEnabled(false);
+        mPicturesRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mPicturesRecyclerView, this));
+        mPicturesRecyclerView.setAdapter(mEventImagesAdapter);
+        SnapHelper snapHelper = new PagerSnapHelper();
+        snapHelper.attachToRecyclerView(mPicturesRecyclerView);
+    }
+
+
+    private void getAllEventImages() {
+        Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("pictures");
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                mEventImagesList.clear();
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot data : dataSnapshot.getChildren()) {
+                        EventPhotos eventPhotos = data.getValue(EventPhotos.class);
+                        mEventImagesList.add(eventPhotos.getUrl());
+
+                    }
+                    mEventImagesAdapter.notifyDataSetChanged();
+                    setVisibility(mPicturesRecyclerView, 1.0f, 300, true);
+
+                } else
+                    setVisibility(mPicturesRecyclerView, 0.0f, 0, false);
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+
+    private void inflateMapAutoCompleteFragment() {
+        if (mPlaceAutocompleteFragment == null) {
+            mPlaceAutocompleteFragment = (PlaceAutocompleteFragment)
+                    getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+
+            mPlaceAutocompleteFragment.setOnPlaceSelectedListener(this);
+        }
+    }
+
+    private void inflateMapFragment() {
+        mapFragment = (MapFragment) getSupportFragmentManager().findFragmentByTag(MapFragment.class.getSimpleName());
+        if (mapFragment == null) {
+            Log.d(TAG, "map fragment null");
+            mapFragment = new MapFragment();
+            getSupportFragmentManager().beginTransaction().add(R.id.framelayout, mapFragment, MapFragment.class.getSimpleName()).commit();
+        }
+    }
+
+
+    private void initMode() {
         if (mMode) {
             mShare.setEnabled(false);
             mAddImage.setEnabled(false);
@@ -541,21 +515,6 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
-
-//    private void setAppBarOffset() {
-//
-//        mAppBarLayout.post(new Runnable() {
-//            @Override
-//            public void run() {
-//                //mNestedScrollView.scrollTo(0,500);
-//                CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
-//                AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) params.getBehavior();
-//                behavior.onNestedFling(mCoordinatorLayout, mAppBarLayout, null, 0, mAppBarLayout.getTotalScrollRange() * 2, false);
-//
-//            }
-//        });
-//
-//    }
 
     private void checkEvent() {
         if (mCurrentEvent != null) {
@@ -738,19 +697,6 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
-//    private void setCoordinatorLayoutBehavior() {
-//        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) mAppBarLayout.getLayoutParams();
-//        AppBarLayout.Behavior behavior = new AppBarLayout.Behavior();
-//        behavior.setDragCallback(new AppBarLayout.Behavior.DragCallback() {
-//            @Override
-//            public boolean canDrag(AppBarLayout appBarLayout) {
-//                return mCanDrag;
-//            }
-//        });
-//        params.setBehavior(behavior);
-//    }
-
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -762,24 +708,24 @@ public class CreateEventActivity extends BaseActivity
         return super.onOptionsItemSelected(item);
     }
 
-//    @Override
-//    public void onBackPressed() {
-//        if (!mCanDrag)
-//            setAppBarOffset();
-//        else {
-//            if (mMode)
-//                BuildReturnDialogFragment();
-//            else {
-//                if (isEventChanged())
-//                    BuildReturnDialogFragment();
-//                else
-//                    super.onBackPressed();
-//            }
-//
-//        }
-//
-//
-//    }
+    @Override
+    public void onBackPressed() {
+
+        mPicturesRecyclerView.requestFocus();
+        behavior.setState(STATE_ANCHORED);
+
+
+        if (mMode)
+            BuildReturnDialogFragment();
+        else {
+            if (isEventChanged())
+                BuildReturnDialogFragment();
+            else
+                super.onBackPressed();
+        }
+
+    }
+
 
     @Override
     protected int getNavigationDrawerID() {
@@ -852,28 +798,6 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
-    private void addImagesChangeListener() {
-        Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("pictures");
-
-        mPicturesAdapter = new FirebaseRecyclerAdapter<EventPhotos, ViewHolders.PicturesViewHolder>(
-                EventPhotos.class, R.layout.grid_item_event_pic, ViewHolders.PicturesViewHolder.class, query) {
-            @Override
-            protected void populateViewHolder(ViewHolders.PicturesViewHolder picturesViewHolder, EventPhotos model, int position) {
-                Picasso.with(CreateEventActivity.this)
-                        .load(model.getUrl())
-                        .error(R.drawable.common_google_signin_btn_icon_dark)
-                        .into(picturesViewHolder.imgThumbnail);
-
-                mPicturesKeys.add(model.getTitle());
-
-            }
-
-        };
-
-        mPicturesRecyclerView.setAdapter(mPicturesAdapter);
-
-    }
-
     private void participatesChangeListener() {
         Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
 
@@ -945,7 +869,7 @@ public class CreateEventActivity extends BaseActivity
 
 
         if (mCurrentEvent != null) {
-           // mTitle.setText(mCurrentEvent.getTitle());
+            mTitle.setText(mCurrentEvent.getTitle());
             //setImageBack();
             mEventDetails.setText(mCurrentEvent.getDetails());
             Calendar calendar = Calendar.getInstance();
@@ -1036,7 +960,7 @@ public class CreateEventActivity extends BaseActivity
                 //finish();
                 mMode = false;
                 cloneEvent();
-                initView();
+                initMode();
 
             }
 
@@ -1055,43 +979,6 @@ public class CreateEventActivity extends BaseActivity
         return map;
     }
 
-//    @Override
-//    public boolean dispatchTouchEvent(MotionEvent ev) {
-//
-//        mTouchEventFired = true;
-//        int x = (int) ev.getX();
-//        int y = (int) ev.getY();
-//        float bottom = mapFragment.getBottomHeight();
-//
-//        try {
-//
-//            if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-//                if (!mCanDrag)
-//                    if (y > mCoordinatorLayout.getMeasuredHeight() - bottom)
-//                        mCanDrag = true;
-//                if (mEventDetails.isFocused()) mEventDetails.clearFocus();
-//                if (mTitle.isFocused()) mTitle.clearFocus();
-//
-//
-//            }
-//
-//            if (ev.getAction() == MotionEvent.ACTION_UP && mCanDrag) {
-//                float per = Math.abs(mAppBarLayout.getY()) / mAppBarLayout.getTotalScrollRange();
-//                boolean setExpanded = (per <= 0.2F);
-//                if (setExpanded) {
-//                    if (mScrollDirection < 0)
-//                        mAppBarLayout.setExpanded(setExpanded, true);
-//
-//                }
-//
-//            }
-//
-//            return super.dispatchTouchEvent(ev);
-//        } catch (Exception e) {
-//            Log.e(TAG, "dispatchTouchEvent " + e.toString());
-//            return false;
-//        }
-//    }
 
     private void buildImageAndTitleChooser() {
 
@@ -1134,76 +1021,38 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
-//    @Override
-//    public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-//        int lastOfsset = mCurrentOffset;
-//
-//
-//        mCurrentOffset = Math.abs(verticalOffset);
-//
-//        Log.d(TAG, mCurrentOffset + "");
-//
-//
-//        if (mCurrentOffset - lastOfsset > 0)
-//            mScrollDirection = 1;
-//        else
-//            mScrollDirection = -1;
-//
-//
-//        if (mCurrentOffset == 0) {
-//            mCanDrag = false;
-//            if (mPlaceAutoCompleteLayout.getVisibility() == View.GONE)
-//                mPlaceAutoCompleteLayout.setVisibility(View.VISIBLE);
-//
-//            if (mTouchEventFired && mHorizontalScrollView.getVisibility() == View.VISIBLE)
-//                setVisibility(mHorizontalScrollView, 0.0f);
-//
-//        } else
-//
-//        {
-//            mCanDrag = true;
-//            if (mPlaceAutoCompleteLayout.getVisibility() == View.VISIBLE)
-//                mPlaceAutoCompleteLayout.setVisibility(View.GONE);
-//        }
-//        if (mTouchEventFired) {
-//
-//            if (mCurrentOffset < mHorizontalScrollView.getHeight()) {
-//                if (mHorizontalScrollView.getVisibility() == View.VISIBLE)
-//                    setVisibility(mHorizontalScrollView, 0.0f);
-//            } else {
-//
-//
-//                if (mCurrentOffset < mAppBarLayout.getTotalScrollRange() - mHorizontalScrollView.getHeight()) {
-//                    if (mHorizontalScrollView.getVisibility() == View.GONE)
-//                        setVisibility(mHorizontalScrollView, 1.0f);
-//                } else {
-//                    if (mHorizontalScrollView.getVisibility() == View.VISIBLE)
-//                        setVisibility(mHorizontalScrollView, 0.0f);
-//                }
-//
-//            }
-//        }
-//
-//
-//    }
 
+    private void setVisibility(final View view, final float alpha, long duration, boolean animate) {
 
-    private void setVisibility(final View view, final float alpha,long duration) {
-        view.animate()
-                .alpha(alpha)
-                .setDuration(duration)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        super.onAnimationEnd(animation);
-//                        if (alpha == 1.0f)
-//                            view.setVisibility(View.VISIBLE);
-//                        if (alpha == 0.0f)
-//                            view.setVisibility(View.GONE);
-                        Log.d(TAG,alpha+"");
+        if (animate)
+            view.animate()
+                    .alpha(alpha)
+                    .setDuration(duration)
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            super.onAnimationEnd(animation);
+                            if (alpha == 1.0f)
+                                view.setVisibility(View.VISIBLE);
+                            if (alpha == 0.0f)
+                                view.setVisibility(View.GONE);
+                            Log.d(TAG, alpha + "");
 
-                    }
-                });
+                        }
+                    });
+        else {
+            if (alpha == 1.0f) {
+                view.setAlpha(1.0f);
+                view.setVisibility(View.VISIBLE);
+            }
+
+            if (alpha == 0.0f) {
+                view.setAlpha(0.0f);
+                view.setVisibility(View.GONE);
+            }
+
+        }
+
     }
 
 
@@ -1216,6 +1065,31 @@ public class CreateEventActivity extends BaseActivity
             case R.id.tv_desciption:
                 mFocusedEditText = DETAILS_FOCUS;
                 break;
+        }
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+
+        try {
+
+            if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+                if (mEventDetails.isFocused()) {
+                    mEventDetails.clearFocus();
+                    behavior.setState(STATE_ANCHORED);
+
+                }
+                if (mTitle.isFocused()) {
+                    mTitle.clearFocus();
+                    behavior.setState(STATE_ANCHORED);
+
+                }
+
+            }
+            return super.dispatchTouchEvent(ev);
+        } catch (Exception e) {
+            Log.e(TAG, "dispatchTouchEvent " + e.toString());
+            return false;
         }
     }
 
@@ -1248,5 +1122,7 @@ public class CreateEventActivity extends BaseActivity
         isChangeMade();
 
     }
+
+
 }
 

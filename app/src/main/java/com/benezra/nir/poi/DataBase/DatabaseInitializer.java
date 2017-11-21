@@ -62,6 +62,7 @@ public class DatabaseInitializer {
 
         @Override
         protected Void doInBackground(final Void... params) {
+            mDb.interestsDao().deleteAll();
             mDb.interestsDao().updateAll(mInterestData);
             return null;
         }

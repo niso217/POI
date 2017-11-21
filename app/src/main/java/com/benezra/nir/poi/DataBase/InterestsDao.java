@@ -18,6 +18,9 @@ public interface InterestsDao {
     @Query("SELECT * FROM interest_data")
     List<EventsInterestData> getAll();
 
+    @Query("DELETE  FROM interest_data")
+    void deleteAll();
+
     @Query("SELECT * FROM interest_data where interest LIKE  :interest")
     EventsInterestData findByName(String interest);
 
@@ -31,11 +34,9 @@ public interface InterestsDao {
     @Delete
     void delete(EventsInterestData interestData);
 
-    @Update
+    @Insert
     void updateAll(List<EventsInterestData> interestData);
 
-    @Insert
-    void insert(EventsInterestData... interestData);
 
 
 }

@@ -102,7 +102,8 @@ public class EventByInterestListFragment extends Fragment implements
     private String mImageUrl;
 
 
-    @Override
+
+             @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mEventModel = new EventModel();
@@ -261,6 +262,8 @@ public class EventByInterestListFragment extends Fragment implements
         mEventHashSet.clear();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("events");
         GeoFire geoFire = new GeoFire(ref);
+
+        if (mLastLocation==null) return;
         // creates a new query around [37.7832, -122.4056] with a radius of 0.6 kilometers
         GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()), radius);
 
