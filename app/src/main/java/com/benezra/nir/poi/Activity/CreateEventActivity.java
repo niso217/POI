@@ -5,9 +5,11 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -26,6 +28,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
@@ -33,6 +36,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -207,6 +211,9 @@ public class CreateEventActivity extends BaseActivity
 
         inflateMapAutoCompleteFragment();
 
+        addKeboardChangeListener();
+
+
 
         if (savedInstanceState != null) {
             mCurrentEvent = savedInstanceState.getParcelable("event");
@@ -242,8 +249,6 @@ public class CreateEventActivity extends BaseActivity
         behavior.setParallax(mPicturesRecyclerView);
         behavior.setAnchorHeight(900);
         behavior.setHideable(false);
-
-        behavior.setState(STATE_ANCHORED);
 
 
     }
@@ -620,6 +625,40 @@ public class CreateEventActivity extends BaseActivity
         saveEventToFirebase();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG,"onResume");
+    }
+
+    private  void addKeboardChangeListener(){
+        CoordinatorLayout contentView = findViewById(R.id.coordinatorlayout);
+        contentView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+
+                Rect r = new Rect();
+                CoordinatorLayout contentView = findViewById(R.id.coordinatorlayout);
+                contentView.getWindowVisibleDisplayFrame(r);
+                int screenHeight = contentView.getRootView().getHeight();
+
+                // r.bottom is the position above soft keypad or device button.
+                // if keypad is shown, the r.bottom is smaller than that before.
+                int keypadHeight = screenHeight - r.bottom;
+
+                Log.d("Nifras", "keypadHeight = " + keypadHeight);
+
+                if (keypadHeight > screenHeight * 0.15) { // 0.15 ratio is perhaps enough to determine keypad height.
+                   Log.d(TAG,"open");
+                }
+                else {
+                    Log.d(TAG,"close");
+                    behavior.setState(STATE_ANCHORED);
+                    contentView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                }
+            }
+        });
+    }
 
     @Override
     public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
@@ -710,10 +749,6 @@ public class CreateEventActivity extends BaseActivity
 
     @Override
     public void onBackPressed() {
-
-        mPicturesRecyclerView.requestFocus();
-        behavior.setState(STATE_ANCHORED);
-
 
         if (mMode)
             BuildReturnDialogFragment();
@@ -1058,6 +1093,9 @@ public class CreateEventActivity extends BaseActivity
 
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
+        if (hasFocus)
+            behavior.setState(STATE_EXPANDED);
+
         switch (v.getId()) {
             case R.id.tv_title:
                 mFocusedEditText = TITLE_FOCUS;
@@ -1076,12 +1114,12 @@ public class CreateEventActivity extends BaseActivity
             if (ev.getAction() == MotionEvent.ACTION_DOWN) {
                 if (mEventDetails.isFocused()) {
                     mEventDetails.clearFocus();
-                    behavior.setState(STATE_ANCHORED);
+                    //behavior.setState(STATE_ANCHORED);
 
                 }
                 if (mTitle.isFocused()) {
                     mTitle.clearFocus();
-                    behavior.setState(STATE_ANCHORED);
+                    //behavior.setState(STATE_ANCHORED);
 
                 }
 
