@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.LinearLayoutManager;
@@ -50,6 +51,7 @@ import com.benezra.nir.poi.Adapter.EventImagesAdapter;
 import com.benezra.nir.poi.Adapter.ViewHolders;
 import com.benezra.nir.poi.Bitmap.DateUtil;
 import com.benezra.nir.poi.ChatActivity;
+import com.benezra.nir.poi.CustomPlaceAutoCompleteFragment;
 import com.benezra.nir.poi.Event;
 import com.benezra.nir.poi.Fragment.AlertDialogFragment;
 import com.benezra.nir.poi.Fragment.ImageCameraDialogFragmentNew;
@@ -97,6 +99,9 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.DialogInterface.BUTTON_NEGATIVE;
 import static android.content.DialogInterface.BUTTON_NEUTRAL;
 import static android.content.DialogInterface.BUTTON_POSITIVE;
+import static com.benezra.nir.poi.Fragment.MapFragment.EVENT_LOC_TAB;
+import static com.benezra.nir.poi.Fragment.MapFragment.LOCATION_TAB;
+import static com.benezra.nir.poi.Fragment.MapFragment.SEARCH_TAB;
 import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_ANCHORED;
 import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
 import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_DRAGGING;
@@ -145,8 +150,8 @@ public class CreateEventActivity extends BaseActivity
         View.OnFocusChangeListener,
         UploadToFireBaseFragment.UploadListener,
         GoogleMapsBottomSheetBehavior.BottomSheetCallback,
-        ViewTreeObserver.OnGlobalLayoutListener
-
+        ViewTreeObserver.OnGlobalLayoutListener,
+        TabLayout.OnTabSelectedListener
 {
 
     private GoogleMap mMap;
@@ -171,7 +176,7 @@ public class CreateEventActivity extends BaseActivity
     private RecyclerView mPicturesRecyclerView;
     private RecyclerView mParticipateRecyclerView;
     private LinearLayout mHorizontalScrollView;
-    private PlaceAutocompleteFragment mPlaceAutocompleteFragment;
+    private CustomPlaceAutoCompleteFragment mPlaceAutocompleteFragment;
     private LinearLayout mPlaceAutoCompleteLayout;
     private final static int DETAILS_FOCUS = 0;
     private final static int TITLE_FOCUS = 1;
@@ -181,6 +186,14 @@ public class CreateEventActivity extends BaseActivity
     private NestedScrollView mNestedScrollView;
     private EventImagesAdapter mEventImagesAdapter;
     private ArrayList<String> mEventImagesList;
+    private TextView mTextViewDistance;
+    private LinearLayout mNavigationBarLayout;
+
+    private TabLayout mTabLayout;
+
+
+
+    private int mTabSelectedIndex;
 
 
     private FirebaseRecyclerAdapter<User, ViewHolders.ParticipatesViewHolder> mParticipateAdapter;
@@ -221,11 +234,13 @@ public class CreateEventActivity extends BaseActivity
             mInterestsList = savedInstanceState.getStringArrayList("interests");
             mParticipates = savedInstanceState.getParcelableArrayList("participates");
             mMode = savedInstanceState.getBoolean("mode");
+            mTabSelectedIndex = savedInstanceState.getInt("tab_selected_index");
 
             setEventFields();
 
 
         } else {
+            mTabSelectedIndex = -1;
             mInterestsList = new ArrayList<>();
             mParticipates = new ArrayList<>();
 
@@ -253,7 +268,25 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        behavior.setPeekHeight(100);
+
+    }
+
+    public void SelectCurrentEventPoint() {
+        if (mTabSelectedIndex < 0)
+            mTabLayout.getTabAt(LOCATION_TAB).select();
+        else
+            mTabLayout.getTabAt(mTabSelectedIndex).select();
+
+
+    }
+
     private void initView() {
+        mNavigationBarLayout = findViewById(R.id.tab_layout);
+        mParticipateRecyclerView = findViewById(R.id.participate_recycler_view);
         mHorizontalScrollView = findViewById(R.id.scrolling_icons);
         mShare = findViewById(R.id.btn_share);
         mAddImage = findViewById(R.id.btn_add_image);
@@ -273,6 +306,10 @@ public class CreateEventActivity extends BaseActivity
         mSwitch = findViewById(R.id.tgl_allday);
         mNestedScrollView = findViewById(R.id.nestedscrollview);
         behavior = GoogleMapsBottomSheetBehavior.from(mNestedScrollView);
+        mTabLayout = findViewById(R.id.tab_layout_tab);
+        mTextViewDistance =  findViewById(R.id.tv_distance);
+
+
 
     }
 
@@ -293,6 +330,7 @@ public class CreateEventActivity extends BaseActivity
         mEventDetails.addTextChangedListener(this);
         mNestedScrollView.getViewTreeObserver().addOnGlobalLayoutListener(this);
         behavior.setBottomSheetCallback(this);
+        mTabLayout.addOnTabSelectedListener(this);
         mTitle.addTextChangedListener(this);
         addInterestsChangeListener();
         getAllEventImages();
@@ -303,31 +341,30 @@ public class CreateEventActivity extends BaseActivity
     public void onStateChanged(@NonNull View bottomSheet, int newState) {
         switch (newState) {
             case STATE_DRAGGING:
+                switchViews(false);
                 Log.d("state", "STATE_DRAGGING");
-                setVisibility(mHorizontalScrollView, 1.0f, 200, true);
-
                 break;
             case STATE_SETTLING:
-                setVisibility(mHorizontalScrollView, 1.0f, 200, true);
                 Log.d("state", "STATE_SETTLING");
                 break;
             case STATE_EXPANDED:
-                setVisibility(mHorizontalScrollView, 0.0f, 200, true);
-                setVisibility(mPlaceAutoCompleteLayout, 0.0f, 200, true);
+                mHorizontalScrollView.setVisibility(View.GONE);
                 Log.d("state", "STATE_EXPANDED");
+                //switchViews(false);
                 break;
             case STATE_COLLAPSED:
-                setVisibility(mPlaceAutoCompleteLayout, 1.0f, 200, false);
-
+                //behavior.setState(STATE_HIDDEN);
                 Log.d("state", "STATE_OLLAPSED");
+                switchViews(true);
                 break;
             case STATE_HIDDEN:
                 Log.d("state", "STATE_HIDDEN");
+                // mHorizontalScrollView.setVisibility(View.GONE);
                 break;
             case STATE_ANCHORED:
+                // mHorizontalScrollView.setVisibility(View.VISIBLE);
                 Log.d("state", "STATE_ANCHORED");
-                setVisibility(mPlaceAutoCompleteLayout, 0.0f, 200, true);
-
+                switchViews(false);
                 break;
 
 
@@ -348,7 +385,6 @@ public class CreateEventActivity extends BaseActivity
 
 
     private void initParticipatesRecycleView() {
-        mParticipateRecyclerView = findViewById(R.id.participate_recycler_view);
         mParticipateRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
         mParticipateRecyclerView.setNestedScrollingEnabled(false);
 
@@ -396,7 +432,7 @@ public class CreateEventActivity extends BaseActivity
 
     private void inflateMapAutoCompleteFragment() {
         if (mPlaceAutocompleteFragment == null) {
-            mPlaceAutocompleteFragment = (PlaceAutocompleteFragment)
+            mPlaceAutocompleteFragment = (CustomPlaceAutoCompleteFragment)
                     getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
 
             mPlaceAutocompleteFragment.setOnPlaceSelectedListener(this);
@@ -427,7 +463,7 @@ public class CreateEventActivity extends BaseActivity
             mAddImage.setEnabled(true);
             mChat.setEnabled(true);
             mDelete.setVisibility(View.VISIBLE);
-            HideShowPlaceAutoComplete(false);
+            //HideShowPlaceAutoComplete(false);
 
             isChangeMade();
         }
@@ -801,6 +837,7 @@ public class CreateEventActivity extends BaseActivity
         mCurrentEvent.setAddress(place.getAddress().toString());
         mCurrentEvent.setLatLang(place.getLatLng());
         mapFragment.setEventLocation(place.getLatLng(), place.getAddress().toString());
+        mTextViewDistance.setText(place.getAddress());
 
 
     }
@@ -817,18 +854,28 @@ public class CreateEventActivity extends BaseActivity
         if (mCurrentEvent.getLatitude() != 0)
             mapFragment.addSingeMarkerToMap(mCurrentEvent.getLatlng(), mCurrentEvent.getAddress());
 
+        //SelectCurrentEventPoint();
+
+
     }
 
     @Override
     public void onEventLocationChanged(LatLng latLng, String address) {
         mCurrentEvent.setLatLang(latLng);
         mCurrentEvent.setAddress(address);
+        mTextViewDistance.setText(address);
         isChangeMade();
 
     }
 
     @Override
     public void LocationPermission() {
+
+    }
+
+    @Override
+    public void onDistanceChanged(String add) {
+        mTextViewDistance.setText(add);
 
     }
 
@@ -922,7 +969,7 @@ public class CreateEventActivity extends BaseActivity
 
 
             if (Arrays.asList(permissions).contains(ACCESS_FINE_LOCATION)) {
-                mapFragment.initFusedLocation();
+                mapFragment.initFusedLocation(EVENT_LOC_TAB);
             }
             if (Arrays.asList(permissions).contains(Manifest.permission.CAMERA)) {
                 buildImageAndTitleChooser();
@@ -1162,5 +1209,49 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
+    @Override
+    public void onTabSelected(TabLayout.Tab tab) {
+        mTabSelectedIndex = tab.getPosition();
+        switch (mTabSelectedIndex) {
+            case LOCATION_TAB:
+                navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+                break;
+            case SEARCH_TAB:
+                mPlaceAutocompleteFragment.performClick();
+                break;
+
+        }
+
+    }
+
+    @Override
+    public void onTabUnselected(TabLayout.Tab tab) {
+
+    }
+
+    @Override
+    public void onTabReselected(TabLayout.Tab tab) {
+        switch (mTabSelectedIndex) {
+            case LOCATION_TAB:
+                navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+                break;
+            case SEARCH_TAB:
+                mPlaceAutocompleteFragment.performClick();
+                break;
+
+        }
+    }
+
+    private void switchViews(boolean show) {
+        if (show) {
+            mNavigationBarLayout.setVisibility(View.VISIBLE);
+            mHorizontalScrollView.setVisibility(View.GONE);
+
+        } else {
+            mNavigationBarLayout.setVisibility(View.GONE);
+            mHorizontalScrollView.setVisibility(View.VISIBLE);
+        }
+
+    }
 }
 

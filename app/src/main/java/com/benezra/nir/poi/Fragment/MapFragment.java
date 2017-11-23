@@ -13,6 +13,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -57,7 +58,7 @@ public class MapFragment extends Fragment implements
         View.OnClickListener,
         Response.Listener,
         Response.ErrorListener,
-        TabLayout.OnTabSelectedListener, GoogleMap.OnMarkerDragListener {
+        GoogleMap.OnMarkerDragListener {
 
     private GoogleMap mMap;
     private MapView mMapView;
@@ -71,8 +72,6 @@ public class MapFragment extends Fragment implements
     private Marker mMarker;
     private CameraUpdate mCameraUpdate;
     private ProgressBar mProgressBar;
-    private TextView mTextViewDistance;
-    private TabLayout mTabLayout;
     private LinearLayout mUpperMenu;
     private Marker mEventMarker;
     private String mEventAddress;
@@ -81,12 +80,14 @@ public class MapFragment extends Fragment implements
     public static final int WALKING_TAB = 1;
     public static final int CYCLING_TAB = 2;
     public static final int EVENT_LOC_TAB = 3;
-    private int mTabSelectedIndex;
+    public static final int LOCATION_TAB = 0;
+    public static final int SEARCH_TAB = 1;
 
 
     public void setEventLocation(LatLng location,String address) {
         this.mEventLocation = location;
         addSingeMarkerToMap(location,address);
+
     }
 
 
@@ -101,20 +102,16 @@ public class MapFragment extends Fragment implements
 
         mProgressBar = (ProgressBar) view.findViewById(R.id.pb_loading);
 
-        mTextViewDistance = (TextView) view.findViewById(R.id.tv_distance);
 
-        linearLayout = (LinearLayout) view.findViewById(R.id.tab_layout);
-        mTabLayout = (TabLayout) view.findViewById(R.id.tab_layout_tab);
-        mTabLayout.addOnTabSelectedListener(this);
+
+
 
         if (savedInstanceState != null) {
-            mTabSelectedIndex = savedInstanceState.getInt("tab_selected_index");
             mEventLocation = savedInstanceState.getParcelable("event_location");
             mCurrentLocation = savedInstanceState.getParcelable("current_location");
             mEventAddress = savedInstanceState.getString("event_address");
 
-        } else
-            mTabSelectedIndex = -1;
+        }
 
 
         return view;
@@ -126,48 +123,12 @@ public class MapFragment extends Fragment implements
         super.onSaveInstanceState(outState);
         outState.putParcelable("current_location", mCurrentLocation);
         outState.putParcelable("event_location", mEventLocation);
-        outState.putInt("tab_selected_index", mTabSelectedIndex);
         outState.putString("event_address",mEventAddress);
 
     }
 
-    @Override
-    public void onTabSelected(TabLayout.Tab tab) {
-        mTabSelectedIndex = tab.getPosition();
-        switch (mTabSelectedIndex) {
-            case DRIVING_TAB:
-                mListener.LocationPermission();
-                break;
-            case WALKING_TAB:
-                mListener.LocationPermission();
-                break;
-            case CYCLING_TAB:
-                mListener.LocationPermission();
-                break;
-            case EVENT_LOC_TAB:
-                getAddress(mEventLocation);
-                break;
-
-        }
-    }
 
 
-    public void ShowNavigationLayout() {
-        linearLayout.setVisibility(View.VISIBLE);
-    }
-
-    public float getBottomHeight() {
-        return mTextViewDistance.getY() + mTabLayout.getY();
-    }
-
-    public void SelectCurrentEventPoint() {
-        if (mTabSelectedIndex < 0)
-            mTabLayout.getTabAt(EVENT_LOC_TAB).select();
-        else
-            mTabLayout.getTabAt(mTabSelectedIndex).select();
-
-
-    }
 
 
     private String getDirectionsUrl(LatLng origin, LatLng dest, String how) {
@@ -262,7 +223,7 @@ public class MapFragment extends Fragment implements
             String distance = duration_distance.get("distance");
             String duration = duration_distance.get("duration");
 
-            mTextViewDistance.setText(distance + " " + duration);
+            mListener.onDistanceChanged(distance + " " + duration);
 
             for (int j = 1; j < path.size(); j++) {
                 HashMap<String, String> point = path.get(j);
@@ -336,15 +297,7 @@ public class MapFragment extends Fragment implements
     }
 
 
-    @Override
-    public void onTabUnselected(TabLayout.Tab tab) {
 
-    }
-
-    @Override
-    public void onTabReselected(TabLayout.Tab tab) {
-
-    }
 
     @Override
     public void onMarkerDragStart(Marker marker) {
@@ -371,9 +324,11 @@ public class MapFragment extends Fragment implements
 
         void LocationPermission();
 
+        void onDistanceChanged(String add);
+
     }
 
-    public void initFusedLocation() {
+    public void initFusedLocation(final int tab) {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(mContext);
 
         if (ActivityCompat.checkSelfPermission(mContext, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -387,7 +342,7 @@ public class MapFragment extends Fragment implements
                         if (location != null) {
                             mCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
                             String directions = "";
-                            switch (mTabSelectedIndex) {
+                            switch (tab) {
                                 case DRIVING_TAB:
                                     mProgressBar.setVisibility(View.VISIBLE);
                                     directions = getDirectionsUrl(mCurrentLocation, mEventLocation, DRIVING);

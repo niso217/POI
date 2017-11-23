@@ -57,6 +57,10 @@ public class CustomPlaceAutoCompleteFragment extends PlaceAutocompleteFragment {
         return var4;
     }
 
+    public void performClick(){
+        image.performClick();
+    }
+
 
     public void onDestroyView() {
         this.zzaRh = null;

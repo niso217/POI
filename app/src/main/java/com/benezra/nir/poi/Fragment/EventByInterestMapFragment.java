@@ -160,10 +160,13 @@ public class EventByInterestMapFragment extends Fragment implements
         mMap.setOnInfoWindowClickListener(this);
         mMap.setOnMarkerClickListener(this);
         //mMap.setPadding(0, 300, 300, 300);
-        addAllMarkersToMap();
 
         if (!mEventList.isEmpty())
-        PaintSelectedEvent(mEventList.get(mLastSelectedIndex).getMarker());
+        {
+            addAllMarkersToMap();
+            PaintSelectedEvent(mEventList.get(mLastSelectedIndex).getMarker());
+
+        }
 
     }
 

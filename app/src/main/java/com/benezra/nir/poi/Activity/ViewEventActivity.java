@@ -5,34 +5,31 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.drawable.StateListDrawable;
+import android.location.Geocoder;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.NestedScrollView;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PagerSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
 import android.support.v7.widget.Toolbar;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.CompoundButton;
-import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -40,7 +37,6 @@ import android.widget.ToggleButton;
 
 import com.benezra.nir.poi.Adapter.EventImagesAdapter;
 import com.benezra.nir.poi.Adapter.ViewHolders;
-import com.benezra.nir.poi.Bitmap.BitmapUtil;
 import com.benezra.nir.poi.Bitmap.DateUtil;
 import com.benezra.nir.poi.ChatActivity;
 import com.benezra.nir.poi.Event;
@@ -49,6 +45,7 @@ import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Fragment.UploadToFireBaseFragment;
 import com.benezra.nir.poi.GoogleMapsBottomSheetBehavior;
+import com.benezra.nir.poi.Helper.AsyncGeocoder;
 import com.benezra.nir.poi.Objects.EventPhotos;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
@@ -56,6 +53,7 @@ import com.benezra.nir.poi.User;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.vision.text.Line;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -70,6 +68,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.PEEK_HEIGHT_AUTO;
 import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_ANCHORED;
 import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
 import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_DRAGGING;
@@ -95,17 +94,17 @@ public class ViewEventActivity extends BaseActivity
         ImageCameraDialogFragmentNew.ImageCameraDialogCallbackNew,
         RecyclerTouchListener.ClickListener,
         CompoundButton.OnCheckedChangeListener,
-        UploadToFireBaseFragment.UploadListener ,
+        UploadToFireBaseFragment.UploadListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
         GoogleMapsBottomSheetBehavior.BottomSheetCallback,
-        ViewTreeObserver.OnGlobalLayoutListener
+        ViewTreeObserver.OnGlobalLayoutListener,
+        TabLayout.OnTabSelectedListener
 
 {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
     private Event mCurrentEvent;
-    private TextView mEventDetails;
     final static String TAG = ViewEventActivity.class.getSimpleName();
     private CollapsingToolbarLayout collapsingToolbar;
     private FirebaseDatabase mFirebaseInstance;
@@ -120,13 +119,13 @@ public class ViewEventActivity extends BaseActivity
     private AppBarLayout mAppBarLayout;
     private boolean mCanDrag = true;
     private int mCurrentOffset;
-    private LinearLayout mHorizontalScrollView;
     private int mScrollDirection;
     private boolean mTouchEventFired;
     private ImageButton mNavigate, mAddImage, mChat, mShare;
     private ToggleButton mJoin;
     private Toolbar mToolbar;
-    private EditText mTitle;
+    private TextView mTitle, mDetails,mTextViewDistance;
+
     private RecyclerView mPicturesRecyclerView;
     private RecyclerView mParticipateRecyclerView;
     private ArrayList<String> mEventImagesList;
@@ -134,12 +133,20 @@ public class ViewEventActivity extends BaseActivity
     private GoogleMapsBottomSheetBehavior behavior;
     private NestedScrollView mNestedScrollView;
 
+    private LinearLayout mHorizontalScrollView;
+    private LinearLayout mNavigationBarLayout;
 
+    private TabLayout mTabLayout;
+
+    public static final int DRIVING_TAB = 0;
+    public static final int WALKING_TAB = 1;
+    public static final int CYCLING_TAB = 2;
+    public static final int EVENT_LOC_TAB = 3;
+    private int mTabSelectedIndex;
 
 
 
     private FirebaseRecyclerAdapter<User, ViewHolders.ParticipatesViewHolder> mParticipateAdapter;
-
 
 
     @Override
@@ -153,66 +160,28 @@ public class ViewEventActivity extends BaseActivity
         mEventImagesList = new ArrayList<>();
         mEventImagesAdapter = new EventImagesAdapter(this, mEventImagesList);
 
+        initView();
 
-        mHorizontalScrollView =findViewById(R.id.scrolling_icons);
-        mTitle = (EditText) findViewById(R.id.tv_title);
-        mTitle.setEnabled(false);
-        mJoin = findViewById(R.id.btn_join);
-        mShare = findViewById(R.id.btn_share);
-        mNavigate =  findViewById(R.id.btn_navigate);
-        mAddImage =  findViewById(R.id.btn_add_image);
-        mChat = findViewById(R.id.btn_chat);
-        mJoin.setOnCheckedChangeListener(this);
+        initParticipatesRecycleView();
 
-        mShare.setOnClickListener(this);
-        mNavigate.setOnClickListener(this);
-        mAddImage.setOnClickListener(this);
-        mChat.setOnClickListener(this);
+        initImageRecycleView();
 
-        mProgressBar = findViewById(R.id.pb_loading);
+        inflateMapFragment();
 
-
-        mPrivateLinearLayout =  findViewById(R.id.private_layout);
-
-
-        tvDatePicker = findViewById(R.id.tv_date);
-        tvTimePicker = findViewById(R.id.tv_time);
-
-        mEventDetails =  findViewById(R.id.tv_desciption);
-
-
-        //mapFragment = (MapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-
-
-        mapFragment = (MapFragment) getSupportFragmentManager().findFragmentByTag(MapFragment.class.getSimpleName());
-        if (mapFragment==null)
-        {
-            Log.d(TAG,"map fragment null");
-            mapFragment = new MapFragment();
-            getSupportFragmentManager().beginTransaction().add(R.id.framelayout, mapFragment,MapFragment.class.getSimpleName()).commit();
-        }
-
-
-
-
-        mParticipateRecyclerView = (RecyclerView) findViewById(R.id.participate_recycler_view);
-        mParticipateRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
-        mParticipateRecyclerView.setNestedScrollingEnabled(false);
-
-
-
-
+        addKeboardChangeListener();
 
 
         if (savedInstanceState != null) {
             mCurrentEvent = savedInstanceState.getParcelable("event");
             mJoinEvent = savedInstanceState.getBoolean("join");
             mTouchEventFired = savedInstanceState.getBoolean("touch");
+            mTabSelectedIndex = savedInstanceState.getInt("tab_selected_index");
             setEventFields();
             setMenuItemChecked();
 
 
         } else {
+            mTabSelectedIndex = -1;
             mJoinEvent = false;
             getEventIntent(getIntent());
             isJoined();
@@ -221,26 +190,83 @@ public class ViewEventActivity extends BaseActivity
         }
 
 
-        initImageRecycleView();
-        participatesChangeListener();
-        getAllEventImages();
-        addKeboardChangeListener();
+        initListeners();
 
-        mNestedScrollView = findViewById(R.id.nestedscrollview);
-        behavior = GoogleMapsBottomSheetBehavior.from(mNestedScrollView);
 
         behavior.setParallax(mPicturesRecyclerView);
         behavior.setAnchorHeight(900);
         behavior.setHideable(false);
 
+
+
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        behavior.setPeekHeight(100);
+
+    }
+
+    private void initView() {
+        mHorizontalScrollView = findViewById(R.id.scrolling_icons);
+        mNavigationBarLayout = findViewById(R.id.tab_layout);
+        mTitle = findViewById(R.id.tv_title);
+        mTitle.setEnabled(false);
+        mJoin = findViewById(R.id.btn_join);
+        mShare = findViewById(R.id.btn_share);
+        mNavigate = findViewById(R.id.btn_navigate);
+        mAddImage = findViewById(R.id.btn_add_image);
+        mChat = findViewById(R.id.btn_chat);
+        mProgressBar = findViewById(R.id.pb_loading);
+        mPrivateLinearLayout = findViewById(R.id.private_layout);
+        tvDatePicker = findViewById(R.id.tv_date);
+        tvTimePicker = findViewById(R.id.tv_time);
+        mParticipateRecyclerView = findViewById(R.id.participate_recycler_view);
+        mNestedScrollView = findViewById(R.id.nestedscrollview);
+        mDetails = findViewById(R.id.tv_desciption);
         behavior = GoogleMapsBottomSheetBehavior.from(mNestedScrollView);
-        behavior.setBottomSheetCallback(this);
+        mTabLayout = findViewById(R.id.tab_layout_tab);
+        mTextViewDistance =  findViewById(R.id.tv_distance);
 
 
 
     }
 
-    private  void addKeboardChangeListener(){
+    private void initParticipatesRecycleView() {
+        mParticipateRecyclerView = findViewById(R.id.participate_recycler_view);
+        mParticipateRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
+        mParticipateRecyclerView.setNestedScrollingEnabled(false);
+
+    }
+
+
+    private void inflateMapFragment() {
+        mapFragment = (MapFragment) getSupportFragmentManager().findFragmentByTag(MapFragment.class.getSimpleName());
+        if (mapFragment == null) {
+            Log.d(TAG, "map fragment null");
+            mapFragment = new MapFragment();
+            getSupportFragmentManager().beginTransaction().add(R.id.framelayout, mapFragment, MapFragment.class.getSimpleName()).commit();
+        }
+    }
+
+    private void initListeners() {
+        mJoin.setOnCheckedChangeListener(this);
+        mShare.setOnClickListener(this);
+        mNavigate.setOnClickListener(this);
+        mAddImage.setOnClickListener(this);
+        mChat.setOnClickListener(this);
+        mNestedScrollView.getViewTreeObserver().addOnGlobalLayoutListener(this);
+        behavior.setBottomSheetCallback(this);
+        mTabLayout.addOnTabSelectedListener(this);
+        getAllEventImages();
+        participatesChangeListener();
+
+
+    }
+
+
+    private void addKeboardChangeListener() {
         CoordinatorLayout contentView = findViewById(R.id.coordinatorlayout);
         contentView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -258,10 +284,9 @@ public class ViewEventActivity extends BaseActivity
                 Log.d("Nifras", "keypadHeight = " + keypadHeight);
 
                 if (keypadHeight > screenHeight * 0.15) { // 0.15 ratio is perhaps enough to determine keypad height.
-                    Log.d(TAG,"open");
-                }
-                else {
-                    Log.d(TAG,"close");
+                    Log.d(TAG, "open");
+                } else {
+                    Log.d(TAG, "close");
                     behavior.setState(STATE_ANCHORED);
                     contentView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
@@ -306,7 +331,7 @@ public class ViewEventActivity extends BaseActivity
 
 
             if (Arrays.asList(permissions).contains(ACCESS_FINE_LOCATION)) {
-                mapFragment.initFusedLocation();
+                mapFragment.initFusedLocation(mTabSelectedIndex);
             }
             if (Arrays.asList(permissions).contains(Manifest.permission.CAMERA)) {
                 buildImageAndTitleChooser();
@@ -352,19 +377,15 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
-
-
     @Override
     protected int getNavigationDrawerID() {
         return 0;
     }
 
 
-
-
     private void setVisibility(final View view, final float alpha, long duration, boolean animate) {
 
-        if (animate)
+        if (animate) {
             view.animate()
                     .alpha(alpha)
                     .setDuration(duration)
@@ -380,22 +401,21 @@ public class ViewEventActivity extends BaseActivity
 
                         }
                     });
-        else {
+        } else {
+
+            view.setAlpha(alpha);
+
             if (alpha == 1.0f) {
-                view.setAlpha(1.0f);
                 view.setVisibility(View.VISIBLE);
             }
 
             if (alpha == 0.0f) {
-                view.setAlpha(0.0f);
                 view.setVisibility(View.GONE);
             }
 
         }
 
     }
-
-
 
 
     private void isJoined() {
@@ -505,12 +525,6 @@ public class ViewEventActivity extends BaseActivity
         return super.onOptionsItemSelected(item);
     }
 
-    private void setIcon(MenuItem item) {
-        StateListDrawable stateListDrawable = (StateListDrawable) getResources().getDrawable(R.drawable.toggle_selector);
-        int[] state = {item.isChecked() ? android.R.attr.state_checked : android.R.attr.state_empty};
-        stateListDrawable.setState(state);
-        item.setIcon(stateListDrawable.getCurrent());
-    }
 
     private void JoinLeaveEvent() {
         if (mJoinEvent) JoinEvent();
@@ -576,6 +590,8 @@ public class ViewEventActivity extends BaseActivity
         outState.putParcelable("event", mCurrentEvent);
         outState.putBoolean("join", mJoinEvent);
         outState.putBoolean("touch", mTouchEventFired);
+        outState.putInt("tab_selected_index", mTabSelectedIndex);
+
 
 
     }
@@ -586,8 +602,8 @@ public class ViewEventActivity extends BaseActivity
 
         if (mCurrentEvent != null) {
             mTitle.setText(mCurrentEvent.getTitle());
-            mEventDetails.setText(mCurrentEvent.getDetails());
-           // setImageBack();
+            mDetails.setText(mCurrentEvent.getDetails());
+            // setImageBack();
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(mCurrentEvent.getStart());
             tvDatePicker.setText(DateUtil.CalendartoDate(calendar.getTime()));
@@ -599,23 +615,32 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
-
-
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        mapFragment.ShowNavigationLayout();
+        //mapFragment.ShowNavigationLayout();
         // Add a marker in the respective location and move the camera and set the zoom level to 15
         LatLng location = new LatLng(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude());
-        mapFragment.setEventLocation(location, mCurrentEvent.getAddress());
-        mapFragment.addSingeMarkerToMap(location,mCurrentEvent.getAddress());
-        mapFragment.SelectCurrentEventPoint();
+         mapFragment.setEventLocation(location, mCurrentEvent.getAddress());
+         mapFragment.addSingeMarkerToMap(location, mCurrentEvent.getAddress());
+        SelectCurrentEventPoint();
+
+
+
+
+    }
+
+    public void SelectCurrentEventPoint() {
+        if (mTabSelectedIndex < 0)
+            mTabLayout.getTabAt(EVENT_LOC_TAB).select();
+        else
+            mTabLayout.getTabAt(mTabSelectedIndex).select();
 
 
     }
 
     @Override
-    public void onEventLocationChanged(LatLng latLng,String address) {
+    public void onEventLocationChanged(LatLng latLng, String address) {
 
     }
 
@@ -624,6 +649,10 @@ public class ViewEventActivity extends BaseActivity
         navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
     }
 
+    @Override
+    public void onDistanceChanged(String add) {
+        mTextViewDistance.setText(add);
+    }
 
 
     private void buildImageAndTitleChooser() {
@@ -657,7 +686,7 @@ public class ViewEventActivity extends BaseActivity
     @Override
     public void onClick(View view, int position) {
         Intent galleryIntent = new Intent(ViewEventActivity.this, SpaceGalleryActivity.class);
-        galleryIntent.putExtra(ID,mCurrentEvent.getId());
+        galleryIntent.putExtra(ID, mCurrentEvent.getId());
         startActivity(galleryIntent);
 
     }
@@ -684,27 +713,30 @@ public class ViewEventActivity extends BaseActivity
     public void onStateChanged(@NonNull View bottomSheet, int newState) {
         switch (newState) {
             case STATE_DRAGGING:
+                switchViews(false);
                 Log.d("state", "STATE_DRAGGING");
-                setVisibility(mHorizontalScrollView, 1.0f, 200, true);
-
                 break;
             case STATE_SETTLING:
-                setVisibility(mHorizontalScrollView, 1.0f, 200, true);
                 Log.d("state", "STATE_SETTLING");
                 break;
             case STATE_EXPANDED:
-                setVisibility(mHorizontalScrollView, 0.0f, 200, true);
+                 mHorizontalScrollView.setVisibility(View.GONE);
                 Log.d("state", "STATE_EXPANDED");
+                //switchViews(false);
                 break;
             case STATE_COLLAPSED:
-
+                //behavior.setState(STATE_HIDDEN);
                 Log.d("state", "STATE_OLLAPSED");
+                switchViews(true);
                 break;
             case STATE_HIDDEN:
                 Log.d("state", "STATE_HIDDEN");
+                // mHorizontalScrollView.setVisibility(View.GONE);
                 break;
             case STATE_ANCHORED:
+                // mHorizontalScrollView.setVisibility(View.VISIBLE);
                 Log.d("state", "STATE_ANCHORED");
+                switchViews(false);
                 break;
 
 
@@ -714,6 +746,69 @@ public class ViewEventActivity extends BaseActivity
     @Override
     public void onSlide(@NonNull View bottomSheet, float slideOffset) {
 
+    }
+
+    private void switchViews(boolean show) {
+        if (show) {
+            mNavigationBarLayout.setVisibility(View.VISIBLE);
+            mHorizontalScrollView.setVisibility(View.GONE);
+
+        } else {
+            mNavigationBarLayout.setVisibility(View.GONE);
+            mHorizontalScrollView.setVisibility(View.VISIBLE);
+        }
+
+    }
+
+    @Override
+    public void onTabSelected(TabLayout.Tab tab) {
+        mTabSelectedIndex = tab.getPosition();
+        switch (mTabSelectedIndex) {
+            case DRIVING_TAB:
+                LocationPermission();
+                break;
+            case WALKING_TAB:
+                LocationPermission();
+                break;
+            case CYCLING_TAB:
+                LocationPermission();
+                break;
+            case EVENT_LOC_TAB:
+                getAddress(mCurrentEvent.getLatlng());
+                break;
+
+        }
+    }
+
+    @Override
+    public void onTabUnselected(TabLayout.Tab tab) {
+
+    }
+
+    @Override
+    public void onTabReselected(TabLayout.Tab tab) {
+
+    }
+
+    public void getAddress(final LatLng latLng) {
+
+        new AsyncGeocoder(new AsyncGeocoder.onAddressFoundListener() {
+            @Override
+            public void onAddressFound(String result) {
+                mapFragment.addSingeMarkerToMap(latLng,result);
+                Log.d(TAG, "the address is: " + result);
+
+            }
+        }).execute(new AsyncGeocoder.AsyncGeocoderObject(
+                new Geocoder(this), LatLongToLocation(latLng)));
+    }
+
+
+    private Location LatLongToLocation(LatLng latLng){
+        Location loc = new Location("");
+        loc.setLatitude(latLng.latitude);
+        loc.setLongitude(latLng.longitude);
+        return loc;
     }
 }
 
