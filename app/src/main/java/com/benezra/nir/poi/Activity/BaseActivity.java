@@ -53,6 +53,7 @@ import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 import com.squareup.picasso.Picasso;
 import com.google.android.gms.plus.PlusShare;
 
@@ -89,6 +90,7 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mHandler = new Handler();
@@ -210,6 +212,8 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
                 createBackStack(intent);
                 break;
             case R.id.fake_data:
+                intent = new Intent(this, GeoActivity.class);
+                createBackStack(intent);
                 //intent = new Intent(this, BlaBlaActivity.class);
                 //createBackStack(intent);
                 break;

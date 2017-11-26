@@ -45,7 +45,9 @@ public class MainActivity extends BaseActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-       // new RetrieveFeedTask().execute();
+
+
+        // new RetrieveFeedTask().execute();
 
         // Set the content of the activity to use the activity_main.xml layout file
         setContentView(R.layout.activity_main);

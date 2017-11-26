@@ -151,8 +151,7 @@ public class CreateEventActivity extends BaseActivity
         UploadToFireBaseFragment.UploadListener,
         GoogleMapsBottomSheetBehavior.BottomSheetCallback,
         ViewTreeObserver.OnGlobalLayoutListener,
-        TabLayout.OnTabSelectedListener
-{
+        TabLayout.OnTabSelectedListener {
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -192,7 +191,6 @@ public class CreateEventActivity extends BaseActivity
     private TabLayout mTabLayout;
 
 
-
     private int mTabSelectedIndex;
 
 
@@ -227,7 +225,6 @@ public class CreateEventActivity extends BaseActivity
         addKeboardChangeListener();
 
 
-
         if (savedInstanceState != null) {
             mCurrentEvent = savedInstanceState.getParcelable("event");
             mCurrentEventChangeFlag = savedInstanceState.getParcelable("event_clone");
@@ -240,14 +237,15 @@ public class CreateEventActivity extends BaseActivity
 
 
         } else {
-            mTabSelectedIndex = -1;
             mInterestsList = new ArrayList<>();
             mParticipates = new ArrayList<>();
 
             if (getIntent().getStringExtra(EVENT_ID) != null) {
+                mTabSelectedIndex = -1;
                 mMode = false; //edit  existing event
                 getEventIntent(getIntent());
             } else {
+                mTabSelectedIndex = 0;
                 mMode = true; //new event
                 mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
 
@@ -276,8 +274,8 @@ public class CreateEventActivity extends BaseActivity
     }
 
     public void SelectCurrentEventPoint() {
-        if (mTabSelectedIndex < 0)
-            mTabLayout.getTabAt(LOCATION_TAB).select();
+        if (mTabSelectedIndex == -1) return;
+
         else
             mTabLayout.getTabAt(mTabSelectedIndex).select();
 
@@ -307,8 +305,7 @@ public class CreateEventActivity extends BaseActivity
         mNestedScrollView = findViewById(R.id.nestedscrollview);
         behavior = GoogleMapsBottomSheetBehavior.from(mNestedScrollView);
         mTabLayout = findViewById(R.id.tab_layout_tab);
-        mTextViewDistance =  findViewById(R.id.tv_distance);
-
+        mTextViewDistance = findViewById(R.id.tv_distance);
 
 
     }
@@ -455,7 +452,6 @@ public class CreateEventActivity extends BaseActivity
             mAddImage.setEnabled(false);
             mChat.setEnabled(false);
             mDelete.setVisibility(View.GONE);
-            HideShowPlaceAutoComplete(true);
 
         } else {
             mSave.setEnabled(false);
@@ -463,20 +459,11 @@ public class CreateEventActivity extends BaseActivity
             mAddImage.setEnabled(true);
             mChat.setEnabled(true);
             mDelete.setVisibility(View.VISIBLE);
-            //HideShowPlaceAutoComplete(false);
 
             isChangeMade();
         }
     }
 
-    public void HideShowPlaceAutoComplete(boolean visible) {
-        if (visible)
-            mPlaceAutoCompleteLayout.setVisibility(View.VISIBLE);
-        else
-            mPlaceAutoCompleteLayout.setVisibility(View.INVISIBLE);
-
-
-    }
 
     @Override
     public void onClick(View v) {
@@ -577,9 +564,7 @@ public class CreateEventActivity extends BaseActivity
             }
         }
 
-//        if (mCurrentEvent.getImage() == null && mCurrentEvent.getUri() == null)
-//            BuildReturnDialogFragment();
-//        else
+
         saveEventToFirebase();
 
     }
@@ -664,10 +649,10 @@ public class CreateEventActivity extends BaseActivity
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG,"onResume");
+        Log.d(TAG, "onResume");
     }
 
-    private  void addKeboardChangeListener(){
+    private void addKeboardChangeListener() {
         CoordinatorLayout contentView = findViewById(R.id.coordinatorlayout);
         contentView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -685,10 +670,9 @@ public class CreateEventActivity extends BaseActivity
                 Log.d("Nifras", "keypadHeight = " + keypadHeight);
 
                 if (keypadHeight > screenHeight * 0.15) { // 0.15 ratio is perhaps enough to determine keypad height.
-                   Log.d(TAG,"open");
-                }
-                else {
-                    Log.d(TAG,"close");
+                    Log.d(TAG, "open");
+                } else {
+                    Log.d(TAG, "close");
                     behavior.setState(STATE_ANCHORED);
                     contentView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
@@ -773,26 +757,20 @@ public class CreateEventActivity extends BaseActivity
 
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                onBackPressed();
-                return true;
-
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     public void onBackPressed() {
 
-        if (mMode)
-            BuildReturnDialogFragment();
+        if (behavior.getState() == STATE_COLLAPSED)
+            behavior.setState(STATE_ANCHORED);
         else {
-            if (isEventChanged())
+
+            if (mMode)
                 BuildReturnDialogFragment();
-            else
-                super.onBackPressed();
+            else {
+                if (isEventChanged())
+                    BuildReturnDialogFragment();
+                else
+                    super.onBackPressed();
+            }
         }
 
     }
@@ -854,7 +832,7 @@ public class CreateEventActivity extends BaseActivity
         if (mCurrentEvent.getLatitude() != 0)
             mapFragment.addSingeMarkerToMap(mCurrentEvent.getLatlng(), mCurrentEvent.getAddress());
 
-        //SelectCurrentEventPoint();
+        SelectCurrentEventPoint();
 
 
     }
@@ -941,7 +919,6 @@ public class CreateEventActivity extends BaseActivity
         outState.putStringArrayList("interests", mInterestsList);
         outState.putParcelableArrayList("participates", mParticipates);
         outState.putBoolean("mode", mMode);
-        //outState.putBoolean("touch", mTouchEventFired);
 
 
     }
@@ -952,7 +929,6 @@ public class CreateEventActivity extends BaseActivity
 
         if (mCurrentEvent != null) {
             mTitle.setText(mCurrentEvent.getTitle());
-            //setImageBack();
             mEventDetails.setText(mCurrentEvent.getDetails());
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(mCurrentEvent.getStart());

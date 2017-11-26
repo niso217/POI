@@ -181,7 +181,7 @@ public class ViewEventActivity extends BaseActivity
 
 
         } else {
-            mTabSelectedIndex = -1;
+            mTabSelectedIndex = 0;
             mJoinEvent = false;
             getEventIntent(getIntent());
             isJoined();
@@ -440,12 +440,6 @@ public class ViewEventActivity extends BaseActivity
 
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        mMenu = menu;
-        getMenuInflater().inflate(R.menu.view_event_menu, menu);
-        return true;
-    }
 
 
     private void initImageRecycleView() {
@@ -513,18 +507,14 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                onBackPressed();
-                return true;
-            case R.id.clear:
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
+    @Override
+    public void onBackPressed() {
+        if (behavior.getState() == STATE_COLLAPSED)
+            behavior.setState(STATE_ANCHORED);
+        else
+            super.onBackPressed();
+    }
 
     private void JoinLeaveEvent() {
         if (mJoinEvent) JoinEvent();
@@ -536,11 +526,22 @@ public class ViewEventActivity extends BaseActivity
 
         if (mJoinEvent) {
             mPrivateLinearLayout.setVisibility(View.VISIBLE);
+            setButtonState(true);
+
         } else {
-            mPrivateLinearLayout.setVisibility(View.GONE);
+            mPrivateLinearLayout.setVisibility(View.INVISIBLE);
+            setButtonState(false);
         }
         mJoin.setChecked(mJoinEvent);
 
+    }
+
+    private void setButtonState(boolean state)
+    {
+        mNavigate.setEnabled(state);
+        mShare.setEnabled(state);
+        mChat.setEnabled(state);
+        mAddImage.setEnabled(state);
     }
 
     private void JoinEvent() {
@@ -631,7 +632,7 @@ public class ViewEventActivity extends BaseActivity
     }
 
     public void SelectCurrentEventPoint() {
-        if (mTabSelectedIndex < 0)
+        if (mTabSelectedIndex == 0)
             mTabLayout.getTabAt(EVENT_LOC_TAB).select();
         else
             mTabLayout.getTabAt(mTabSelectedIndex).select();

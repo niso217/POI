@@ -106,7 +106,6 @@ public class LikedEventFragment extends Fragment implements RecyclerTouchListene
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance.getReference().keepSynced(true);
         mEventList = new ArrayList<>();
-        ;
         mEventsAdapter = new EventsAdapter(getContext(), mEventList);
 
     }

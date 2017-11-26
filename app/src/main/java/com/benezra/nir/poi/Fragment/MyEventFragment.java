@@ -115,6 +115,7 @@ public class MyEventFragment extends Fragment implements ValueEventListener,Recy
         mEventList = new ArrayList<>();;
         mEventsAdapter = new EventsAdapter(getContext(),mEventList);
 
+
     }
 
 

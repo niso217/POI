@@ -78,7 +78,6 @@ public class MainEventFragment extends Fragment implements
         setRetainInstance(true);
         mEventsInterestDataList = new ArrayList<>();
         mEventsInterestsAdapter = new EventsInterestsAdapter(getContext(), mEventsInterestDataList);
-
         mEventsInterestDataList.addAll(DatabaseInitializer.populateSync(AppDatabase.getAppDatabase(getApplicationContext())));
 
 
@@ -102,10 +101,10 @@ public class MainEventFragment extends Fragment implements
 
         if (mEventsInterestDataList.size() == 0) {
             mProgressBar.setVisibility(View.VISIBLE);
-            getAllInterests(true); //update database
+            getAllInterests(); //update database
         } else {
             mProgressBar.setVisibility(View.GONE);
-            getAllInterests(false); //update database
+            getAllInterests(); //update database
 
         }
 
@@ -114,24 +113,18 @@ public class MainEventFragment extends Fragment implements
     }
 
 
-    private void getAllInterests(final boolean flag) { //flag=false - first run flag=true - update database
+    private void getAllInterests() { //flag=false - first run flag=true - update database
         Query query = mFirebaseInstance.getReference("interests_data");
         query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 List<EventsInterestData> eventsInterestDataList = new ArrayList<>();
-                if (flag)
                     mEventsInterestDataList.clear();
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot data : dataSnapshot.getChildren()) {
                         EventsInterestData eventsInterestData = data.getValue(EventsInterestData.class);
-                        eventsInterestDataList.add(eventsInterestData);
-                        if (flag) {
                             mEventsInterestDataList.add(eventsInterestData);
-                        }
                     }
-
-                    DatabaseInitializer.updateInterests(AppDatabase.getAppDatabase(getApplicationContext()), eventsInterestDataList);
 
                 }
                 mProgressBar.setVisibility(View.GONE);
