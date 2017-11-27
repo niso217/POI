@@ -17,7 +17,6 @@
 
 package com.benezra.nir.poi.Activity;
 
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -43,17 +42,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
+import com.benezra.nir.poi.Geofencing.GeofencingActivity;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Settings.AboutActivity;
 import com.benezra.nir.poi.Settings.SettingsActivity;
-import com.benezra.nir.poi.Utils.DataFaker;
-import com.facebook.Profile;
-import com.facebook.share.ShareApi;
-import com.facebook.share.model.ShareLinkContent;
-import com.facebook.share.widget.ShareDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.FirebaseDatabase;
 import com.squareup.picasso.Picasso;
 import com.google.android.gms.plus.PlusShare;
 
@@ -63,7 +57,7 @@ import com.google.android.gms.plus.PlusShare;
  * @author Christopher Beckmann, Karola Marky
  * @version 20171017
  * This class is a parent class of all activities that can be accessed from the
- * Navigation Drawer (example see MainActivity.java)
+ * Navigation Drawer (example see GeofencingActivity.java)
  */
 public abstract class BaseActivity extends AppCompatActivity implements OnNavigationItemSelectedListener {
 
@@ -212,7 +206,7 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
                 createBackStack(intent);
                 break;
             case R.id.fake_data:
-                intent = new Intent(this, GeoActivity.class);
+                intent = new Intent(this, GeofencingActivity.class);
                 createBackStack(intent);
                 //intent = new Intent(this, BlaBlaActivity.class);
                 //createBackStack(intent);
