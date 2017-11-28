@@ -10,16 +10,10 @@
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
     <uses-permission android:name="android.permission.INTERNET"/>
-
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-
-    <uses-permission android:name="android.permission.CAMERA"></uses-permission>
-    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL"></uses-permission>
-
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL"/>
 
 
     <application
@@ -31,7 +25,6 @@
         android:theme="@style/AppTheme">
 
         <service android:name=".Geofencing.GeofenceTransitionsIntentService" />
-        <!--<service android:name=".Geofencing.GeofenceTrasitionService" />-->
 
 
         <meta-data
@@ -77,13 +70,13 @@
 
 
 
-        <activity android:name=".ChatActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Activity.ChatActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity android:name=".Activity.MainActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity android:name=".Activity.CreateEventActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity android:name=".Activity.ViewEventActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Activity.SpaceGalleryActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Activity.SpacePhotoActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Activity.EventsActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Activity.GalleryActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Activity.PhotoActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Activity.BrowseInterestActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity android:name=".Utils.DataFaker" android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity android:name=".Login.ResetPasswordActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity android:name=".Login.SignupActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
@@ -92,6 +85,20 @@
         <activity android:name=".Settings.SettingsActivity"></activity>
         <activity android:name=".Settings.AboutActivity"></activity>
         <activity android:name=".Geofencing.GeofencingActivity"></activity>
+
+        <!-- Firebase Notifications -->
+        <service android:name=".Service.MyFirebaseMessagingService">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <service android:name=".Service.MyFirebaseInstanceIDService">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
+            </intent-filter>
+        </service>
+        <!-- ./Firebase Notifications -->
 
 
     </application>

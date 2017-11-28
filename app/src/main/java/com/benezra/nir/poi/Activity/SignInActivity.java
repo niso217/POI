@@ -27,6 +27,7 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 public class SignInActivity extends AppCompatActivity implements LoginCallBackInterface, View.OnClickListener {
 
@@ -48,7 +49,8 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
         mFirebaseInstance = FirebaseDatabase.getInstance();
 
         if (mAuth.getCurrentUser() != null) {
-            startActivity(new Intent(SignInActivity.this, MainActivity.class));
+            Log.d(TAG, FirebaseInstanceId.getInstance().getToken().toString());
+            startActivity(new Intent(SignInActivity.this, TutorialActivity.class));
             finish();
         }
 
@@ -108,7 +110,7 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
                         .addOnCompleteListener(SignInActivity.this, new OnCompleteListener<AuthResult>() {
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
-                                // If sign in fails, display a message to the user. If sign in succeeds
+                                // If sign in fails, display a chat_message_item to the user. If sign in succeeds
                                 // the mAuth state listener will be notified and logic to handle the
                                 // signed in user can be handled in the listener.
                                 progressBar.setVisibility(View.GONE);
@@ -176,7 +178,7 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
             mFirebaseInstance.getReference("users").child(user.getUid()).child("name").setValue(user.getDisplayName());
             mFirebaseInstance.getReference("users").child(user.getUid()).child("email").setValue(user.getEmail());
             mFirebaseInstance.getReference("users").child(user.getUid()).child("avatar").setValue(user.getPhotoUrl().toString());
-            Intent intent = new Intent(SignInActivity.this, MainActivity.class);
+            Intent intent = new Intent(SignInActivity.this, TutorialActivity.class);
             startActivity(intent);
             finish();
         }

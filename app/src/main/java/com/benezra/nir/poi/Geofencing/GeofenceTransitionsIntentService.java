@@ -25,14 +25,13 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Build;
-import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.benezra.nir.poi.R;
-import com.benezra.nir.poi.Utils.NotificationUtils;
+import com.benezra.nir.poi.Utils.NotificationUtil;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 
@@ -151,7 +150,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationUtils  mNotificationUtils = new NotificationUtils(this);
+            NotificationUtil mNotificationUtils = new NotificationUtil(this);
 
             Notification.Builder nb = mNotificationUtils.
                     getAndroidChannelNotification(notificationDetails,getString(R.string.geofence_transition_notification_text),notificationPendingIntent);

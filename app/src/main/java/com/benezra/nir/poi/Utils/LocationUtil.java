@@ -47,4 +47,27 @@ public class LocationUtil {
 
         return new LatLng(foundLatitude,foundLongitude);
     }
+
+    /**
+     * calculates the distance between two locations in MILES
+     */
+    public static double distance(LatLng latLng1, LatLng latLng2) {
+
+        double earthRadius = 3958.75; // in miles, change to 6371 for kilometer output
+
+        double dLat = Math.toRadians(latLng2.latitude - latLng1.latitude);
+        double dLng = Math.toRadians(latLng2.longitude - latLng1.longitude);
+
+        double sindLat = Math.sin(dLat / 2);
+        double sindLng = Math.sin(dLng / 2);
+
+        double a = Math.pow(sindLat, 2) + Math.pow(sindLng, 2)
+                * Math.cos(Math.toRadians(latLng1.latitude)) * Math.cos(Math.toRadians(latLng2.latitude));
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        double dist = earthRadius * c;
+
+        return dist; // output distance, in MILES
+    }
 }

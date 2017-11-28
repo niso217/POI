@@ -4,78 +4,14 @@
     <!-- Category name for useful info [CHAR LIMIT=20] -->
     <string name="event_by_interests">Events</string>
 
-    <!-- Category name for places [CHAR LIMIT=20] -->
-    <string name="events_by_user">My Events</string>
-
-    <string name="liked_events">Liked</string>
 
     <string name="hello">Hello,</string>
 
 
-    <!-- Category name for food [CHAR LIMIT=20] -->
-    <string name="category_food">Food</string>
-
-    <!-- Category name for nature [CHAR LIMIT=20] -->
-    <string name="category_nature">Nature</string>
-
-    <!-- Category name for weather -->
-    <string name="wheather">Wheather</string>
-
-    <!-- Category name for when to come -->
-    <string name="when_come">When to come</string>
-
-    <!-- Category name for dress code -->
-    <string name="dress_code">Dress Code</string>
-
-    <!-- Category name for ramadan -->
-    <string name="ramadan">Ramadan</string>
-
-    <!-- Category name for alcohol -->
-    <string name="alcohol">Alcohol</string>
-
-    <!-- Category name for prices -->
-    <string name="prices">Prices</string>
-
-    <!-- TODO DELETE ME -->
-    <string name="cheese_ipsum">Jarlsberg lancashire edam. Dolcelatte hard cheese brie st. agur blue
-    cheese caerphilly bavarian bergkase cheese and biscuits mascarpone. Cheeseburger swiss bavarian
-    bergkase cream cheese fromage frais cheesy feet port-salut airedale. St. agur blue cheese rubber
-    cheese caerphilly cheddar cheesecake cream cheese manchego lancashire. Roquefort squirty cheese
-    the big cheese.</string>
-    <string name="checkin">Checkin</string>
-
-    <string name="menu_night_mode">Night mode</string>
-    <string name="menu_night_mode_system">Follow system</string>
-    <string name="menu_night_mode_day">Day (always)</string>
-    <string name="menu_night_mode_night">Night (always)</string>
-    <string name="menu_night_mode_auto">Auto</string>
-    <!-- TODO DELETE ME -->
-
-    <string name="event_details">event details</string>
-    <string name="title_activity_maps">Map</string>
-    <string name="first_p"></string>
-    <string name="map_location_title">Jumeirah Beach Hotel</string>
-    <string name="map_location_title2">Burj Al Arab</string>
-
-    <string name="GoogleMapsBottomSheetBehavior">com.benezra.nir.poi.GoogleMapsBottomSheetBehavior</string>
-    <string name="BackDropBottomSheetBehavior">com.benezra.nir.poi.BackdropBottomSheetBehavior</string>
-
-    <string name="empty_view">empty view</string>
-
-    <string name="navigate_button">Navigate Now</string>
-    <string name="facebook_share_button">Share on Facebook</string>
-
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
-    <string name="show_dialog">Show dialog</string>
-    <string name="login">Login</string>
-    <string name="email">Email</string>
-    <string name="title">Title</string>
-    <string name="password">Password</string>
-    <string name="login_label">Login</string>
-    <string name="success_login_msg">Login successful</string>
-    <string name="error_login_msg">Please fill any empty fields</string>
+
     <string name="all_day">All-day</string>
     <string name="not_repeat">Does not repeat</string>
 
@@ -111,19 +47,15 @@
 
 
     <!--Alert Dialog Titles-->
-    <string name="no_image_title">No image</string>
     <string name="unsave_saved">Unsaved changes</string>
     <string name="sure">Sure</string>
     <string name="return_to_event">Return</string>
     <string name="discard_event">Event haven\'t saved, are you sure you want to leave?</string>
-    <string name="no_image_message">No image add, are you sure you want to continue?</string>
     <string name="cancel">Cancel</string>
 
     <string name="delete_event_title">Delete</string>
     <string name="delete_event_message">Are you sure you want to delte the event?</string>
 
-    <string name="no_permission_title">No location permission</string>
-    <string name="no_permission_message">The system will not be able to work without location services approval</string>
 
     <!--Progress Dialog Titles-->
     <string name="updating_event">Updating event</string>
@@ -140,9 +72,6 @@
     <string name="add_image">Add image</string>
     <string name="chat">Chat</string>
 
-
-    <string name="drawer_open">Open</string>
-    <string name="drawer_close">Close</string>
 
     <string name="action_sign_in_short">Register</string>
     <string name="minimum_password">Password too short, enter minimum 6 characters!</string>

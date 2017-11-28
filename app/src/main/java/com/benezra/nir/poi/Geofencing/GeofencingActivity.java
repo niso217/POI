@@ -471,7 +471,7 @@ public class GeofencingActivity extends AppCompatActivity implements OnCompleteL
                     R.string.geofences_removed;
             Toast.makeText(this, getString(messageId), Toast.LENGTH_SHORT).show();
         } else {
-            // Get the status code for the error and log it using a user-friendly message.
+            // Get the status code for the error and log it using a user-friendly chat_message_item.
             String errorMessage = GeofenceErrorMessages.getErrorString(this, task.getException());
             Log.w(TAG, errorMessage);
         }

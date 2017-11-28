@@ -7,11 +7,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.benezra.nir.poi.Bitmap.DateUtil;
 import com.benezra.nir.poi.R;
 import com.squareup.picasso.Picasso;
 
-import java.util.Calendar;
 import java.util.List;
 
 public class EventImagesAdapter extends RecyclerView.Adapter<EventImagesAdapter.EventsViewHolder>  {

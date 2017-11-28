@@ -28,9 +28,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.benezra.nir.poi.Bitmap.BitmapUtil;
+import com.benezra.nir.poi.Utils.BitmapUtil;
 import com.benezra.nir.poi.Objects.EventPhotos;
-import com.benezra.nir.poi.Objects.UploadInfo;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
@@ -44,8 +43,8 @@ import com.google.firebase.storage.UploadTask;
 import java.io.ByteArrayOutputStream;
 import java.util.UUID;
 
-import static com.benezra.nir.poi.Helper.Constants.ID;
-import static com.benezra.nir.poi.Helper.Constants.URI;
+import static com.benezra.nir.poi.Interface.Constants.ID;
+import static com.benezra.nir.poi.Interface.Constants.URI;
 
 
 /**

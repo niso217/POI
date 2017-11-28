@@ -14,7 +14,7 @@ import android.widget.NumberPicker;
 import android.widget.Toast;
 
 import com.benezra.nir.poi.Activity.MainActivity;
-import com.benezra.nir.poi.Event;
+import com.benezra.nir.poi.Objects.Event;
 import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Helper.AsyncGeocoder;
 import com.benezra.nir.poi.Objects.EventsInterestData;
@@ -46,17 +46,17 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
-import static com.benezra.nir.poi.Helper.Constants.ADDRESS;
-import static com.benezra.nir.poi.Helper.Constants.DETAILS;
-import static com.benezra.nir.poi.Helper.Constants.END;
-import static com.benezra.nir.poi.Helper.Constants.ID;
-import static com.benezra.nir.poi.Helper.Constants.IMAGE;
-import static com.benezra.nir.poi.Helper.Constants.INTEREST;
-import static com.benezra.nir.poi.Helper.Constants.LATITUDE;
-import static com.benezra.nir.poi.Helper.Constants.LONGITUDE;
-import static com.benezra.nir.poi.Helper.Constants.OWNER;
-import static com.benezra.nir.poi.Helper.Constants.START;
-import static com.benezra.nir.poi.Helper.Constants.TITLE;
+import static com.benezra.nir.poi.Interface.Constants.ADDRESS;
+import static com.benezra.nir.poi.Interface.Constants.DETAILS;
+import static com.benezra.nir.poi.Interface.Constants.END;
+import static com.benezra.nir.poi.Interface.Constants.ID;
+import static com.benezra.nir.poi.Interface.Constants.IMAGE;
+import static com.benezra.nir.poi.Interface.Constants.INTEREST;
+import static com.benezra.nir.poi.Interface.Constants.LATITUDE;
+import static com.benezra.nir.poi.Interface.Constants.LONGITUDE;
+import static com.benezra.nir.poi.Interface.Constants.OWNER;
+import static com.benezra.nir.poi.Interface.Constants.START;
+import static com.benezra.nir.poi.Interface.Constants.TITLE;
 
 /**
  * Created by nirb on 06/11/2017.

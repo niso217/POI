@@ -22,7 +22,7 @@
         android:elevation="16dp"
         app:behavior_anchorHeight="auto"
         app:behavior_hideable="true"
-        app:layout_behavior="@string/GoogleMapsBottomSheetBehavior">
+        app:layout_behavior="com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior">
 
 
         <LinearLayout

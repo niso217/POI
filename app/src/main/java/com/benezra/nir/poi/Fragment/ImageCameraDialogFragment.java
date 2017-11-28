@@ -10,49 +10,46 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
 
-import com.android.volley.toolbox.ImageLoader;
-import com.benezra.nir.poi.Bitmap.BitmapUtil;
-import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.benezra.nir.poi.R;
-import com.squareup.picasso.Picasso;
 
 import java.io.File;
-
 import java.util.ArrayList;
 import java.util.List;
 
 
+public class ImageCameraDialogFragment extends DialogFragment{
 
-public class ImageCameraDialogFragment extends DialogFragment implements View.OnClickListener {
-
-    private ImageCameraDialogCallback mListener;
-    private EditText mDialogTitle;
-    private Button mDialogFinish;
-    private ImageView mDialogImageView;
+    private ImageCameraDialogCallbackNew mListener;
     private Context mContext;
-    private String mTitle;
     private Uri mPicUri;
-    private String mPicURL;
 
     private final static String TAG = ImageCameraDialogFragment.class.getSimpleName();
 
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setStyle(STYLE_NO_TITLE, R.style.PermissionsDialogFragmentStyle);
+
+
+        if (savedInstanceState != null) {
+
+            mPicUri = savedInstanceState.getParcelable("uri");
+
+
+        } else {
+
+            startActivityForResult(getPickImageChooserIntent(), 200);
+
+        }
+    }
 
     public static ImageCameraDialogFragment newInstance() {
         return new ImageCameraDialogFragment();
@@ -65,97 +62,24 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
     public void onAttach(Context context) {
         super.onAttach(context);
         this.mContext = context;
-        if (context instanceof ImageCameraDialogFragment.ImageCameraDialogCallback) {
-            mListener = (ImageCameraDialogFragment.ImageCameraDialogCallback) context;
+        if (context instanceof ImageCameraDialogFragment.ImageCameraDialogCallbackNew) {
+            mListener = (ImageCameraDialogFragment.ImageCameraDialogCallbackNew) context;
         }
     }
 
 
-    public void setPicURL(String url) {
-        mPicURL = url;
-    }
 
-    public void setImageUri(Uri uri) {
-        mPicUri = uri;
-    }
-
-    public void setTitle(String title) {
-        mTitle = title;
-    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString("name", mDialogTitle.getText().toString());
         outState.putParcelable("uri", mPicUri);
-        outState.putString("url", mPicURL);
     }
 
-    private Bitmap getBitmap() {
-        return ((BitmapDrawable) mDialogImageView.getDrawable()).getBitmap();
-    }
-
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.dialog_login, container, false);
-
-        mDialogTitle = (EditText) view.findViewById(R.id.et_dialogtitle);
-        mDialogFinish = (Button) view.findViewById(R.id.btn_dialogfinish);
-        mDialogImageView = (ImageView) view.findViewById(R.id.iv_dialogimage);
-        mDialogImageView.setOnClickListener(this);
-        mDialogFinish.setOnClickListener(this);
-
-        if (savedInstanceState != null) {
-
-            mPicURL = savedInstanceState.getString("url");
-            if (mPicURL != null) {
-                Picasso.with(getContext()).load(mPicURL).into(mDialogImageView);
-            } else {
-                mPicUri = savedInstanceState.getParcelable("uri");
-                if (mPicUri != null)
-                    setImageBack();
-            }
-            mTitle = savedInstanceState.getString("name");
-            if (mTitle != null)
-                mDialogTitle.setText(mTitle);
 
 
-        } else {
-
-            if (mPicURL != null) {
-                Picasso.with(getContext()).load(mPicURL).into(mDialogImageView);
-            } else {
-
-                if (mPicUri != null)
-                    setImageBack();
-            }
-            if (mTitle != null)
-                mDialogTitle.setText(mTitle);
-
-
-        }
-
-
-        return view;
-    }
-
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.iv_dialogimage:
-                startActivityForResult(getPickImageChooserIntent(), 200);
-                break;
-            case R.id.btn_dialogfinish:
-                mListener.DialogResults(mDialogTitle.getText().toString(), mPicUri);
-                dismiss();
-                break;
-
-        }
-    }
-
-    public interface ImageCameraDialogCallback {
-        void DialogResults(String title, Uri picUri);
+    public interface ImageCameraDialogCallbackNew {
+        void DialogResults(Uri picUri);
     }
 
     /**
@@ -172,7 +96,7 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
         PackageManager packageManager = getActivity().getPackageManager();
 
         // collect all camera intents
-        Intent captureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        Intent captureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         List<ResolveInfo> listCam = packageManager.queryIntentActivities(captureIntent, 0);
         for (ResolveInfo res : listCam) {
             Intent intent = new Intent(captureIntent);
@@ -248,17 +172,14 @@ public class ImageCameraDialogFragment extends DialogFragment implements View.On
 
             if (getPickImageResultUri(data) != null) {
                 mPicUri = getPickImageResultUri(data);
-                mPicURL = null;
-                setImageBack();
+                if (mPicUri!=null)
+                mListener.DialogResults(mPicUri);
+                dismiss();
+
             }
         }
 
     }
 
-    private void setImageBack() {
-        Bitmap bitmap = BitmapUtil.UriToBitmap(getContext(), mPicUri);
-        if (bitmap != null)
-            mDialogImageView.setImageBitmap(bitmap);
-    }
 
 }

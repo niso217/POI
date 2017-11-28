@@ -13,9 +13,6 @@ public class SharePref {
     private static SharedPreferences sharedPreferences;
     private static SharedPreferences.Editor editor;
 
-    private static final String IMAGE = "image";
-    private static final String IS_FIRST_TIME_LAUNCH = "IsFirstTimeLaunch";
-
 
     private SharePref() {} //prevent creating multiple instances by making the constructor private
 

@@ -5,10 +5,8 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
@@ -24,12 +22,9 @@ import android.support.v7.widget.SnapHelper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
@@ -37,7 +32,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -49,29 +43,28 @@ import java.util.Calendar;
 
 import com.benezra.nir.poi.Adapter.EventImagesAdapter;
 import com.benezra.nir.poi.Adapter.ViewHolders;
-import com.benezra.nir.poi.Bitmap.DateUtil;
-import com.benezra.nir.poi.ChatActivity;
-import com.benezra.nir.poi.CustomPlaceAutoCompleteFragment;
-import com.benezra.nir.poi.Event;
+import com.benezra.nir.poi.Utils.DateUtil;
+import com.benezra.nir.poi.Fragment.CustomPlaceAutoCompleteFragment;
+import com.benezra.nir.poi.Objects.Event;
 import com.benezra.nir.poi.Fragment.AlertDialogFragment;
-import com.benezra.nir.poi.Fragment.ImageCameraDialogFragmentNew;
+import com.benezra.nir.poi.Fragment.ImageCameraDialogFragment;
 import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Adapter.CustomSpinnerAdapter;
 import com.benezra.nir.poi.Fragment.UploadToFireBaseFragment;
-import com.benezra.nir.poi.GoogleMapsBottomSheetBehavior;
+import com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior;
 import com.benezra.nir.poi.Objects.EventPhotos;
 import com.benezra.nir.poi.Objects.EventsInterestData;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
-import com.benezra.nir.poi.User;
+import com.benezra.nir.poi.Objects.User;
+import com.benezra.nir.poi.Utils.LocationUtil;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.core.GeoHash;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
 import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
@@ -102,46 +95,45 @@ import static android.content.DialogInterface.BUTTON_POSITIVE;
 import static com.benezra.nir.poi.Fragment.MapFragment.EVENT_LOC_TAB;
 import static com.benezra.nir.poi.Fragment.MapFragment.LOCATION_TAB;
 import static com.benezra.nir.poi.Fragment.MapFragment.SEARCH_TAB;
-import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_ANCHORED;
-import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
-import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_DRAGGING;
-import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_EXPANDED;
-import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_HIDDEN;
-import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_SETTLING;
-import static com.benezra.nir.poi.Helper.Constants.ACTION_FINISH;
-import static com.benezra.nir.poi.Helper.Constants.ACTION_REMOVE;
-import static com.benezra.nir.poi.Helper.Constants.ADDRESS;
-import static com.benezra.nir.poi.Helper.Constants.DETAILS;
-import static com.benezra.nir.poi.Helper.Constants.END;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_IMAGE;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_INTEREST;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_LATITUDE;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_LONGITUDE;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_OWNER;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_START;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
-import static com.benezra.nir.poi.Helper.Constants.ID;
-import static com.benezra.nir.poi.Helper.Constants.IMAGE;
-import static com.benezra.nir.poi.Helper.Constants.INTEREST;
-import static com.benezra.nir.poi.Helper.Constants.LATITUDE;
-import static com.benezra.nir.poi.Helper.Constants.LONGITUDE;
-import static com.benezra.nir.poi.Helper.Constants.OWNER;
-import static com.benezra.nir.poi.Helper.Constants.PARTICIPATES;
-import static com.benezra.nir.poi.Helper.Constants.START;
-import static com.benezra.nir.poi.Helper.Constants.TITLE;
+import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_ANCHORED;
+import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
+import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_DRAGGING;
+import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_EXPANDED;
+import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_HIDDEN;
+import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_SETTLING;
+import static com.benezra.nir.poi.Interface.Constants.ACTION_FINISH;
+import static com.benezra.nir.poi.Interface.Constants.ACTION_REMOVE;
+import static com.benezra.nir.poi.Interface.Constants.ADDRESS;
+import static com.benezra.nir.poi.Interface.Constants.DETAILS;
+import static com.benezra.nir.poi.Interface.Constants.END;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_ADDRESS;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_DETAILS;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_ID;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_IMAGE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_INTEREST;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_LATITUDE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_LONGITUDE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_OWNER;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_START;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_TITLE;
+import static com.benezra.nir.poi.Interface.Constants.ID;
+import static com.benezra.nir.poi.Interface.Constants.IMAGE;
+import static com.benezra.nir.poi.Interface.Constants.INTEREST;
+import static com.benezra.nir.poi.Interface.Constants.LATITUDE;
+import static com.benezra.nir.poi.Interface.Constants.LONGITUDE;
+import static com.benezra.nir.poi.Interface.Constants.OWNER;
+import static com.benezra.nir.poi.Interface.Constants.PARTICIPATES;
+import static com.benezra.nir.poi.Interface.Constants.START;
+import static com.benezra.nir.poi.Interface.Constants.TITLE;
 
 
 public class CreateEventActivity extends BaseActivity
         implements View.OnClickListener,
-        PermissionsDialogFragment.PermissionsGrantedCallback,
         RecyclerTouchListener.ClickListener,
         DatePickerDialog.OnDateSetListener,
         TimePickerDialog.OnTimeSetListener,
         CompoundButton.OnCheckedChangeListener,
-        ImageCameraDialogFragmentNew.ImageCameraDialogCallbackNew,
+        ImageCameraDialogFragment.ImageCameraDialogCallbackNew,
         TextWatcher,
         AdapterView.OnItemSelectedListener,
         AlertDialogFragment.DialogListenerCallback,
@@ -586,7 +578,7 @@ public class CreateEventActivity extends BaseActivity
         return (!mCurrentEvent.getTitle().equals(mCurrentEventChangeFlag.getTitle()) ||
                 (mCurrentEvent.getImage() != null && !mCurrentEvent.getImage().equals(mCurrentEventChangeFlag.getImage())) ||
                 !mCurrentEvent.getDetails().equals(mCurrentEventChangeFlag.getDetails()) ||
-                distance(mCurrentEvent.getLatlng(), mCurrentEventChangeFlag.getLatlng()) > 0.02 ||
+                LocationUtil.distance(mCurrentEvent.getLatlng(), mCurrentEventChangeFlag.getLatlng()) > 0.02 ||
                 !mCurrentEvent.getInterest().equals(mCurrentEventChangeFlag.getInterest()) ||
                 mCurrentEvent.getStart() != mCurrentEventChangeFlag.getStart());
     }
@@ -1040,12 +1032,12 @@ public class CreateEventActivity extends BaseActivity
 
     private void buildImageAndTitleChooser() {
 
-        ImageCameraDialogFragmentNew ImageCameraFragment = (ImageCameraDialogFragmentNew) getSupportFragmentManager().findFragmentByTag(ImageCameraDialogFragmentNew.class.getName());
+        ImageCameraDialogFragment ImageCameraFragment = (ImageCameraDialogFragment) getSupportFragmentManager().findFragmentByTag(ImageCameraDialogFragment.class.getName());
 
         if (ImageCameraFragment == null) {
             Log.d(TAG, "opening image camera dialog");
-            ImageCameraFragment = ImageCameraDialogFragmentNew.newInstance();
-            ImageCameraFragment.show(getSupportFragmentManager(), ImageCameraDialogFragmentNew.class.getName());
+            ImageCameraFragment = ImageCameraDialogFragment.newInstance();
+            ImageCameraFragment.show(getSupportFragmentManager(), ImageCameraDialogFragment.class.getName());
 
         }
 
@@ -1068,7 +1060,7 @@ public class CreateEventActivity extends BaseActivity
 
     @Override
     public void onClick(View view, int position) {
-        Intent galleryIntent = new Intent(CreateEventActivity.this, SpaceGalleryActivity.class);
+        Intent galleryIntent = new Intent(CreateEventActivity.this, GalleryActivity.class);
         galleryIntent.putExtra(ID, mCurrentEvent.getId());
         startActivity(galleryIntent);
 
@@ -1154,28 +1146,7 @@ public class CreateEventActivity extends BaseActivity
         }
     }
 
-    /**
-     * calculates the distance between two locations in MILES
-     */
-    private double distance(LatLng latLng1, LatLng latLng2) {
 
-        double earthRadius = 3958.75; // in miles, change to 6371 for kilometer output
-
-        double dLat = Math.toRadians(latLng2.latitude - latLng1.latitude);
-        double dLng = Math.toRadians(latLng2.longitude - latLng1.longitude);
-
-        double sindLat = Math.sin(dLat / 2);
-        double sindLng = Math.sin(dLng / 2);
-
-        double a = Math.pow(sindLat, 2) + Math.pow(sindLng, 2)
-                * Math.cos(Math.toRadians(latLng1.latitude)) * Math.cos(Math.toRadians(latLng2.latitude));
-
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        double dist = earthRadius * c;
-
-        return dist; // output distance, in MILES
-    }
 
     @Override
     public void onFinishDialog(String image) {

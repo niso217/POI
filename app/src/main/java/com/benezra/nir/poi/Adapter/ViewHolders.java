@@ -1,20 +1,11 @@
 package com.benezra.nir.poi.Adapter;
 
-import android.content.Context;
-import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.benezra.nir.poi.Activity.SpacePhotoActivity;
-import com.benezra.nir.poi.Objects.EventPhotos;
 import com.benezra.nir.poi.R;
-import com.squareup.picasso.Picasso;
-
-import java.util.ArrayList;
 
 public class ViewHolders {
 

@@ -68,8 +68,8 @@ public class EventsInterestsAdapter extends RecyclerView.Adapter<EventsInterests
         EventsInterestData listItem = filterList.get(position);
         if (!listItem.getImage().equals(""))
         Picasso.with(mContext).load(listItem.getImage()).resize(100,100).into(customViewHolder.Image);
-        else
-            Picasso.with(mContext).load(R.drawable.cooking_back).resize(100,100).into(customViewHolder.Image);
+        //else
+            //Picasso.with(mContext).load(R.drawable.cooking_back).resize(100,100).into(customViewHolder.Image);
 
         customViewHolder.tvName.setText(listItem.getInterest());
 

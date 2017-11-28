@@ -8,17 +8,14 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -49,9 +46,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.benezra.nir.poi.Helper.Constants.CYCLING;
-import static com.benezra.nir.poi.Helper.Constants.DRIVING;
-import static com.benezra.nir.poi.Helper.Constants.WALKING;
+import static com.benezra.nir.poi.Interface.Constants.CYCLING;
+import static com.benezra.nir.poi.Interface.Constants.DRIVING;
+import static com.benezra.nir.poi.Interface.Constants.WALKING;
 
 public class MapFragment extends Fragment implements
         OnMapReadyCallback,
@@ -97,7 +94,7 @@ public class MapFragment extends Fragment implements
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.map_fragment, container, false);
+        View view = inflater.inflate(R.layout.fragment_map, container, false);
 
 
         mProgressBar = (ProgressBar) view.findViewById(R.id.pb_loading);

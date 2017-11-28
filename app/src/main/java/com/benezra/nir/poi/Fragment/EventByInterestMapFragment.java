@@ -2,36 +2,26 @@ package com.benezra.nir.poi.Fragment;
 
 
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PagerSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.benezra.nir.poi.Activity.ViewEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
-import com.benezra.nir.poi.Event;
+import com.benezra.nir.poi.Objects.Event;
 import com.benezra.nir.poi.Helper.MapStateManager;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
-import com.firebase.geofire.GeoFire;
-import com.firebase.geofire.GeoLocation;
-import com.firebase.geofire.GeoQuery;
-import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -43,33 +33,22 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
-import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_IMAGE;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_INTEREST;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_LATITUDE;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_LONGITUDE;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_OWNER;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_START;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_ADDRESS;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_DETAILS;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_ID;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_IMAGE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_INTEREST;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_LATITUDE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_LONGITUDE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_OWNER;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_START;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_TITLE;
 
 
 /**

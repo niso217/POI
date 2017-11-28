@@ -115,7 +115,7 @@ public class FacebookLoginFragment extends Fragment implements
                             mListener.login(true);
 
                         } else {
-                            // If sign in fails, display a message to the user.
+                            // If sign in fails, display a chat_message_item to the user.
                             Log.w(TAG, "signInWithCredential:failure", task.getException());
                             mListener.login(false);
 

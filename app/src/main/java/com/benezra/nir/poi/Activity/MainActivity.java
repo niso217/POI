@@ -1,22 +1,32 @@
 package com.benezra.nir.poi.Activity;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
+import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.Objects.EventsInterestData;
 import com.benezra.nir.poi.R;
-import com.benezra.nir.poi.SimpleFragmentPagerAdapter;
+import com.benezra.nir.poi.Adapter.SimpleFragmentPagerAdapter;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -27,18 +37,24 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+
 public class MainActivity extends BaseActivity implements
-        FragmentDataCallBackInterface {
+        FragmentDataCallBackInterface,OnSuccessListener<Location>,OnFailureListener {
 
     private DrawerLayout drawerLayout;
     private Toolbar mToolbar;
     TabLayout mTabLayout;
     private FirebaseAuth mAuth;
+    private FusedLocationProviderClient mFusedLocationProviderClient;
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private Location mLastKnownLocation;
+    private ViewPager viewPager;
+
 
 
     @Override
@@ -59,30 +75,18 @@ public class MainActivity extends BaseActivity implements
 
         mAuth = FirebaseAuth.getInstance();
 
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         // Find the view pager that will allow the user to swipe between fragments
-        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
+         viewPager =  findViewById(R.id.viewpager);
         viewPager.setOffscreenPageLimit(3);
-        // Create an adapter that knows which fragment should be shown on each page
-        SimpleFragmentPagerAdapter adapter = new SimpleFragmentPagerAdapter(this, getSupportFragmentManager());
 
-        // Set the adapter onto the view pager
-        viewPager.setAdapter(adapter);
 
         // Give the TabLayout the ViewPager
-        mTabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
+        mTabLayout = findViewById(R.id.sliding_tabs);
         mTabLayout.setupWithViewPager(viewPager);
-        setupTabIcons();
 
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Intent intent = new Intent(getApplicationContext(), CreateEventActivity.class);
-//                startActivity(intent);
-//
-//            }
-//        });
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
@@ -98,8 +102,12 @@ public class MainActivity extends BaseActivity implements
 
     }
 
+
+
     @Override
     protected void onResume() {
+        navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+
         super.onResume();
     }
 
@@ -130,6 +138,79 @@ public class MainActivity extends BaseActivity implements
     public void finishLoadingData() {
         hideProgressMessage();
 
+    }
+
+    private void initFusedLocation() {
+
+        if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+        }
+        mFusedLocationProviderClient.getLastLocation()
+                .addOnSuccessListener(this,this)
+                .addOnFailureListener(this, this);
+    }
+
+    @Override
+    public void navigateToCaptureFragment(String[] permissions) {
+
+        if (isPermissionGranted(permissions)) {
+
+
+            if (Arrays.asList(permissions).contains(ACCESS_FINE_LOCATION)) {
+                initFusedLocation();
+            }
+            if (Arrays.asList(permissions).contains(Manifest.permission.CAMERA)) {
+
+            }
+        } else {
+            PermissionsDialogFragment dialogFragment = (PermissionsDialogFragment) getSupportFragmentManager().findFragmentByTag(PermissionsDialogFragment.class.getName());
+            if (dialogFragment == null) {
+                Log.d(TAG, "opening dialog");
+                PermissionsDialogFragment permissionsDialogFragment = PermissionsDialogFragment.newInstance();
+                permissionsDialogFragment.setPermissions(permissions);
+                permissionsDialogFragment.show(getSupportFragmentManager(), PermissionsDialogFragment.class.getName());
+
+            }
+        }
+    }
+
+    @Override
+    public void UserIgnoredPermissionDialog() {
+        initPager();
+    }
+
+    private boolean isPermissionGranted(String[] permissions) {
+        for (int i = 0; i < permissions.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, permissions[i]) == PackageManager.PERMISSION_DENIED)
+                return false;
+        }
+        return true;
+    }
+
+    @Override
+    public void onSuccess(Location location) {
+        // Got last known location. In some rare situations this can be null.
+        if (location != null) {
+            mLastKnownLocation = location;
+        }
+        initPager();
+
+    }
+
+    @Override
+    public void onFailure(@NonNull Exception e) {
+        Log.d(TAG, e.getMessage().toString());
+        initPager();
+
+    }
+
+    private void initPager(){
+        // Create an adapter that knows which fragment should be shown on each page
+        SimpleFragmentPagerAdapter adapter = new SimpleFragmentPagerAdapter(this, getSupportFragmentManager(),mLastKnownLocation);
+        // Set the adapter onto the view pager
+        viewPager.setAdapter(adapter);
+        setupTabIcons();
     }
 
 
@@ -263,5 +344,7 @@ public class MainActivity extends BaseActivity implements
         // TODO: check this.exception
         // TODO: do something with the feed
     }
+
+
 }
 

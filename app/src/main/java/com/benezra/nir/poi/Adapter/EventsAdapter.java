@@ -8,13 +8,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.benezra.nir.poi.Activity.SpaceGalleryActivity;
-import com.benezra.nir.poi.Bitmap.BitmapUtil;
-import com.benezra.nir.poi.Bitmap.DateUtil;
-import com.benezra.nir.poi.Event;
-import com.benezra.nir.poi.Helper.ItemTouchHelperAdapter;
+import com.benezra.nir.poi.Utils.DateUtil;
+import com.benezra.nir.poi.Objects.Event;
+import com.benezra.nir.poi.Interface.ItemTouchHelperAdapter;
 import com.benezra.nir.poi.R;
-import com.bumptech.glide.Glide;
 import com.squareup.picasso.Picasso;
 
 import java.util.Calendar;

@@ -172,7 +172,7 @@ public class TutorialActivity extends AppCompatActivity {
 
     private void launchHomeScreen() {
         SharePref.getInstance(this).putBoolean(IS_FIRST_TIME_LAUNCH, false);
-        Intent intent = new Intent(TutorialActivity.this, SignInActivity.class);
+        Intent intent = new Intent(TutorialActivity.this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
         finish();

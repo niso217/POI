@@ -11,10 +11,9 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,8 +22,7 @@ import android.widget.ImageView;
 
 import com.benezra.nir.poi.Activity.ViewEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
-import com.benezra.nir.poi.Event;
-import com.benezra.nir.poi.EventModel;
+import com.benezra.nir.poi.Objects.Event;
 import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
@@ -34,7 +32,6 @@ import com.firebase.geofire.GeoQuery;
 import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -50,38 +47,29 @@ import com.xw.repo.BubbleSeekBar;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-import static android.content.DialogInterface.BUTTON_NEGATIVE;
-import static android.content.DialogInterface.BUTTON_NEUTRAL;
-import static android.content.DialogInterface.BUTTON_POSITIVE;
-import static com.benezra.nir.poi.Helper.Constants.ACTION_REMOVE;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_IMAGE;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_INTEREST;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_LATITUDE;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_LONGITUDE;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_OWNER;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_START;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_ADDRESS;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_DETAILS;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_ID;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_IMAGE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_INTEREST;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_LATITUDE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_LONGITUDE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_OWNER;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_START;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_TITLE;
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class EventByInterestListFragment extends Fragment implements
 
-        RecyclerTouchListener.ClickListener
-         {
+        RecyclerTouchListener.ClickListener {
 
-    private EventModel mEventModel;
     private FirebaseDatabase mFirebaseInstance;
     private FusedLocationProviderClient mFusedLocationClient;
     private Location mLastLocation;
@@ -91,22 +79,19 @@ public class EventByInterestListFragment extends Fragment implements
     private RecyclerView mEventsRecyclerView;
     private ArrayList<Event> mEventList;
     private EventsAdapter mEventsAdapter;
-    private ItemTouchHelper mItemTouchHelper;
     final static String TAG = EventByInterestListFragment.class.getSimpleName();
     private List<String> mUserEvents;
-    private List<String> mEventInterest;
     private Set<String> mEventHashSet;
     private FirebaseAuth mAuth;
     private String mSelectedInterest;
     private BubbleSeekBar mBbubbleSeekBar;
     private String mImageUrl;
+    private NestedScrollView mNestedScrollView;
 
 
-
-             @Override
+    @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mEventModel = new EventModel();
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance.getReference().keepSynced(true);
@@ -117,6 +102,7 @@ public class EventByInterestListFragment extends Fragment implements
         mAuth = FirebaseAuth.getInstance();
         mSelectedInterest = getArguments().getString("interest");
         mImageUrl = getArguments().getString("image");
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
     }
 
@@ -163,13 +149,13 @@ public class EventByInterestListFragment extends Fragment implements
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        Log.d(TAG,"onSaveInstanceState");
+        Log.d(TAG, "onSaveInstanceState");
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.category_list, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_browse_interest, container, false);
 
 
         mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.events_recycler_view);
@@ -178,9 +164,11 @@ public class EventByInterestListFragment extends Fragment implements
         mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
         mEventsRecyclerView.setAdapter(mEventsAdapter);
 
+        mNestedScrollView = rootView.findViewById(R.id.nestedscrollview);
+
         ImageView background = (ImageView) rootView.findViewById(R.id.backdrop);
         if (!mImageUrl.equals(""))
-        Picasso.with(getContext()).load(mImageUrl).into(background);
+            Picasso.with(getContext()).load(mImageUrl).into(background);
 
         FloatingActionButton fab = (FloatingActionButton) rootView.findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -195,25 +183,26 @@ public class EventByInterestListFragment extends Fragment implements
             }
         });
 
-         mBbubbleSeekBar = (BubbleSeekBar) rootView.findViewById(R.id.sb_km);
+        mBbubbleSeekBar = (BubbleSeekBar) rootView.findViewById(R.id.sb_km);
 
 
         mBbubbleSeekBar.setOnProgressChangedListener(new BubbleSeekBar.OnProgressChangedListener() {
             @Override
             public void onProgressChanged(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat) {
-                Log.d(TAG,progress+" Changed");
+                Log.d(TAG, progress + " Changed");
             }
 
             @Override
             public void getProgressOnActionUp(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat) {
-                Log.d(TAG,progress+" UP");
+                Log.d(TAG, progress + " UP");
                 initGeoFire(progress);
+                mEventsRecyclerView.requestLayout();
 
             }
 
             @Override
             public void getProgressOnFinally(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat) {
-                Log.d(TAG,progress+" Finally");
+                Log.d(TAG, progress + " Finally");
 
             }
         });
@@ -227,10 +216,8 @@ public class EventByInterestListFragment extends Fragment implements
     }
 
 
-
     public void initFusedLocation() {
         mListener.startLoadingData();
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
         if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -238,23 +225,23 @@ public class EventByInterestListFragment extends Fragment implements
         }
         mFusedLocationClient.getLastLocation()
                 .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            mLastLocation = location;
-                            initGeoFire(30);
+                            @Override
+                            public void onSuccess(Location location) {
+                                // Got last known location. In some rare situations this can be null.
+                                if (location != null) {
+                                    mLastLocation = location;
+                                    initGeoFire(30);
+                                }
+                            }
                         }
-                    }
-                }
 
                 )
                 .addOnFailureListener(getActivity(), new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Log.d(TAG,e.getMessage().toString());
-            }
-        });
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.d(TAG, e.getMessage().toString());
+                    }
+                });
     }
 
 
@@ -263,7 +250,7 @@ public class EventByInterestListFragment extends Fragment implements
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("events");
         GeoFire geoFire = new GeoFire(ref);
 
-        if (mLastLocation==null) return;
+        if (mLastLocation == null) return;
         // creates a new query around [37.7832, -122.4056] with a radius of 0.6 kilometers
         GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()), radius);
 
@@ -361,7 +348,6 @@ public class EventByInterestListFragment extends Fragment implements
             }
         });
     }
-
 
 
 }

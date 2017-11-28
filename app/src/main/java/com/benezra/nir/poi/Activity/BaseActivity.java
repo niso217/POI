@@ -17,49 +17,86 @@
 
 package com.benezra.nir.poi.Activity;
 
+import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.Geofencing.GeofencingActivity;
+import com.benezra.nir.poi.Helper.VolleyHelper;
+import com.benezra.nir.poi.Interface.Constants;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Settings.AboutActivity;
 import com.benezra.nir.poi.Settings.SettingsActivity;
+import com.benezra.nir.poi.Utils.NotificationUtils;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.squareup.picasso.Picasso;
 import com.google.android.gms.plus.PlusShare;
 
+import org.json.JSONObject;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static com.benezra.nir.poi.Fragment.MapFragment.EVENT_LOC_TAB;
 
 
 /**
  * @author Christopher Beckmann, Karola Marky
  * @version 20171017
- * This class is a parent class of all activities that can be accessed from the
- * Navigation Drawer (example see GeofencingActivity.java)
+ *          This class is a parent class of all activities that can be accessed from the
+ *          Navigation Drawer (example see GeofencingActivity.java)
  */
-public abstract class BaseActivity extends AppCompatActivity implements OnNavigationItemSelectedListener {
+public abstract class BaseActivity extends AppCompatActivity
+        implements OnNavigationItemSelectedListener,
+        PermissionsDialogFragment.PermissionsGrantedCallback ,
+        Response.Listener,
+        Response.ErrorListener{
 
     // delay to launch nav drawer item, to allow close animation to play
     static final int NAVDRAWER_LAUNCH_DELAY = 250;
@@ -68,6 +105,7 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
     static final int MAIN_CONTENT_FADEOUT_DURATION = 150;
     static final int MAIN_CONTENT_FADEIN_DURATION = 250;
     public static final int REQ_START_SHARE = 2;
+    private BroadcastReceiver mRegistrationBroadcastReceiver;
 
 
     // Navigation drawer:
@@ -75,7 +113,6 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
     private NavigationView mNavigationView;
     private static final String TAG = BaseActivity.class.getSimpleName();
     private FirebaseUser mFirebaseUser;
-
 
     // Helper
     private Handler mHandler;
@@ -90,8 +127,34 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
         mHandler = new Handler();
 
 
-
         overridePendingTransition(0, 0);
+
+
+        mRegistrationBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+
+                // checking for type intent filter
+                if (intent.getAction().equals(Constants.REGISTRATION_COMPLETE)) {
+                    // gcm successfully registered
+                    // now subscribe to `global` topic to receive app wide notifications
+                    FirebaseMessaging.getInstance().subscribeToTopic(Constants.TOPIC_GLOBAL);
+
+                    displayFirebaseRegId();
+
+                } else if (intent.getAction().equals(Constants.PUSH_NOTIFICATION)) {
+                    // new push notification is received
+
+                    String message = intent.getStringExtra("message");
+
+                    Toast.makeText(getApplicationContext(), "Push notification: " + message, Toast.LENGTH_LONG).show();
+
+                    //txtMessage.setText(message);
+                }
+            }
+        };
+
+        displayFirebaseRegId();
     }
 
     @Override
@@ -104,6 +167,45 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
         }
     }
 
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // register GCM registration complete receiver
+        LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver,
+                new IntentFilter(Constants.REGISTRATION_COMPLETE));
+
+        // register new push message receiver
+        // by doing this, the activity will be notified each time a new message arrives
+        LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver,
+                new IntentFilter(Constants.PUSH_NOTIFICATION));
+
+        // clear the notification area when the app is opened
+        NotificationUtils.clearNotifications(getApplicationContext());
+    }
+
+    // Fetches reg id from shared preferences
+    // and displays on the screen
+    private void displayFirebaseRegId() {
+        SharedPreferences pref = getApplicationContext().getSharedPreferences(Constants.SHARED_PREF, 0);
+        String regId = pref.getString("regId", null);
+
+        Log.e(TAG, "Firebase reg id: " + regId);
+
+        //if (!TextUtils.isEmpty(regId))
+        //txtRegId.setText("Firebase Reg Id: " + regId);
+        // else
+        //txtRegId.setText("Firebase Reg Id is not received yet!");
+    }
+
+    @Override
+    protected void onPause() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
+        super.onPause();
+    }
+
+
     protected abstract int getNavigationDrawerID();
 
     @Override
@@ -115,7 +217,7 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
 
     protected boolean goToNavigationItem(final int itemId) {
 
-        if(itemId == getNavigationDrawerID()) {
+        if (itemId == getNavigationDrawerID()) {
             // just close drawer because we are already in this activity
             mDrawerLayout.closeDrawer(GravityCompat.START);
             return true;
@@ -143,7 +245,7 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
 
     // set active navigation item
     private void selectNavigationItem(int itemId) {
-        for(int i = 0 ; i < mNavigationView.getMenu().size(); i++) {
+        for (int i = 0; i < mNavigationView.getMenu().size(); i++) {
             boolean b = itemId == mNavigationView.getMenu().getItem(i).getItemId();
             mNavigationView.getMenu().getItem(i).setChecked(b);
         }
@@ -152,6 +254,7 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
     /**
      * Enables back navigation for activities that are launched from the NavBar. See
      * {@code AndroidManifest.xml} to find out the parent activity names for each activity.
+     *
      * @param intent
      */
     private void createBackStack(Intent intent) {
@@ -168,13 +271,14 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
     /**
      * This method manages the behaviour of the navigation drawer
      * Add your menu items (ids) to res/menu/activity_main_drawer.xml
+     *
      * @param itemId Item that has been clicked by the user
      */
     private void callDrawerItem(final int itemId) {
 
         Intent intent;
 
-        switch(itemId) {
+        switch (itemId) {
             case R.id.nav_add_event:
                 intent = new Intent(this, CreateEventActivity.class);
                 intent.setAction(TutorialActivity.ACTION_SHOW_ANYWAYS);
@@ -198,18 +302,19 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
                 break;
             case R.id.nav_share:
                 shareApp();
-               /// intent = new Intent(this, HelpActivity.class);
-               // createBackStack(intent);
+                /// intent = new Intent(this, HelpActivity.class);
+                // createBackStack(intent);
                 break;
             case R.id.nav_settings:
                 intent = new Intent(this, SettingsActivity.class);
                 createBackStack(intent);
                 break;
             case R.id.fake_data:
-                intent = new Intent(this, GeofencingActivity.class);
-                createBackStack(intent);
+                //intent = new Intent(this, GeofencingActivity.class);
+                //createBackStack(intent);
                 //intent = new Intent(this, BlaBlaActivity.class);
                 //createBackStack(intent);
+                sendExample();
                 break;
             default:
                 finish();
@@ -221,7 +326,7 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
         super.onPostCreate(savedInstanceState);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        if(getSupportActionBar() == null) {
+        if (getSupportActionBar() == null) {
             setSupportActionBar(toolbar);
         }
 
@@ -238,7 +343,7 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
         TextView name = (TextView) headerView.findViewById(R.id.tv_name);
         ImageView image = (ImageView) headerView.findViewById(R.id.iv_profile);
 
-        name.setText(getString(R.string.hello) +" " + mFirebaseUser.getDisplayName());
+        name.setText(getString(R.string.hello) + " " + mFirebaseUser.getDisplayName());
         Picasso.with(this).load(mFirebaseUser.getPhotoUrl().toString()).into(image);
 
         selectNavigationItem(getNavigationDrawerID());
@@ -269,10 +374,9 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
 
 
     /**
-     *
      * @param subject - the subject of the post
-     * @param body - the body of the post
-     * @param url - link inside the post
+     * @param body    - the body of the post
+     * @param url     - link inside the post
      */
     public void PostOnGoogle(String subject, String body, String url) {
         Intent shareIntent = new PlusShare.Builder(this)
@@ -284,7 +388,7 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
     }
 
 
-    public void GooglePostPhoto(Intent intent){
+    public void GooglePostPhoto(Intent intent) {
         try {
             Uri selectedImage = intent.getData();
             ContentResolver cr = getContentResolver();
@@ -294,25 +398,79 @@ public abstract class BaseActivity extends AppCompatActivity implements OnNaviga
             share.setText(getResources().getString(R.string.app_name));
             share.addStream(selectedImage);
             share.setType(mime);
-           startActivityForResult(share.getIntent(), REQ_START_SHARE);
-        }
-        catch (NullPointerException e){
-            Log.e(TAG,e.getMessage());
-        }catch (Exception e) {
+            startActivityForResult(share.getIntent(), REQ_START_SHARE);
+        } catch (NullPointerException e) {
+            Log.e(TAG, e.getMessage());
+        } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
 
 
     }
 
-    private void shareApp(){
+    private void shareApp() {
         String textToShare = "Visit <a href=\"http://www.google.com\">google</a> for more info.";
         Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
         sharingIntent.setType("text/html");
         sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Subject here");
-        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT,  Html.fromHtml(textToShare));
+        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, Html.fromHtml(textToShare));
         startActivity(Intent.createChooser(sharingIntent, "Shearing Option"));
     }
+
+    final String URL = "https://poi-project.herokuapp.com";
+    // Post params to be sent to the server
+    HashMap<String, String> params = new HashMap<String, String>();
+
+
+    private void sendExample() {
+
+
+
+        //VolleyHelper.getInstance(this).post(URL,object,BaseActivity.this,BaseActivity.this);
+
+        StringRequest postRequest = new StringRequest(Request.Method.POST, URL,
+                new Response.Listener<String>()
+                {
+                    @Override
+                    public void onResponse(String response) {
+                        // response
+                        Log.d("Response", response);
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // error
+                        Log.d("Error.Response", error.getMessage());
+                    }
+                }
+        ) {
+            @Override
+            protected Map<String, String> getParams()
+            {
+                params.put("regId","cVzkd8aod30:APA91bGlqs_XnlPmI5SOxSRY5PAQozSXb0ANR5eNN5eNLajODBPMrbAk5MW4k3q8WootIlqWj2YPshwXJ4xvuJxhDNckCTd4zFVi-vVaOYJ4e2_QnuRsYTIDcJ-_UI38VBElDWP_C7YN");
+                params.put("title","login_id_value");
+                params.put("message","username");
+                params.put("push_type","individual");
+
+                return params;
+            }
+        };
+        VolleyHelper.getInstance(this).addToRequestQueue(postRequest);
+    }
+
+    @Override
+    public void onErrorResponse(VolleyError error) {
+
+    }
+
+
+    @Override
+    public void onResponse(Object response) {
+        Log.d(TAG,response.toString());
+    }
+
 
 
 }

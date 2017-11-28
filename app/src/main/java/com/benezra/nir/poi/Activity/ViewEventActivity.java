@@ -6,7 +6,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
-import android.graphics.drawable.StateListDrawable;
 import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
@@ -25,7 +24,6 @@ import android.support.v7.widget.SnapHelper;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.CompoundButton;
@@ -37,23 +35,21 @@ import android.widget.ToggleButton;
 
 import com.benezra.nir.poi.Adapter.EventImagesAdapter;
 import com.benezra.nir.poi.Adapter.ViewHolders;
-import com.benezra.nir.poi.Bitmap.DateUtil;
-import com.benezra.nir.poi.ChatActivity;
-import com.benezra.nir.poi.Event;
-import com.benezra.nir.poi.Fragment.ImageCameraDialogFragmentNew;
+import com.benezra.nir.poi.Utils.DateUtil;
+import com.benezra.nir.poi.Objects.Event;
+import com.benezra.nir.poi.Fragment.ImageCameraDialogFragment;
 import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Fragment.UploadToFireBaseFragment;
-import com.benezra.nir.poi.GoogleMapsBottomSheetBehavior;
+import com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior;
 import com.benezra.nir.poi.Helper.AsyncGeocoder;
 import com.benezra.nir.poi.Objects.EventPhotos;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
-import com.benezra.nir.poi.User;
+import com.benezra.nir.poi.Objects.User;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.vision.text.Line;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -68,30 +64,29 @@ import java.util.Arrays;
 import java.util.Calendar;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.PEEK_HEIGHT_AUTO;
-import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_ANCHORED;
-import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
-import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_DRAGGING;
-import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_EXPANDED;
-import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_HIDDEN;
-import static com.benezra.nir.poi.GoogleMapsBottomSheetBehavior.STATE_SETTLING;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_ADDRESS;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_DETAILS;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_ID;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_IMAGE;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_INTEREST;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_LATITUDE;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_LONGITUDE;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_OWNER;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_START;
-import static com.benezra.nir.poi.Helper.Constants.EVENT_TITLE;
-import static com.benezra.nir.poi.Helper.Constants.ID;
+import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_ANCHORED;
+import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
+import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_DRAGGING;
+import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_EXPANDED;
+import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_HIDDEN;
+import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_SETTLING;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_ADDRESS;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_DETAILS;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_ID;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_IMAGE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_INTEREST;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_LATITUDE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_LONGITUDE;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_OWNER;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_START;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_TITLE;
+import static com.benezra.nir.poi.Interface.Constants.ID;
 
 
 public class ViewEventActivity extends BaseActivity
         implements View.OnClickListener,
         MapFragment.MapFragmentCallback,
-        ImageCameraDialogFragmentNew.ImageCameraDialogCallbackNew,
+        ImageCameraDialogFragment.ImageCameraDialogCallbackNew,
         RecyclerTouchListener.ClickListener,
         CompoundButton.OnCheckedChangeListener,
         UploadToFireBaseFragment.UploadListener,
@@ -307,7 +302,7 @@ public class ViewEventActivity extends BaseActivity
             case R.id.btn_share:
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                 sharingIntent.setType("text/plain");
-                String shareBodyText = "Check it out. Your message goes here";
+                String shareBodyText = "Check it out. Your chat_message_item goes here";
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Subject here");
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBodyText);
                 startActivity(Intent.createChooser(sharingIntent, "Shearing Option"));
@@ -658,12 +653,12 @@ public class ViewEventActivity extends BaseActivity
 
     private void buildImageAndTitleChooser() {
 
-        ImageCameraDialogFragmentNew ImageCameraFragment = (ImageCameraDialogFragmentNew) getSupportFragmentManager().findFragmentByTag(ImageCameraDialogFragmentNew.class.getName());
+        ImageCameraDialogFragment ImageCameraFragment = (ImageCameraDialogFragment) getSupportFragmentManager().findFragmentByTag(ImageCameraDialogFragment.class.getName());
 
         if (ImageCameraFragment == null) {
             Log.d(TAG, "opening image camera dialog");
-            ImageCameraFragment = ImageCameraDialogFragmentNew.newInstance();
-            ImageCameraFragment.show(getSupportFragmentManager(), ImageCameraDialogFragmentNew.class.getName());
+            ImageCameraFragment = ImageCameraDialogFragment.newInstance();
+            ImageCameraFragment.show(getSupportFragmentManager(), ImageCameraDialogFragment.class.getName());
 
         }
 
@@ -686,7 +681,7 @@ public class ViewEventActivity extends BaseActivity
 
     @Override
     public void onClick(View view, int position) {
-        Intent galleryIntent = new Intent(ViewEventActivity.this, SpaceGalleryActivity.class);
+        Intent galleryIntent = new Intent(ViewEventActivity.this, GalleryActivity.class);
         galleryIntent.putExtra(ID, mCurrentEvent.getId());
         startActivity(galleryIntent);
 

@@ -22,9 +22,9 @@ import android.support.v4.app.DialogFragment;
 import static android.content.DialogInterface.BUTTON_NEGATIVE;
 import static android.content.DialogInterface.BUTTON_NEUTRAL;
 import static android.content.DialogInterface.BUTTON_POSITIVE;
-import static com.benezra.nir.poi.Helper.Constants.MESSAGE;
-import static com.benezra.nir.poi.Helper.Constants.OPTIONS;
-import static com.benezra.nir.poi.Helper.Constants.TITLE;
+import static com.benezra.nir.poi.Interface.Constants.MESSAGE;
+import static com.benezra.nir.poi.Interface.Constants.OPTIONS;
+import static com.benezra.nir.poi.Interface.Constants.TITLE;
 
 
 /**

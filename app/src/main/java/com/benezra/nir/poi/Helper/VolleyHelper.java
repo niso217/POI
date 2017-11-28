@@ -12,9 +12,12 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONObject;
+
+import java.util.Map;
 
 
 public class VolleyHelper {
@@ -75,12 +78,18 @@ public class VolleyHelper {
         addToRequestQueue(objRequest);
     }
 
-    public void post(String method, JSONObject jsonRequest,
-                     Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
+//    public void post(String URL, JSONObject jsonRequest,
+//                     Response.Listener<String> listener, Response.ErrorListener errorListener){
+//
+//        JsonObjectRequest objRequest = new JsonObjectRequest(Request.Method.POST,URL, jsonRequest, listener, errorListener);
+//        addToRequestQueue(objRequest);
+//    }
 
-        JsonObjectRequest objRequest = new JsonObjectRequest(Request.Method.POST, method, jsonRequest, listener, errorListener);
-        addToRequestQueue(objRequest);
-    }
+//    public void post(Response.Listener<String> listener,String url, Response.ErrorListener errorListener, Map<String,String> map){
+//
+//        StringRequest objRequest = new StringRequest(Request.Method.POST, listener,url, errorListener,map);
+//        addToRequestQueue(objRequest);
+//    }
 
     public void delete(String method, JSONObject jsonRequest,
                        Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){

@@ -11,13 +11,10 @@ package com.benezra.nir.poi.Fragment;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
-
-import com.benezra.nir.poi.R;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,10 +22,10 @@ import java.util.Map;
 import static android.content.DialogInterface.BUTTON_NEGATIVE;
 import static android.content.DialogInterface.BUTTON_NEUTRAL;
 import static android.content.DialogInterface.BUTTON_POSITIVE;
-import static com.benezra.nir.poi.Helper.Constants.ACTION;
-import static com.benezra.nir.poi.Helper.Constants.MESSAGE;
-import static com.benezra.nir.poi.Helper.Constants.OPTIONS;
-import static com.benezra.nir.poi.Helper.Constants.TITLE;
+import static com.benezra.nir.poi.Interface.Constants.ACTION;
+import static com.benezra.nir.poi.Interface.Constants.MESSAGE;
+import static com.benezra.nir.poi.Interface.Constants.OPTIONS;
+import static com.benezra.nir.poi.Interface.Constants.TITLE;
 
 
 /**
