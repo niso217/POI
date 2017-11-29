@@ -128,33 +128,6 @@ public abstract class BaseActivity extends AppCompatActivity
 
 
         overridePendingTransition(0, 0);
-
-
-        mRegistrationBroadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-
-                // checking for type intent filter
-                if (intent.getAction().equals(Constants.REGISTRATION_COMPLETE)) {
-                    // gcm successfully registered
-                    // now subscribe to `global` topic to receive app wide notifications
-                    FirebaseMessaging.getInstance().subscribeToTopic(Constants.TOPIC_GLOBAL);
-
-                    displayFirebaseRegId();
-
-                } else if (intent.getAction().equals(Constants.PUSH_NOTIFICATION)) {
-                    // new push notification is received
-
-                    String message = intent.getStringExtra("message");
-
-                    Toast.makeText(getApplicationContext(), "Push notification: " + message, Toast.LENGTH_LONG).show();
-
-                    //txtMessage.setText(message);
-                }
-            }
-        };
-
-        displayFirebaseRegId();
     }
 
     @Override
@@ -168,42 +141,6 @@ public abstract class BaseActivity extends AppCompatActivity
     }
 
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        // register GCM registration complete receiver
-        LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver,
-                new IntentFilter(Constants.REGISTRATION_COMPLETE));
-
-        // register new push message receiver
-        // by doing this, the activity will be notified each time a new message arrives
-        LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver,
-                new IntentFilter(Constants.PUSH_NOTIFICATION));
-
-        // clear the notification area when the app is opened
-        NotificationUtils.clearNotifications(getApplicationContext());
-    }
-
-    // Fetches reg id from shared preferences
-    // and displays on the screen
-    private void displayFirebaseRegId() {
-        SharedPreferences pref = getApplicationContext().getSharedPreferences(Constants.SHARED_PREF, 0);
-        String regId = pref.getString("regId", null);
-
-        Log.e(TAG, "Firebase reg id: " + regId);
-
-        //if (!TextUtils.isEmpty(regId))
-        //txtRegId.setText("Firebase Reg Id: " + regId);
-        // else
-        //txtRegId.setText("Firebase Reg Id is not received yet!");
-    }
-
-    @Override
-    protected void onPause() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
-        super.onPause();
-    }
 
 
     protected abstract int getNavigationDrawerID();
@@ -314,7 +251,7 @@ public abstract class BaseActivity extends AppCompatActivity
                 //createBackStack(intent);
                 //intent = new Intent(this, BlaBlaActivity.class);
                 //createBackStack(intent);
-                sendExample();
+                //sendExample();
                 break;
             default:
                 finish();
@@ -422,43 +359,6 @@ public abstract class BaseActivity extends AppCompatActivity
     HashMap<String, String> params = new HashMap<String, String>();
 
 
-    private void sendExample() {
-
-
-
-        //VolleyHelper.getInstance(this).post(URL,object,BaseActivity.this,BaseActivity.this);
-
-        StringRequest postRequest = new StringRequest(Request.Method.POST, URL,
-                new Response.Listener<String>()
-                {
-                    @Override
-                    public void onResponse(String response) {
-                        // response
-                        Log.d("Response", response);
-                    }
-                },
-                new Response.ErrorListener()
-                {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // error
-                        Log.d("Error.Response", error.getMessage());
-                    }
-                }
-        ) {
-            @Override
-            protected Map<String, String> getParams()
-            {
-                params.put("regId","cVzkd8aod30:APA91bGlqs_XnlPmI5SOxSRY5PAQozSXb0ANR5eNN5eNLajODBPMrbAk5MW4k3q8WootIlqWj2YPshwXJ4xvuJxhDNckCTd4zFVi-vVaOYJ4e2_QnuRsYTIDcJ-_UI38VBElDWP_C7YN");
-                params.put("title","login_id_value");
-                params.put("message","username");
-                params.put("push_type","individual");
-
-                return params;
-            }
-        };
-        VolleyHelper.getInstance(this).addToRequestQueue(postRequest);
-    }
 
     @Override
     public void onErrorResponse(VolleyError error) {

@@ -1,13 +1,27 @@
-package com.benezra.nir.poi.Service;
+package com.benezra.nir.poi;
 
+/**
+ * Created by nirb on 29/11/2017.
+ */
+
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.benezra.nir.poi.Activity.BaseActivity;
 import com.benezra.nir.poi.Interface.Constants;
+import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Utils.NotificationUtils;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
@@ -15,19 +29,16 @@ import com.google.firebase.messaging.RemoteMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+public class MessagingService extends FirebaseMessagingService {
+    private static final String TAG = "FPN";
 
-/**
- * Created by Ravi Tamada on 08/08/16.
- * www.androidhive.info
- */
-public class MyFirebaseMessagingService extends FirebaseMessagingService {
-
-    private static final String TAG = MyFirebaseMessagingService.class.getSimpleName();
 
     private NotificationUtils notificationUtils;
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
+
         Log.e(TAG, "From: " + remoteMessage.getFrom());
 
         if (remoteMessage == null)
@@ -44,8 +55,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             Log.e(TAG, "Data Payload: " + remoteMessage.getData().toString());
 
             try {
-                JSONObject json = new JSONObject(remoteMessage.getData().toString());
-                handleDataMessage(json);
+                //JSONObject json = new JSONObject(remoteMessage.getData().toString());
+                handleDataMessage(remoteMessage);
             } catch (Exception e) {
                 Log.e(TAG, "Exception: " + e.getMessage());
             }
@@ -67,31 +78,24 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         }
     }
 
-    private void handleDataMessage(JSONObject json) {
-        Log.e(TAG, "push json: " + json.toString());
+    private void handleDataMessage(RemoteMessage remoteMessage) {
+        Log.e(TAG, "push json: " + remoteMessage.toString());
 
         try {
-            JSONObject data = json.getJSONObject("data");
+            //JSONObject data = json.getJSONObject("data");
 
-            String title = data.getString("title");
-            String message = data.getString("message");
-            boolean isBackground = data.getBoolean("is_background");
-            String imageUrl = data.getString("image");
-            String timestamp = data.getString("timestamp");
-            JSONObject payload = data.getJSONObject("payload");
-
-            Log.e(TAG, "title: " + title);
-            Log.e(TAG, "message: " + message);
-            Log.e(TAG, "isBackground: " + isBackground);
-            Log.e(TAG, "payload: " + payload.toString());
-            Log.e(TAG, "imageUrl: " + imageUrl);
-            Log.e(TAG, "timestamp: " + timestamp);
+            String title = remoteMessage.getData().get("title");
+            String body = remoteMessage.getData().get("body");
+            String type = remoteMessage.getData().get("type");
+            Log.d(TAG, "Title: " + title);
+            Log.d(TAG, "Body: " + body);
+            Log.d(TAG, "Type: " + type);
 
 
             if (!NotificationUtils.isAppIsInBackground(getApplicationContext())) {
                 // app is in foreground, broadcast the push message
                 Intent pushNotification = new Intent(Constants.PUSH_NOTIFICATION);
-                pushNotification.putExtra("message", message);
+                pushNotification.putExtra("message", body);
                 LocalBroadcastManager.getInstance(this).sendBroadcast(pushNotification);
 
                 // play notification sound
@@ -100,19 +104,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             } else {
                 // app is in background, show the notification in notification tray
                 Intent resultIntent = new Intent(getApplicationContext(), BaseActivity.class);
-                resultIntent.putExtra("message", message);
+                resultIntent.putExtra("message", body);
 
-                // check for image attachment
-                if (TextUtils.isEmpty(imageUrl)) {
-                    showNotificationMessage(getApplicationContext(), title, message, timestamp, resultIntent);
-                } else {
-                    // image is present, show notification with image
-                    showNotificationMessageWithBigImage(getApplicationContext(), title, message, timestamp, resultIntent, imageUrl);
-                }
+                showNotificationMessage(getApplicationContext(), title, body, "", resultIntent);
+
             }
-        } catch (JSONException e) {
-            Log.e(TAG, "Json Exception: " + e.getMessage());
-        } catch (Exception e) {
+        }
+         catch (Exception e) {
             Log.e(TAG, "Exception: " + e.getMessage());
         }
     }

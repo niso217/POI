@@ -10,10 +10,10 @@
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
 
 
     <application
@@ -25,6 +25,18 @@
         android:theme="@style/AppTheme">
 
         <service android:name=".Geofencing.GeofenceTransitionsIntentService" />
+
+        <service android:name=".MessagingService">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <service android:name=".FirebaseTokenService">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
+            </intent-filter>
+        </service>
 
 
         <meta-data
@@ -39,7 +51,7 @@
         <!-- Facebook app ID -->
         <meta-data
             android:name="com.facebook.sdk.ApplicationId"
-            android:value="@string/facebook_app_id"/>
+            android:value="@string/facebook_app_id" />
 
         <activity
             android:name=".Activity.SplashActivity"
@@ -53,54 +65,63 @@
         </activity>
 
 
-        <activity android:name="com.facebook.FacebookActivity"
-            android:configChanges=
-                "keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+        <activity
+            android:name="com.facebook.FacebookActivity"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/app_name" />
         <activity
             android:name="com.facebook.CustomTabActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+
                 <data android:scheme="@string/fb_login_protocol_scheme" />
             </intent-filter>
         </activity>
 
 
-
-        <activity android:name=".Activity.ChatActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Activity.MainActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Activity.CreateEventActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Activity.ViewEventActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Activity.GalleryActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Activity.PhotoActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Activity.BrowseInterestActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Utils.DataFaker" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Login.ResetPasswordActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Login.SignupActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Activity.TutorialActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Activity.SignInActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".Activity.ChatActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".Activity.MainActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".Activity.CreateEventActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".Activity.ViewEventActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".Activity.GalleryActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".Activity.PhotoActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".Activity.BrowseInterestActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".Utils.DataFaker"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".Login.ResetPasswordActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".Login.SignupActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".Activity.TutorialActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".Activity.SignInActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity android:name=".Settings.SettingsActivity"></activity>
         <activity android:name=".Settings.AboutActivity"></activity>
         <activity android:name=".Geofencing.GeofencingActivity"></activity>
-
-        <!-- Firebase Notifications -->
-        <service android:name=".Service.MyFirebaseMessagingService">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-
-        <service android:name=".Service.MyFirebaseInstanceIDService">
-            <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
-            </intent-filter>
-        </service>
-        <!-- ./Firebase Notifications -->
-
-
     </application>
 
 </manifest>
