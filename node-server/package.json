@@ -1,0 +1,23 @@
+{
+ "name": "firebase-notification",
+ "version": "1.0.0",
+ "description": "firebase notification using nodejs",
+ "main": "index.js",
+ "scripts": {
+  "test": "node index.js"
+ },
+ "keywords": [
+  "nodejs",
+  "firebase",
+  "notification"
+ ],
+ "author": "Devesh Vyas",
+ "license": "ISC",
+ "dependencies": {
+  "body-parser": "^1.18.1",
+  "cors": "^2.8.4",
+  "express": "4.16.2",
+  "firebase-admin": "5.5.1",
+  "helmet": "^3.8.1"
+ }
+}
