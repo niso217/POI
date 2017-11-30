@@ -43,6 +43,8 @@ import java.util.Calendar;
 
 import com.benezra.nir.poi.Adapter.EventImagesAdapter;
 import com.benezra.nir.poi.Adapter.ViewHolders;
+import com.benezra.nir.poi.Helper.SharePref;
+import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.benezra.nir.poi.Utils.DateUtil;
 import com.benezra.nir.poi.Fragment.CustomPlaceAutoCompleteFragment;
 import com.benezra.nir.poi.Objects.Event;
@@ -80,6 +82,9 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -95,6 +100,8 @@ import static android.content.DialogInterface.BUTTON_POSITIVE;
 import static com.benezra.nir.poi.Fragment.MapFragment.EVENT_LOC_TAB;
 import static com.benezra.nir.poi.Fragment.MapFragment.LOCATION_TAB;
 import static com.benezra.nir.poi.Fragment.MapFragment.SEARCH_TAB;
+import static com.benezra.nir.poi.Interface.Constants.ID_TOKEN;
+import static com.benezra.nir.poi.Interface.Constants.MAIN_ADDRESS;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_ANCHORED;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_DRAGGING;
@@ -1016,6 +1023,8 @@ public class CreateEventActivity extends BaseActivity
 
         });
 
+        NotifyAllUsers();
+
     }
 
 
@@ -1199,6 +1208,25 @@ public class CreateEventActivity extends BaseActivity
             mHorizontalScrollView.setVisibility(View.VISIBLE);
         }
 
+    }
+
+    public void NotifyAllUsers(){
+
+        JSONObject manJson = new JSONObject();
+
+        try {
+            manJson.put("title", mCurrentEvent.getTitle());
+            manJson.put("body", mCurrentEvent.getDetails());
+            manJson.put("lat", mCurrentEvent.getLatitude());
+            manJson.put("lon", mCurrentEvent.getLongitude());
+            manJson.put("id_token", SharePref.getInstance(this).getString(ID_TOKEN,""));
+            VolleyHelper.getInstance(this).put(MAIN_ADDRESS, manJson, this, this);
+
+        }
+
+        catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }
 

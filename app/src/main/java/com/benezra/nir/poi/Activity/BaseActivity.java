@@ -60,6 +60,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.Geofencing.GeofencingActivity;
+import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.benezra.nir.poi.Interface.Constants;
 import com.benezra.nir.poi.R;
@@ -72,10 +73,12 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.squareup.picasso.Picasso;
 import com.google.android.gms.plus.PlusShare;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Arrays;
@@ -84,6 +87,8 @@ import java.util.Map;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static com.benezra.nir.poi.Fragment.MapFragment.EVENT_LOC_TAB;
+import static com.benezra.nir.poi.Interface.Constants.ID_TOKEN;
+import static com.benezra.nir.poi.Interface.Constants.MAIN_ADDRESS;
 
 
 /**
@@ -128,6 +133,7 @@ public abstract class BaseActivity extends AppCompatActivity
 
 
         overridePendingTransition(0, 0);
+
     }
 
     @Override
@@ -354,14 +360,10 @@ public abstract class BaseActivity extends AppCompatActivity
         startActivity(Intent.createChooser(sharingIntent, "Shearing Option"));
     }
 
-    final String URL = "https://poi-project.herokuapp.com";
-    // Post params to be sent to the server
-    HashMap<String, String> params = new HashMap<String, String>();
-
-
 
     @Override
     public void onErrorResponse(VolleyError error) {
+        Log.d(TAG,error.toString());
 
     }
 

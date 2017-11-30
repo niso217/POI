@@ -71,10 +71,10 @@ public class VolleyHelper {
         addToRequestQueue(objRequest);
     }
 
-    public void put(String method, JSONObject jsonRequest,
+    public void put(String url, JSONObject jsonRequest,
                     Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
 
-        JsonObjectRequest objRequest = new JsonObjectRequest(Request.Method.PUT, method, jsonRequest, listener, errorListener);
+        JsonObjectRequest objRequest = new JsonObjectRequest(Request.Method.PUT, url, jsonRequest, listener, errorListener);
         addToRequestQueue(objRequest);
     }
 

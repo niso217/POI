@@ -23,6 +23,8 @@ import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.Objects.EventsInterestData;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Adapter.SimpleFragmentPagerAdapter;
+import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.core.GeoHash;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -193,6 +195,11 @@ public class MainActivity extends BaseActivity implements
         // Got last known location. In some rare situations this can be null.
         if (location != null) {
             mLastKnownLocation = location;
+            GeoHash geoHash = new GeoHash(new GeoLocation(location.getLatitude(), location.getLongitude()));
+            FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
+                    .child("/g").setValue(geoHash.getGeoHashString());
+            FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
+                    .child("/l").setValue(Arrays.asList(location.getLatitude(), location.getLongitude()));
         }
         initPager();
 

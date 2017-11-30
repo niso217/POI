@@ -17,6 +17,7 @@ import android.widget.ScrollView;
 import android.widget.Toast;
 
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
+import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.Login.ResetPasswordActivity;
 import com.benezra.nir.poi.Login.SignupActivity;
 import com.benezra.nir.poi.Interface.LoginCallBackInterface;
@@ -26,8 +27,12 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GetTokenResult;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.iid.FirebaseInstanceId;
+
+import static com.benezra.nir.poi.Interface.Constants.ID_TOKEN;
+import static com.benezra.nir.poi.Interface.Constants.NOTIFY_TOKEN;
 
 public class SignInActivity extends AppCompatActivity implements LoginCallBackInterface, View.OnClickListener {
 
@@ -48,11 +53,7 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
         mAuth = FirebaseAuth.getInstance();
         mFirebaseInstance = FirebaseDatabase.getInstance();
 
-        if (mAuth.getCurrentUser() != null) {
-            Log.d(TAG, FirebaseInstanceId.getInstance().getToken().toString());
-            startActivity(new Intent(SignInActivity.this, TutorialActivity.class));
-            finish();
-        }
+        saveUserToFireBase();
 
         // set the view now
         setContentView(R.layout.activity_login);
@@ -72,10 +73,7 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
         animationDrawable.setEnterFadeDuration(2000);
         animationDrawable.setExitFadeDuration(2000);
 
-        //Get Firebase mAuth instance
-        mAuth = FirebaseAuth.getInstance();
-
-        btnSignup.setOnClickListener(this) ;
+        btnSignup.setOnClickListener(this);
 
 
         btnReset.setOnClickListener(this);
@@ -84,10 +82,10 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
         btnLogin.setOnClickListener(this);
 
     }
+
     @Override
     public void onClick(View v) {
-        switch (v.getId())
-        {
+        switch (v.getId()) {
             case R.id.btn_login:
                 startLogin();
                 String email = inputEmail.getText().toString();
@@ -145,7 +143,6 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
     }
 
 
-
     @Override
     protected void onPause() {
         super.onPause();
@@ -171,19 +168,40 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
     }
 
     public void saveUserToFireBase() {
-        if (mAuth.getCurrentUser() != null)
+        final FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            user.getToken(true)
+                    .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
+                        public void onComplete(@NonNull Task<GetTokenResult> task) {
+                            if (task.isSuccessful()) {
+                                String idToken = task.getResult().getToken();
+                                String niftyToken = FirebaseInstanceId.getInstance().getToken().toString();
 
-        {
-            FirebaseUser user = mAuth.getCurrentUser();
-            mFirebaseInstance.getReference("users").child(user.getUid()).child("name").setValue(user.getDisplayName());
-            mFirebaseInstance.getReference("users").child(user.getUid()).child("email").setValue(user.getEmail());
-            mFirebaseInstance.getReference("users").child(user.getUid()).child("avatar").setValue(user.getPhotoUrl().toString());
-            Intent intent = new Intent(SignInActivity.this, TutorialActivity.class);
-            startActivity(intent);
-            finish();
+                                Log.d(TAG, ID_TOKEN + idToken);
+                                Log.d(TAG, NOTIFY_TOKEN + niftyToken);
+
+                                SharePref.getInstance(SignInActivity.this).putString(ID_TOKEN, idToken);
+                                SharePref.getInstance(SignInActivity.this).putString(NOTIFY_TOKEN, niftyToken);
+
+                                // Send token to your backend via HTTPS
+                                mFirebaseInstance.getReference().child("users").child(user.getUid()).child("notify_token").setValue(FirebaseInstanceId.getInstance().getToken().toString());
+                                mFirebaseInstance.getReference().child("users").child(user.getUid()).child("user_token").setValue(task.getResult().getToken());
+                                mFirebaseInstance.getReference("users").child(user.getUid()).child("name").setValue(user.getDisplayName());
+                                mFirebaseInstance.getReference("users").child(user.getUid()).child("email").setValue(user.getEmail());
+                                mFirebaseInstance.getReference("users").child(user.getUid()).child("avatar").setValue(user.getPhotoUrl().toString());
+                                Intent intent = new Intent(SignInActivity.this, TutorialActivity.class);
+                                startActivity(intent);
+                                finish();
+
+                                // ...
+                            } else {
+                                // Handle error -> task.getException();
+                            }
+                        }
+                    });
         }
-
     }
+
 
     @Override
     public void login(boolean status) {
@@ -199,7 +217,6 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
     public void startLogin() {
         showProgress(getString(R.string.loading), getString(R.string.please_wait));
     }
-
 
 
 }
