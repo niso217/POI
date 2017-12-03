@@ -37,6 +37,10 @@ let title = req.body.title;
  let lat = parseFloat(req.body.lat);
  let lon = parseFloat(req.body.lon);
  let id_token = req.body.id_token;
+ let interest = req.body.interest;
+ let event_id = req.body.event_id;
+ let mode = req.body.mode;
+
 
 let payload = {
  data:{
@@ -46,46 +50,52 @@ let payload = {
 
  };
 
+
  admin.auth().verifyIdToken(id_token)
    .then(function(decodedToken) {
      var uid = decodedToken.uid;
 
-var radius = 10;
+      var radius = 60;
+        geoQuery = geoFire.query({
+          center: [lat, lon],
+          radius: radius
+        });
 
-  geoQuery = geoFire.query({
-    center: [lat, lon],
-    radius: radius
-  });
+  geoQuery.on("key_entered",
 
-  geoQuery.on("key_entered", function(key, location, distance) {
+  function(key, location, distance) {
     console.log(key + " is located at [" + location + "] which is within the query (" + distance.toFixed(2) + " km from center)");
-
-
-    usersRef.orderByKey().equalTo(key).once("child_added", function(snapshot) {
+    usersRef.orderByKey().equalTo(key).once("child_added",
+    function(snapshot) {
           var token = snapshot.val().notify_token;
-          console.log("token  "+token);
-          console.log("payload  "+payload);
+          var notify_radius = snapshot.val().notify_radius;
+          var user_lat = snapshot.val().l[0];
+          var user_lon = snapshot.val().l[1];
 
+          console.log("notify_radius" + notify_radius);
 
-
-          admin.messaging().sendToDevice(token, payload)
-           .then(function(response){
-           return res.json(response);
-           console.log("response  "+response);
-           })
-           .catch(function(error){
-           res.json(error);
-           console.log("error  "+error);
-           });
-
-
-
-
+            var notificationArr = snapshot.val().notification;
+            for (var key in notificationArr) {
+              if (key==interest && notificationArr[key]==true && getDistanceFromLatLonInKm(lat,lon,user_lat,user_lon)<=notify_radius){
+                console.log("notify");
+                  {
+                    admin.messaging().sendToDevice(token, payload)
+                     .then(function(response){
+                       res.json(response);
+                     console.log("response  "+response);
+                     })
+                     .catch(function(error){
+                       res.json(error);
+                     console.log("error  "+error);
+                     });
+                  }
+              }
+            };
 
 });
 
 
-  });
+});
 
   geoQuery.on("key_exited", function(key, location, distance) {
     console.log(key, location, distance);
@@ -95,35 +105,34 @@ var radius = 10;
 
 console.log(" the query: centered at [" + lat + "," + lon + "] with radius of " + radius + "km")
 
+
+
    }).catch(function(error) {
      console.log("Error  "+error);
 
    });
 
 
-
 });
 
-app.put('/noti/sendToTopic', function(req,res){
-let title = req.body.title;
- let body = req.body.body;
- let type =req.body.type;
- let token = req.body.token;
-let payload = {
- data:{
- title : title,
- body: body,
- type: type
- }
- };
-admin.messaging().sendToToken(token, payload)
- .then(function(response){
- res.json(response);
- })
- .catch(function(error){
- res.json(error);
- });
-});
+function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+  var R = 6371; // Radius of the earth in km
+  var dLat = deg2rad(lat2-lat1);  // deg2rad below
+  var dLon = deg2rad(lon2-lon1);
+  var a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon/2) * Math.sin(dLon/2)
+    ;
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  var d = R * c; // Distance in km
+  return d;
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI/180)
+}
+
 app.listen(PORT,function(){
  console.log("Server running on port "+PORT);
 })

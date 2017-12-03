@@ -53,33 +53,34 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
         mAuth = FirebaseAuth.getInstance();
         mFirebaseInstance = FirebaseDatabase.getInstance();
 
-        saveUserToFireBase();
-
-        // set the view now
-        setContentView(R.layout.activity_login);
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);
-
-        inputEmail = (EditText) findViewById(R.id.email);
-        inputPassword = (EditText) findViewById(R.id.password);
-        progressBar = (ProgressBar) findViewById(R.id.progressBar);
-        btnSignup = (Button) findViewById(R.id.btn_signup);
-        btnLogin = (Button) findViewById(R.id.btn_login);
-        btnReset = (Button) findViewById(R.id.btn_reset_password);
-
-        scrollView = (ScrollView) findViewById(R.id.scrollview);
-        animationDrawable = (AnimationDrawable) scrollView.getBackground();
-        animationDrawable.setEnterFadeDuration(2000);
-        animationDrawable.setExitFadeDuration(2000);
-
-        btnSignup.setOnClickListener(this);
+        if (mAuth.getCurrentUser() != null)
+            saveUserToFireBase();
+        else {
+            // set the view now
+            setContentView(R.layout.activity_login);
 
 
-        btnReset.setOnClickListener(this);
+            inputEmail = (EditText) findViewById(R.id.email);
+            inputPassword = (EditText) findViewById(R.id.password);
+            progressBar = (ProgressBar) findViewById(R.id.progressBar);
+            btnSignup = (Button) findViewById(R.id.btn_signup);
+            btnLogin = (Button) findViewById(R.id.btn_login);
+            btnReset = (Button) findViewById(R.id.btn_reset_password);
+
+            scrollView = (ScrollView) findViewById(R.id.scrollview);
+            animationDrawable = (AnimationDrawable) scrollView.getBackground();
+            animationDrawable.setEnterFadeDuration(2000);
+            animationDrawable.setExitFadeDuration(2000);
+
+            btnSignup.setOnClickListener(this);
 
 
-        btnLogin.setOnClickListener(this);
+            btnReset.setOnClickListener(this);
+
+
+            btnLogin.setOnClickListener(this);
+        }
+
 
     }
 
@@ -169,37 +170,38 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
 
     public void saveUserToFireBase() {
         final FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            user.getToken(true)
-                    .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
-                        public void onComplete(@NonNull Task<GetTokenResult> task) {
-                            if (task.isSuccessful()) {
-                                String idToken = task.getResult().getToken();
-                                String niftyToken = FirebaseInstanceId.getInstance().getToken().toString();
+        user.getToken(true)
+                .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
+                    public void onComplete(@NonNull Task<GetTokenResult> task) {
+                        if (task.isSuccessful()) {
+                            String idToken = task.getResult().getToken();
+                            String niftyToken = FirebaseInstanceId.getInstance().getToken().toString();
 
-                                Log.d(TAG, ID_TOKEN + idToken);
-                                Log.d(TAG, NOTIFY_TOKEN + niftyToken);
+                            Log.d(TAG, ID_TOKEN + idToken);
+                            Log.d(TAG, NOTIFY_TOKEN + niftyToken);
 
-                                SharePref.getInstance(SignInActivity.this).putString(ID_TOKEN, idToken);
-                                SharePref.getInstance(SignInActivity.this).putString(NOTIFY_TOKEN, niftyToken);
+                            SharePref.getInstance(SignInActivity.this).putString(ID_TOKEN, idToken);
+                            SharePref.getInstance(SignInActivity.this).putString(NOTIFY_TOKEN, niftyToken);
 
-                                // Send token to your backend via HTTPS
-                                mFirebaseInstance.getReference().child("users").child(user.getUid()).child("notify_token").setValue(FirebaseInstanceId.getInstance().getToken().toString());
-                                mFirebaseInstance.getReference().child("users").child(user.getUid()).child("user_token").setValue(task.getResult().getToken());
-                                mFirebaseInstance.getReference("users").child(user.getUid()).child("name").setValue(user.getDisplayName());
-                                mFirebaseInstance.getReference("users").child(user.getUid()).child("email").setValue(user.getEmail());
-                                mFirebaseInstance.getReference("users").child(user.getUid()).child("avatar").setValue(user.getPhotoUrl().toString());
-                                Intent intent = new Intent(SignInActivity.this, TutorialActivity.class);
-                                startActivity(intent);
-                                finish();
+                            // Send token to your backend via HTTPS
+                            mFirebaseInstance.getReference().child("users").child(user.getUid()).child("notify_token").setValue(FirebaseInstanceId.getInstance().getToken().toString());
+                            mFirebaseInstance.getReference().child("users").child(user.getUid()).child("user_token").setValue(task.getResult().getToken());
+                            mFirebaseInstance.getReference("users").child(user.getUid()).child("name").setValue(user.getDisplayName());
+                            mFirebaseInstance.getReference("users").child(user.getUid()).child("email").setValue(user.getEmail());
+                            mFirebaseInstance.getReference("users").child(user.getUid()).child("avatar").setValue(user.getPhotoUrl().toString());
+                            mFirebaseInstance.getReference("users").child(user.getUid()).child("notify_radius").setValue(SharePref.getInstance(SignInActivity.this).getDefaultRadiusgetDefaultRadius());
 
-                                // ...
-                            } else {
-                                // Handle error -> task.getException();
-                            }
+                            Intent intent = new Intent(SignInActivity.this, TutorialActivity.class);
+                            startActivity(intent);
+                            finish();
+
+                            // ...
+                        } else {
+                            // Handle error -> task.getException();
                         }
-                    });
-        }
+                    }
+                });
+
     }
 
 

@@ -39,7 +39,7 @@ public interface Constants {
     public static final String OPTIONS = "options";
 
 
-    public static final String MAIN_ADDRESS = "http://172.16.16.106:3000/noti/sendToToken";
+    public static final String MAIN_ADDRESS = "https://poi-project.herokuapp.com/noti/sendToToken";
     public static final String ID_TOKEN = "id_token";
     public static final String NOTIFY_TOKEN = "notify_token";
 

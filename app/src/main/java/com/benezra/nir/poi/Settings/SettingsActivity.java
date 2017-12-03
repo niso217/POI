@@ -18,7 +18,12 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 
 import com.benezra.nir.poi.Activity.MainActivity;
+import com.benezra.nir.poi.Activity.SignInActivity;
+import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.R;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.FirebaseDatabase;
+import com.pavelsikun.seekbarpreference.SeekBarPreference;
 
 
 public class SettingsActivity extends AppCompatPreferenceActivity {
@@ -38,9 +43,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         public void onCreate(final Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_main);
-
-            // gallery EditText change listener
-            bindPreferenceSummaryToValue(findPreference(getString(R.string.key_gallery_name)));
 
             // notification preference change listener
             bindPreferenceSummaryToValue(findPreference(getString(R.string.key_notifications_new_message_ringtone)));
@@ -67,6 +69,12 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
     @Override
     public void onBackPressed() {
+
+        FirebaseDatabase.getInstance().getReference("users")
+                .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                .child("notify_radius").setValue(SharePref.getInstance(this).getDefaultRadiusgetDefaultRadius());
+
+
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);

@@ -1217,6 +1217,9 @@ public class CreateEventActivity extends BaseActivity
         try {
             manJson.put("title", mCurrentEvent.getTitle());
             manJson.put("body", mCurrentEvent.getDetails());
+            manJson.put("interest", mCurrentEvent.getInterest());
+            manJson.put("event_id", mCurrentEvent.getId());
+            manJson.put("mode", mMode);
             manJson.put("lat", mCurrentEvent.getLatitude());
             manJson.put("lon", mCurrentEvent.getLongitude());
             manJson.put("id_token", SharePref.getInstance(this).getString(ID_TOKEN,""));

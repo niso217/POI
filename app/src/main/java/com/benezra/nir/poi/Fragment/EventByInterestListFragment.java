@@ -18,7 +18,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.Switch;
 
 import com.benezra.nir.poi.Activity.ViewEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
@@ -87,6 +89,7 @@ public class EventByInterestListFragment extends Fragment implements
     private BubbleSeekBar mBbubbleSeekBar;
     private String mImageUrl;
     private NestedScrollView mNestedScrollView;
+    private Switch mSwitch;
 
 
     @Override
@@ -104,6 +107,8 @@ public class EventByInterestListFragment extends Fragment implements
         mImageUrl = getArguments().getString("image");
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
+
+        getAllUserInterests();
     }
 
 
@@ -157,7 +162,14 @@ public class EventByInterestListFragment extends Fragment implements
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_browse_interest, container, false);
 
+        mSwitch = rootView.findViewById(R.id.switch_notify);
 
+        mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mFirebaseInstance.getReference("users").child(mAuth.getCurrentUser().getUid()).child("notification").child(mSelectedInterest).setValue(isChecked);
+            }
+        });
         mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.events_recycler_view);
         mEventsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mEventsRecyclerView.setNestedScrollingEnabled(false);
@@ -311,6 +323,32 @@ public class EventByInterestListFragment extends Fragment implements
                     }
                 }
                 initFusedLocation();
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    public void getAllUserInterests() {
+        Query query = mFirebaseInstance.getReference("users").child(mAuth.getCurrentUser().getUid()).child("notification").child(mSelectedInterest);
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    if ((boolean)dataSnapshot.getValue()==true)
+                        mSwitch.setChecked(true);
+                    else
+                        mSwitch.setChecked(false);
+
+
+                }
+                else
+                    mSwitch.setChecked(false);
+
 
             }
 

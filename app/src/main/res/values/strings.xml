@@ -133,6 +133,10 @@
     <string name="pref_title_ringtone">Ringtone</string>
     <string name="pref_ringtone_silent">Silent</string>
 
+    <string name="key_radius">key_radius</string>
+    <string name="title_radius">Notification Radius</string>
+    <string name="summary_radius_range">Choose radius discance to notify</string>
+
     <string name="default_gallery_storage">My Videos</string>
     <string name="title_auto_upload">Auto upload</string>
     <string name="summary_upload_over_wifi">Upload the videos when wifi is available</string>
