@@ -45,6 +45,12 @@
     <string name="missing_title">Please add a tittle to the event</string>
     <string name="collapsingtoolbar_title">Click to add title...</string>
 
+    <string name="location_changed_title">event location changed</string>
+    <string name="location_changed_body">User has changed the event location</string>
+    <string name="new_event_title">Lets </string>
+    <string name="new_event_body">We found new event for you...</string>
+
+
 
     <!--Alert Dialog Titles-->
     <string name="unsave_saved">Unsaved changes</string>

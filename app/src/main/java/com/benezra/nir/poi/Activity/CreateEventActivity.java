@@ -102,6 +102,9 @@ import static com.benezra.nir.poi.Fragment.MapFragment.LOCATION_TAB;
 import static com.benezra.nir.poi.Fragment.MapFragment.SEARCH_TAB;
 import static com.benezra.nir.poi.Interface.Constants.ID_TOKEN;
 import static com.benezra.nir.poi.Interface.Constants.MAIN_ADDRESS;
+import static com.benezra.nir.poi.Interface.Constants.PROD_ADD;
+import static com.benezra.nir.poi.Interface.Constants.PROD_UPDATE;
+import static com.benezra.nir.poi.Interface.Constants.UPDATE_ADDRESS;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_ANCHORED;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_DRAGGING;
@@ -585,9 +588,13 @@ public class CreateEventActivity extends BaseActivity
         return (!mCurrentEvent.getTitle().equals(mCurrentEventChangeFlag.getTitle()) ||
                 (mCurrentEvent.getImage() != null && !mCurrentEvent.getImage().equals(mCurrentEventChangeFlag.getImage())) ||
                 !mCurrentEvent.getDetails().equals(mCurrentEventChangeFlag.getDetails()) ||
-                LocationUtil.distance(mCurrentEvent.getLatlng(), mCurrentEventChangeFlag.getLatlng()) > 0.02 ||
+                isLocationChanged() ||
                 !mCurrentEvent.getInterest().equals(mCurrentEventChangeFlag.getInterest()) ||
                 mCurrentEvent.getStart() != mCurrentEventChangeFlag.getStart());
+    }
+
+    private boolean isLocationChanged(){
+        return LocationUtil.distance(mCurrentEvent.getLatlng(), mCurrentEventChangeFlag.getLatlng()) > 0.02;
     }
 
     private void BuildReturnDialogFragment() {
@@ -1015,6 +1022,17 @@ public class CreateEventActivity extends BaseActivity
                 hideProgressMessage();
                 Toast.makeText(CreateEventActivity.this, getString(R.string.event_created), Toast.LENGTH_SHORT).show();
                 //finish();
+                if (mMode)
+                {
+                    NotifyAllUsersNewEvent();
+
+                }
+                else
+                {
+                    NotifyAllUsersUpdateEvent();
+
+
+                }
                 mMode = false;
                 cloneEvent();
                 initMode();
@@ -1023,7 +1041,6 @@ public class CreateEventActivity extends BaseActivity
 
         });
 
-        NotifyAllUsers();
 
     }
 
@@ -1210,20 +1227,21 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
-    public void NotifyAllUsers(){
+    public void NotifyAllUsersNewEvent(){
 
         JSONObject manJson = new JSONObject();
 
         try {
-            manJson.put("title", mCurrentEvent.getTitle());
-            manJson.put("body", mCurrentEvent.getDetails());
+            manJson.put("user_id", FirebaseAuth.getInstance().getCurrentUser().getUid());
+            manJson.put("title", getString(R.string.new_event_title) +  mCurrentEvent.getInterest());
+            manJson.put("body", getString(R.string.new_event_body));
             manJson.put("interest", mCurrentEvent.getInterest());
             manJson.put("event_id", mCurrentEvent.getId());
             manJson.put("mode", mMode);
             manJson.put("lat", mCurrentEvent.getLatitude());
             manJson.put("lon", mCurrentEvent.getLongitude());
             manJson.put("id_token", SharePref.getInstance(this).getString(ID_TOKEN,""));
-            VolleyHelper.getInstance(this).put(MAIN_ADDRESS, manJson, this, this);
+            VolleyHelper.getInstance(this).put(PROD_ADD, manJson, this, this);
 
         }
 
@@ -1231,5 +1249,28 @@ public class CreateEventActivity extends BaseActivity
             e.printStackTrace();
         }
     }
+
+    public void NotifyAllUsersUpdateEvent(){
+
+        if (!isLocationChanged()) return;
+
+        JSONObject manJson = new JSONObject();
+
+        try {
+            manJson.put("user_id", FirebaseAuth.getInstance().getCurrentUser().getUid());
+            manJson.put("title", getString(R.string.location_changed_title));
+            manJson.put("body", getString(R.string.location_changed_body));
+            manJson.put("event_id", mCurrentEvent.getId());
+            manJson.put("id_token", SharePref.getInstance(this).getString(ID_TOKEN,""));
+
+            VolleyHelper.getInstance(this).put(PROD_UPDATE, manJson, this, this);
+
+        }
+
+        catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
 
