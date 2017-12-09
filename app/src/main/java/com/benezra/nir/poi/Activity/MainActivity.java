@@ -2,6 +2,8 @@ package com.benezra.nir.poi.Activity;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -22,7 +24,7 @@ import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.Objects.EventsInterestData;
 import com.benezra.nir.poi.R;
-import com.benezra.nir.poi.Adapter.SimpleFragmentPagerAdapter;
+import com.benezra.nir.poi.Adapter.FragmentPagerAdapter;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.core.GeoHash;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -30,23 +32,36 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnPausedListener;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
 public class MainActivity extends BaseActivity implements
-        FragmentDataCallBackInterface,OnSuccessListener<Location>,OnFailureListener {
+        FragmentDataCallBackInterface, OnSuccessListener<Location>, OnFailureListener {
 
     private DrawerLayout drawerLayout;
     private Toolbar mToolbar;
@@ -56,6 +71,11 @@ public class MainActivity extends BaseActivity implements
     private static final String TAG = MainActivity.class.getSimpleName();
     private Location mLastKnownLocation;
     private ViewPager viewPager;
+    private DatabaseReference mFirebaseEventPicReference;
+    private Element nextsib;
+    EventsInterestData temp;
+    List<String> images;
+    private FragmentPagerAdapter mFragmentPagerAdapter;
 
 
 
@@ -63,12 +83,14 @@ public class MainActivity extends BaseActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // getImagefromGoogle();
 
-
-        // new RetrieveFeedTask().execute();
+        //new RetrieveFeedTask().execute();
 
         // Set the content of the activity to use the activity_main.xml layout file
         setContentView(R.layout.activity_main);
+
+        images = new ArrayList<>();
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
 
@@ -77,16 +99,23 @@ public class MainActivity extends BaseActivity implements
 
         mAuth = FirebaseAuth.getInstance();
 
+
+
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         // Find the view pager that will allow the user to swipe between fragments
-         viewPager =  findViewById(R.id.viewpager);
+        viewPager = findViewById(R.id.viewpager);
         viewPager.setOffscreenPageLimit(3);
 
+        mFragmentPagerAdapter = new FragmentPagerAdapter(this, getSupportFragmentManager(), mLastKnownLocation);
 
+        viewPager.setAdapter(mFragmentPagerAdapter);
         // Give the TabLayout the ViewPager
         mTabLayout = findViewById(R.id.sliding_tabs);
         mTabLayout.setupWithViewPager(viewPager);
+        setupTabIcons();
+
+
 
 
 
@@ -103,7 +132,6 @@ public class MainActivity extends BaseActivity implements
         //getSupportActionBar().setDisplayShowTitleEnabled(false);
 
     }
-
 
 
     @Override
@@ -134,6 +162,7 @@ public class MainActivity extends BaseActivity implements
     public void startLoadingData() {
         showProgress(getString(R.string.loading), getString(R.string.please_wait));
 
+
     }
 
     @Override
@@ -149,7 +178,7 @@ public class MainActivity extends BaseActivity implements
 
         }
         mFusedLocationProviderClient.getLastLocation()
-                .addOnSuccessListener(this,this)
+                .addOnSuccessListener(this, this)
                 .addOnFailureListener(this, this);
     }
 
@@ -179,7 +208,6 @@ public class MainActivity extends BaseActivity implements
 
     @Override
     public void UserIgnoredPermissionDialog() {
-        initPager();
     }
 
     private boolean isPermissionGranted(String[] permissions) {
@@ -201,24 +229,15 @@ public class MainActivity extends BaseActivity implements
             FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
                     .child("/l").setValue(Arrays.asList(location.getLatitude(), location.getLongitude()));
         }
-        initPager();
 
     }
 
     @Override
     public void onFailure(@NonNull Exception e) {
         Log.d(TAG, e.getMessage().toString());
-        initPager();
 
     }
 
-    private void initPager(){
-        // Create an adapter that knows which fragment should be shown on each page
-        SimpleFragmentPagerAdapter adapter = new SimpleFragmentPagerAdapter(this, getSupportFragmentManager(),mLastKnownLocation);
-        // Set the adapter onto the view pager
-        viewPager.setAdapter(adapter);
-        setupTabIcons();
-    }
 
 
     class RetrieveFeedTask extends AsyncTask<String, Void, Void> {
@@ -228,6 +247,8 @@ public class MainActivity extends BaseActivity implements
 
 
         protected Void doInBackground(String... urls) {
+
+
             try {
                 Document doc = Jsoup.connect("https://en.wikipedia.org/wiki/List_of_hobbies").timeout(10000).get();
 
@@ -247,7 +268,7 @@ public class MainActivity extends BaseActivity implements
                                 main.equals("Collection hobbies") ||
                                 main.equals("Competitive hobbies") ||
                                 main.equals("Observation hobbies")) {
-                            Element nextsib = h2.nextElementSibling();
+                             nextsib = h2.nextElementSibling();
                             while (nextsib != null) {
                                 if (nextsib.tagName().equals("div") || nextsib.tagName().equals("ul")) {
                                     //here you will get an Elements object which you
@@ -257,15 +278,8 @@ public class MainActivity extends BaseActivity implements
                                     if (elements.size() > 3) {
                                         for (Element el : elements) {
                                             String title = el.text();
-                                            if (title.equals("Volleyball"))
-                                            {
-                                                Log.d("nir","");
-                                            }
-                                            if (title.equals("Water Polo"))
-                                            {
-                                                Log.d("nir","");
-                                            }
-                                            if (!title.equals("") && !isListContainsInterest(list,title))  {
+
+                                            if (!title.equals("") && !isListContainsInterest(list, title)) {
 
                                                 Document tempdoc = null;
                                                 try {
@@ -298,28 +312,126 @@ public class MainActivity extends BaseActivity implements
                                                         }
                                                     }
 
+                                                    String userAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36";
+                                                    String url = "https://www.google.com/search?site=imghp&tbm=isch&source=hp&q=" + title + "&gws_rd=cr";
+
+                                                    List<String> resultUrls = new ArrayList<String>();
+
+                                                    try {
+                                                        Document google_doc = Jsoup.connect(url).userAgent(userAgent).referrer("https://www.google.com/").get();
+
+                                                        Elements google_elements = google_doc.select("div.rg_meta");
+
+                                                        JSONObject jsonObject;
+                                                        for (Element element : google_elements) {
+                                                            if (element.childNodeSize() > 0) {
+                                                                jsonObject = (JSONObject) new JSONParser().parse(element.childNode(0).toString());
+                                                                resultUrls.add((String) jsonObject.get("ou"));
+                                                            }
+                                                        }
+
+                                                        System.out.println("number of results: " + resultUrls.size());
+
+//                                                        for (String imageUrl : resultUrls) {
+//                                                            System.out.println(imageUrl);
+//                                                        }
+
+                                                    } catch (IOException e) {
+                                                        e.printStackTrace();
+                                                    } catch (org.json.simple.parser.ParseException e) {
+                                                        e.printStackTrace();
+                                                    }
+
 
                                                     //Element masthead = tempdoc.select("div#mw-content-text").first();
                                                     Elements paragraphs = tempdoc.select("p:not(:has(#coordinates))");
-                                                    Elements metaOgImage = tempdoc.select("meta[property=og:image]");
-                                                    EventsInterestData temp = new EventsInterestData();
+                                                    //Elements metaOgImage = tempdoc.select("meta[property=og:image]");
+                                                     temp = new EventsInterestData();
                                                     temp.setTitle(title);
                                                     temp.setInterest(title);
                                                     temp.setCategories(categories_list);
-                                                    temp.setImage(metaOgImage == null ? "" : metaOgImage.attr("content"));
                                                     temp.setDetails(paragraphs == null ? "" : paragraphs.text());
                                                     list.add(temp);
-                                                    Log.d("Added", "==========" + title + "===============");
+
+
+
+                                                    Bitmap myBitmap = null;
+                                                    int i=0;
+                                                    while (myBitmap==null)
+                                                    {
+                                                        try {
+                                                            URL url1 = new URL(resultUrls.get(i++));
+                                                            HttpURLConnection connection = (HttpURLConnection) url1.openConnection();
+                                                            connection.setDoInput(true);
+                                                            connection.connect();
+                                                            InputStream input = connection.getInputStream();
+                                                            myBitmap = BitmapFactory.decodeStream(input);
+                                                        }catch (Exception e){
+                                                            Log.d(TAG,e.getMessage());
+                                                        }
+                                                    }
+
+                                                    //temp.setImage(metaOgImage == null ? "" : metaOgImage.attr("content"));
+                                                   // Bitmap bitmap = new DownloadBitmapTask().execute(resultUrls.get(1)).get();
+
+                                                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                                    myBitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
+                                                    byte[] data = baos.toByteArray();
+                                                    final String pic_id = UUID.randomUUID().toString() + ".jpg";
+
+
+                                                    StorageReference fileRef = FirebaseStorage.getInstance().getReference().child("interests_images").child(pic_id);
+                                                    fileRef.putBytes(data)
+                                                            .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                                                @Override
+                                                                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                                                    //mProgressDialogFragment.dismiss();
+
+                                                                    Log.i(TAG, "Uri: " + taskSnapshot.getDownloadUrl());
+                                                                    Log.i(TAG, "Name: " + taskSnapshot.getMetadata().getName());
+                                                                    images.add(taskSnapshot.getDownloadUrl().toString());
+
+                                                                    //temp.setImage(taskSnapshot.getDownloadUrl().toString());
+                                                                    Log.d(TAG,"========File Uploade=d =========");
+                                                                    //nextsib = nextsib.nextElementSibling();
+
+                                                                }
+                                                            })
+                                                            .addOnFailureListener(new OnFailureListener() {
+                                                                @Override
+                                                                public void onFailure(@NonNull Exception exception) {
+                                                                    Log.d(TAG, exception.getMessage());
+                                                                    //nextsib = nextsib.nextElementSibling();
+
+                                                                }
+                                                            })
+                                                            .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                                                                @Override
+                                                                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                                                                    // progress percentage
+                                                                    double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+                                                                    Log.d(TAG, "addOnProgressListener " + progress + "");
+
+                                                                }
+                                                            })
+                                                            .addOnPausedListener(new OnPausedListener<UploadTask.TaskSnapshot>() {
+                                                                @Override
+                                                                public void onPaused(UploadTask.TaskSnapshot taskSnapshot) {
+                                                                    System.out.println("Upload is paused!");
+                                                                }
+                                                            });
+
                                                 }
 
 
                                             }
                                             //list.add(title);
+
                                         }
                                     }
 
-
                                     nextsib = nextsib.nextElementSibling();
+
                                 } else if (nextsib.tagName().equals("h2")) {
                                     nextsib = null;
                                 } else {
@@ -329,28 +441,45 @@ public class MainActivity extends BaseActivity implements
                         }
                     }
                 }
-            } catch (Exception e) {
+            }
+
+
+            catch (Exception e) {
                 this.exception = e;
 
                 //return null;
             }
+
+            while (images.size()!=list.size())
+            {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            for (int i = 0; i < images.size(); i++) {
+                list.get(i).setImage(images.get(i));
+            }
+
             FirebaseDatabase.getInstance().getReference("interests_data").setValue(list);
             Log.d("Finsish", "==========finish===============");
             return null;
         }
     }
 
-    private boolean isListContainsInterest(List<EventsInterestData> list,String interest){
+
+
+
+    private boolean isListContainsInterest(List<EventsInterestData> list, String interest) {
         for (int i = 0; i < list.size(); i++) {
             if (list.get(i).getInterest().equals(interest)) return true;
         }
         return false;
     }
 
-    protected void onPostExecute(ArrayList<String> feed) {
-        // TODO: check this.exception
-        // TODO: do something with the feed
-    }
+
 
 
 }

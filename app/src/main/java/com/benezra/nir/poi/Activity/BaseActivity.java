@@ -299,13 +299,13 @@ public abstract class BaseActivity extends AppCompatActivity
     }
 
     public void showProgress(String title, String message) {
-        ProgressDialogFragment mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
-        if (mProgressDialogFragment == null) {
-            Log.d(TAG, "opening origress dialog");
-            mProgressDialogFragment = ProgressDialogFragment.newInstance(
-                    title, message, ProgressDialog.STYLE_SPINNER);
-            mProgressDialogFragment.show(getSupportFragmentManager(), ProgressDialogFragment.class.getName());
-        }
+//        ProgressDialogFragment mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
+//        if (mProgressDialogFragment == null) {
+//            Log.d(TAG, "opening origress dialog");
+//            mProgressDialogFragment = ProgressDialogFragment.newInstance(
+//                    title, message, ProgressDialog.STYLE_SPINNER);
+//            mProgressDialogFragment.show(getSupportFragmentManager(), ProgressDialogFragment.class.getName());
+//        }
     }
 
     public void hideProgressMessage() {

@@ -5,7 +5,6 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 
 import com.benezra.nir.poi.Fragment.ParticipateEventFragment;
 import com.benezra.nir.poi.Fragment.MainEventFragment;
@@ -20,12 +19,12 @@ import static com.benezra.nir.poi.Interface.Constants.USER_LOCATION;
 /**
  * Provides the appropriate {@link Fragment} for a view pager.
  */
-public class SimpleFragmentPagerAdapter extends FragmentPagerAdapter {
+public class FragmentPagerAdapter extends android.support.v4.app.FragmentPagerAdapter {
 
     private Context mContext;
     private Location mLocation;
 
-    public SimpleFragmentPagerAdapter(Context context, FragmentManager fm, Location location) {
+    public FragmentPagerAdapter(Context context, FragmentManager fm, Location location) {
         super(fm);
         mContext = context;
         mLocation = location;

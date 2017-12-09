@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 
 import com.benezra.nir.poi.Fragment.AlertDialogFragment;
@@ -38,6 +39,8 @@ public class BrowseInterestActivity extends BaseActivity implements
         String interest = intent.getStringExtra("interest");
         String image = intent.getStringExtra("image");
 
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitle(interest);
 
 
 

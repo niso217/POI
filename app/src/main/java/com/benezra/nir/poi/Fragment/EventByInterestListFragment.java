@@ -8,18 +8,21 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Switch;
 
 import com.benezra.nir.poi.Activity.ViewEventActivity;
@@ -90,6 +93,7 @@ public class EventByInterestListFragment extends Fragment implements
     private String mImageUrl;
     private NestedScrollView mNestedScrollView;
     private Switch mSwitch;
+    private ProgressBar mProgressBar;
 
 
     @Override
@@ -178,9 +182,21 @@ public class EventByInterestListFragment extends Fragment implements
 
         mNestedScrollView = rootView.findViewById(R.id.nestedscrollview);
 
+        mProgressBar = rootView.findViewById(R.id.pb_loading);
+
         ImageView background = (ImageView) rootView.findViewById(R.id.backdrop);
         if (!mImageUrl.equals(""))
-            Picasso.with(getContext()).load(mImageUrl).into(background);
+            Picasso.with(getContext()).load(mImageUrl).into(background, new com.squareup.picasso.Callback() {
+                @Override
+                public void onSuccess() {
+                    mProgressBar.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onError() {
+
+                }
+            });;
 
         FloatingActionButton fab = (FloatingActionButton) rootView.findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
