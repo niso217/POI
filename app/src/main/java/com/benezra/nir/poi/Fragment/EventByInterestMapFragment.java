@@ -21,6 +21,7 @@ import com.benezra.nir.poi.Objects.Event;
 import com.benezra.nir.poi.Helper.MapStateManager;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
+import com.benezra.nir.poi.View.DividerItemDecoration;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -193,6 +194,8 @@ public class EventByInterestMapFragment extends Fragment implements
         mEventsRecyclerView.setLayoutManager(layoutManager);
         mEventsRecyclerView.setNestedScrollingEnabled(false);
         mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
+        //mEventsRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(),DividerItemDecoration.HORIZONTAL_LIST));
+        mEventsRecyclerView.setBackgroundResource(R.drawable.image_border);
         mEventsRecyclerView.setAdapter(mEventsAdapter);
 
         SnapHelper snapHelper = new PagerSnapHelper();

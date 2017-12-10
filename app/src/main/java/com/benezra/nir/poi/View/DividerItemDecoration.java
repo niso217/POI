@@ -3,11 +3,14 @@ package com.benezra.nir.poi.View;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+
+import com.benezra.nir.poi.R;
 
 /**
  * Created by Lincoln on 30/10/15.
@@ -22,13 +25,19 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
 
     public static final int VERTICAL_LIST = LinearLayoutManager.VERTICAL;
 
+    private Context mContext;
+
     private Drawable mDivider;
 
     private int mOrientation;
 
+    private Paint paint;
+
     public DividerItemDecoration(Context context, int orientation) {
         final TypedArray a = context.obtainStyledAttributes(ATTRS);
         mDivider = a.getDrawable(0);
+        mContext = context;
+        this.paint = new Paint();
         a.recycle();
         setOrientation(orientation);
     }
@@ -61,6 +70,8 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
             final int top = child.getBottom() + params.bottomMargin;
             final int bottom = top + mDivider.getIntrinsicHeight();
             mDivider.setBounds(left, top, right, bottom);
+            paint.setColor(mContext.getResources().getColor(R.color.lightblue));
+            c.drawRect(left, top, right, bottom,paint);
             mDivider.draw(c);
         }
     }
@@ -77,6 +88,8 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
             final int left = child.getRight() + params.rightMargin;
             final int right = left + mDivider.getIntrinsicHeight();
             mDivider.setBounds(left, top, right, bottom);
+            paint.setColor(mContext.getResources().getColor(R.color.lightblue));
+            c.drawRect(left, top, right, bottom,paint);
             mDivider.draw(c);
         }
     }

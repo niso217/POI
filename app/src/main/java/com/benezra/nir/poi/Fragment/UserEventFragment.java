@@ -20,6 +20,7 @@ import com.benezra.nir.poi.Objects.Event;
 import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
+import com.benezra.nir.poi.View.DividerItemDecoration;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -130,6 +131,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener, R
         mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.my_events_list);
         mEventsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
+        mEventsRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(),DividerItemDecoration.VERTICAL_LIST));
         mEventsRecyclerView.setAdapter(mEventsAdapter);
 
 //        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mEventsAdapter);

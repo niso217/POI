@@ -822,6 +822,7 @@ public class CreateEventActivity extends BaseActivity
         mCurrentEvent.setLatLang(place.getLatLng());
         mapFragment.setEventLocation(place.getLatLng(), place.getAddress().toString());
         mTextViewDistance.setText(place.getAddress());
+        isChangeMade();
 
 
     }

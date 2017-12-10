@@ -8,22 +8,21 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.Switch;
+import android.widget.ToggleButton;
 
 import com.benezra.nir.poi.Activity.ViewEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
@@ -31,6 +30,7 @@ import com.benezra.nir.poi.Objects.Event;
 import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
+import com.benezra.nir.poi.View.DividerItemDecoration;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
@@ -92,7 +92,6 @@ public class EventByInterestListFragment extends Fragment implements
     private BubbleSeekBar mBbubbleSeekBar;
     private String mImageUrl;
     private NestedScrollView mNestedScrollView;
-    private Switch mSwitch;
     private ProgressBar mProgressBar;
 
 
@@ -101,7 +100,6 @@ public class EventByInterestListFragment extends Fragment implements
         super.onCreate(savedInstanceState);
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        mFirebaseInstance.getReference().keepSynced(true);
         mEventList = new ArrayList<>();
         mEventsAdapter = new EventsAdapter(getContext(), mEventList);
         mUserEvents = new ArrayList<>();
@@ -112,7 +110,6 @@ public class EventByInterestListFragment extends Fragment implements
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
 
-        getAllUserInterests();
     }
 
 
@@ -166,18 +163,12 @@ public class EventByInterestListFragment extends Fragment implements
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_browse_interest, container, false);
 
-        mSwitch = rootView.findViewById(R.id.switch_notify);
 
-        mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mFirebaseInstance.getReference("users").child(mAuth.getCurrentUser().getUid()).child("notification").child(mSelectedInterest).setValue(isChecked);
-            }
-        });
         mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.events_recycler_view);
         mEventsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mEventsRecyclerView.setNestedScrollingEnabled(false);
         mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
+        mEventsRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(),DividerItemDecoration.VERTICAL_LIST));
         mEventsRecyclerView.setAdapter(mEventsAdapter);
 
         mNestedScrollView = rootView.findViewById(R.id.nestedscrollview);
@@ -224,7 +215,6 @@ public class EventByInterestListFragment extends Fragment implements
             public void getProgressOnActionUp(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat) {
                 Log.d(TAG, progress + " UP");
                 initGeoFire(progress);
-                mEventsRecyclerView.requestLayout();
 
             }
 
@@ -349,31 +339,7 @@ public class EventByInterestListFragment extends Fragment implements
         });
     }
 
-    public void getAllUserInterests() {
-        Query query = mFirebaseInstance.getReference("users").child(mAuth.getCurrentUser().getUid()).child("notification").child(mSelectedInterest);
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    if ((boolean)dataSnapshot.getValue()==true)
-                        mSwitch.setChecked(true);
-                    else
-                        mSwitch.setChecked(false);
 
-
-                }
-                else
-                    mSwitch.setChecked(false);
-
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-    }
 
     private void getAllEventsByInterests() {
         Query query = mFirebaseInstance.getReference("events").orderByChild("interest").equalTo(mSelectedInterest);
