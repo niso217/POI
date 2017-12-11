@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -17,6 +18,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
@@ -100,28 +102,14 @@ public class MainActivity extends BaseActivity implements
         mAuth = FirebaseAuth.getInstance();
 
 
-
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         // Find the view pager that will allow the user to swipe between fragments
         viewPager = findViewById(R.id.viewpager);
         viewPager.setOffscreenPageLimit(3);
 
-        mFragmentPagerAdapter = new FragmentPagerAdapter(this, getSupportFragmentManager(), mLastKnownLocation);
 
-        viewPager.setAdapter(mFragmentPagerAdapter);
-        // Give the TabLayout the ViewPager
-        mTabLayout = findViewById(R.id.sliding_tabs);
-        mTabLayout.setupWithViewPager(viewPager);
-        setupTabIcons();
-
-
-
-
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        }
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
 
         mToolbar.setBackgroundResource(R.drawable.alcohol_party_dark);
@@ -130,16 +118,15 @@ public class MainActivity extends BaseActivity implements
         mToolbar.setLayoutParams(layoutParams);
 //        setSupportActionBar(mToolbar);
         //getSupportActionBar().setDisplayShowTitleEnabled(false);
-
-    }
-
-
-    @Override
-    protected void onResume() {
+        if (savedInstanceState==null)
         navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+        else
+            initPages();
 
-        super.onResume();
+
     }
+
+
 
     private void setupTabIcons() {
         mTabLayout.getTabAt(0).setIcon(R.drawable.ic_explore_white_48dp);
@@ -208,6 +195,8 @@ public class MainActivity extends BaseActivity implements
 
     @Override
     public void UserIgnoredPermissionDialog() {
+        initPages();
+        showSnackBar(getString(R.string.no_location_determined));
     }
 
     private boolean isPermissionGranted(String[] permissions) {
@@ -230,14 +219,26 @@ public class MainActivity extends BaseActivity implements
                     .child("/l").setValue(Arrays.asList(location.getLatitude(), location.getLongitude()));
         }
 
+        initPages();
+
     }
 
     @Override
     public void onFailure(@NonNull Exception e) {
         Log.d(TAG, e.getMessage().toString());
 
+        initPages();
+
     }
 
+    private void initPages() {
+        mFragmentPagerAdapter = new FragmentPagerAdapter(this, getSupportFragmentManager(), mLastKnownLocation);
+        viewPager.setAdapter(mFragmentPagerAdapter);
+        // Give the TabLayout the ViewPager
+        mTabLayout = findViewById(R.id.sliding_tabs);
+        mTabLayout.setupWithViewPager(viewPager);
+        setupTabIcons();
+    }
 
 
     class RetrieveFeedTask extends AsyncTask<String, Void, Void> {
@@ -268,7 +269,7 @@ public class MainActivity extends BaseActivity implements
                                 main.equals("Collection hobbies") ||
                                 main.equals("Competitive hobbies") ||
                                 main.equals("Observation hobbies")) {
-                             nextsib = h2.nextElementSibling();
+                            nextsib = h2.nextElementSibling();
                             while (nextsib != null) {
                                 if (nextsib.tagName().equals("div") || nextsib.tagName().equals("ul")) {
                                     //here you will get an Elements object which you
@@ -346,7 +347,7 @@ public class MainActivity extends BaseActivity implements
                                                     //Element masthead = tempdoc.select("div#mw-content-text").first();
                                                     Elements paragraphs = tempdoc.select("p:not(:has(#coordinates))");
                                                     //Elements metaOgImage = tempdoc.select("meta[property=og:image]");
-                                                     temp = new EventsInterestData();
+                                                    temp = new EventsInterestData();
                                                     temp.setTitle(title);
                                                     temp.setInterest(title);
                                                     temp.setCategories(categories_list);
@@ -354,11 +355,9 @@ public class MainActivity extends BaseActivity implements
                                                     list.add(temp);
 
 
-
                                                     Bitmap myBitmap = null;
-                                                    int i=0;
-                                                    while (myBitmap==null)
-                                                    {
+                                                    int i = 0;
+                                                    while (myBitmap == null) {
                                                         try {
                                                             URL url1 = new URL(resultUrls.get(i++));
                                                             HttpURLConnection connection = (HttpURLConnection) url1.openConnection();
@@ -366,13 +365,13 @@ public class MainActivity extends BaseActivity implements
                                                             connection.connect();
                                                             InputStream input = connection.getInputStream();
                                                             myBitmap = BitmapFactory.decodeStream(input);
-                                                        }catch (Exception e){
-                                                            Log.d(TAG,e.getMessage());
+                                                        } catch (Exception e) {
+                                                            Log.d(TAG, e.getMessage());
                                                         }
                                                     }
 
                                                     //temp.setImage(metaOgImage == null ? "" : metaOgImage.attr("content"));
-                                                   // Bitmap bitmap = new DownloadBitmapTask().execute(resultUrls.get(1)).get();
+                                                    // Bitmap bitmap = new DownloadBitmapTask().execute(resultUrls.get(1)).get();
 
                                                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                                                     myBitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
@@ -392,7 +391,7 @@ public class MainActivity extends BaseActivity implements
                                                                     images.add(taskSnapshot.getDownloadUrl().toString());
 
                                                                     //temp.setImage(taskSnapshot.getDownloadUrl().toString());
-                                                                    Log.d(TAG,"========File Uploade=d =========");
+                                                                    Log.d(TAG, "========File Uploade=d =========");
                                                                     //nextsib = nextsib.nextElementSibling();
 
                                                                 }
@@ -441,17 +440,13 @@ public class MainActivity extends BaseActivity implements
                         }
                     }
                 }
-            }
-
-
-            catch (Exception e) {
+            } catch (Exception e) {
                 this.exception = e;
 
                 //return null;
             }
 
-            while (images.size()!=list.size())
-            {
+            while (images.size() != list.size()) {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -470,16 +465,12 @@ public class MainActivity extends BaseActivity implements
     }
 
 
-
-
     private boolean isListContainsInterest(List<EventsInterestData> list, String interest) {
         for (int i = 0; i < list.size(); i++) {
             if (list.get(i).getInterest().equals(interest)) return true;
         }
         return false;
     }
-
-
 
 
 }

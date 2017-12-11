@@ -84,17 +84,27 @@
 
 
         <activity
-            android:name=".Activity.ChatActivity"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:name=".Activity.ChatActivity">
+            </activity>
         <activity
             android:name=".Activity.MainActivity"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/transparent"></activity>
         <activity
             android:name=".Activity.CreateEventActivity"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar"
+            android:parentActivityName=".Activity.MainActivity">
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value=".Activity.MainActivity"/>
+        </activity>
         <activity
             android:name=".Activity.ViewEventActivity"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar"
+            android:parentActivityName=".Activity.MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".Activity.MainActivity"/>
+    </activity>
         <activity
             android:name=".Activity.GalleryActivity"
             android:theme="@style/AppTheme.NoActionBar"></activity>
@@ -106,7 +116,11 @@
             android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity
             android:name=".Utils.DataFaker"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar"
+            android:parentActivityName=".Activity.MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".Activity.MainActivity"/></activity>
         <activity
             android:name=".Login.ResetPasswordActivity"
             android:theme="@style/AppTheme.NoActionBar"></activity>
@@ -115,12 +129,24 @@
             android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity
             android:name=".Activity.TutorialActivity"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar"
+            android:parentActivityName=".Activity.MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".Activity.MainActivity"/></activity>
         <activity
             android:name=".Activity.SignInActivity"
             android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Settings.SettingsActivity"></activity>
-        <activity android:name=".Settings.AboutActivity"></activity>
+        <activity android:name=".Settings.SettingsActivity"
+            android:parentActivityName=".Activity.MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".Activity.MainActivity"/></activity>
+        <activity android:name=".Settings.AboutActivity"
+            android:parentActivityName=".Activity.MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".Activity.MainActivity"/></activity>
         <activity android:name=".Geofencing.GeofencingActivity"></activity>
     </application>
 

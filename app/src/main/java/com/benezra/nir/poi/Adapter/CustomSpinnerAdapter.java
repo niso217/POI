@@ -2,10 +2,12 @@ package com.benezra.nir.poi.Adapter;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.support.annotation.NonNull;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
@@ -21,16 +23,23 @@ import java.util.List;
  * Created by nir on 10/10/2017.
  */
 
-public class CustomSpinnerAdapter extends BaseAdapter implements SpinnerAdapter {
+public class CustomSpinnerAdapter extends ArrayAdapter<String> implements SpinnerAdapter {
 
     private final Context activity;
     private ArrayList<String> asr;
 
-    public CustomSpinnerAdapter(Context context,ArrayList<String> asr) {
-        this.asr=asr;
+    public CustomSpinnerAdapter(@NonNull Context context,ArrayList<String> asr) {
+        super(context,0, asr);
+        this.activity = context;
+        this.asr = asr;
         sortList();
-        activity = context;
     }
+
+//    public CustomSpinnerAdapter(Context context, ArrayList<String> asr) {
+//        this.asr=asr;
+//        sortList();
+//        activity = context;
+//    }
 
 
     public void updateInterestList(List<String> list) {
@@ -60,10 +69,10 @@ public class CustomSpinnerAdapter extends BaseAdapter implements SpinnerAdapter 
         return asr.size();
     }
 
-    public Object getItem(int i)
-    {
-        return asr.get(i);
-    }
+//    public Object getItem(int i)
+//    {
+//        return asr.get(i);
+//    }
 
     public long getItemId(int i)
     {

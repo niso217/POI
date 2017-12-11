@@ -145,18 +145,18 @@ public class GeofenceTransitionsIntentService extends IntentService {
         // Get a notification builder that's compatible with platform versions >= 4
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
-        // Get an instance of the Notification manager
+         //Get an instance of the Notification manager
         NotificationManager mNotificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationUtil mNotificationUtils = new NotificationUtil(this);
 
-            Notification.Builder nb = mNotificationUtils.
-                    getAndroidChannelNotification(notificationDetails,getString(R.string.geofence_transition_notification_text),notificationPendingIntent);
-
-
-            mNotificationManager.notify(0, nb.build());
+//            Notification.Builder nb = mNotificationUtils.
+//                    getAndroidChannelNotification(notificationDetails,getString(R.string.geofence_transition_notification_text),notificationPendingIntent);
+//
+//
+//            mNotificationManager.notify(0, nb.build());
 
         }
 

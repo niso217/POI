@@ -18,6 +18,10 @@ import android.util.Log;
 
 import com.benezra.nir.poi.R;
 
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.CAMERA;
+
 /**
  * Created by tylerjroach on 8/31/16.
  */
@@ -34,6 +38,7 @@ public class PermissionsDialogFragment extends DialogFragment {
     private String[] permissions;
     private boolean inProgress = false;
     private AlertDialog settings, retry;
+    private String [] messages;
 
     public static PermissionsDialogFragment newInstance() {
         return new PermissionsDialogFragment();
@@ -60,6 +65,7 @@ public class PermissionsDialogFragment extends DialogFragment {
         outState.putBoolean("shouldResolve", shouldResolve);
         outState.putBoolean("externalGrantNeeded", externalGrantNeeded);
         outState.putBoolean("shouldRetry", shouldRetry);
+        outState.putStringArray("messages", messages);
 
     }
 
@@ -77,7 +83,15 @@ public class PermissionsDialogFragment extends DialogFragment {
             shouldResolve = savedInstanceState.getBoolean("shouldResolve");
             externalGrantNeeded = savedInstanceState.getBoolean("externalGrantNeeded");
             shouldRetry = savedInstanceState.getBoolean("shouldRetry");
+            messages = savedInstanceState.getStringArray("messages");
 
+        }
+        else
+        {
+            if (permissions[0].equals(ACCESS_FINE_LOCATION) || permissions[0].equals(ACCESS_COARSE_LOCATION))
+                messages = new String []{getString(R.string.location_permission),getString(R.string.location_permission_settings)};
+            else if (permissions[0].equals(CAMERA))
+                messages = new String []{getString(R.string.camera_permission),getString(R.string.camera_permission_settings)};
         }
         setStyle(STYLE_NO_TITLE, R.style.PermissionsDialogFragmentStyle);
         if (!shouldResolve)
@@ -148,7 +162,7 @@ public class PermissionsDialogFragment extends DialogFragment {
     private void showAppSettingsDialog() {
         settings = new AlertDialog.Builder(context)
                 .setTitle("Permissions Required")
-                .setMessage("In order to record videos, access to the camera, microphone, and storage is needed. Please enable these permissions from the app settings.")
+                .setMessage(messages[1])
                 .setPositiveButton("App Settings", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
@@ -174,7 +188,7 @@ public class PermissionsDialogFragment extends DialogFragment {
     private void showRetryDialog() {
         retry = new AlertDialog.Builder(context)
                 .setTitle("Permissions Declined")
-                .setMessage("In order to record videos, the app needs access to the camera, microphone, and storage.")
+                .setMessage(messages[0])
                 .setPositiveButton("Retry", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {

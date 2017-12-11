@@ -17,78 +17,44 @@
 
 package com.benezra.nir.poi.Activity;
 
-import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
-import android.support.v4.app.ActivityCompat;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.TaskStackBuilder;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
-import com.benezra.nir.poi.Geofencing.GeofencingActivity;
-import com.benezra.nir.poi.Helper.SharePref;
-import com.benezra.nir.poi.Helper.VolleyHelper;
-import com.benezra.nir.poi.Interface.Constants;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Settings.AboutActivity;
 import com.benezra.nir.poi.Settings.SettingsActivity;
-import com.benezra.nir.poi.Utils.NotificationUtils;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.messaging.FirebaseMessaging;
 import com.squareup.picasso.Picasso;
 import com.google.android.gms.plus.PlusShare;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
-import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-import static com.benezra.nir.poi.Fragment.MapFragment.EVENT_LOC_TAB;
-import static com.benezra.nir.poi.Interface.Constants.ID_TOKEN;
-import static com.benezra.nir.poi.Interface.Constants.MAIN_ADDRESS;
 
 
 /**
@@ -130,6 +96,8 @@ public abstract class BaseActivity extends AppCompatActivity
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mHandler = new Handler();
+
+        mDrawerLayout = findViewById(R.id.drawer_layout);
 
 
         overridePendingTransition(0, 0);
@@ -203,6 +171,7 @@ public abstract class BaseActivity extends AppCompatActivity
     private void createBackStack(Intent intent) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             TaskStackBuilder builder = TaskStackBuilder.create(this);
+            builder.addParentStack(MainActivity.class);
             builder.addNextIntentWithParentStack(intent);
             builder.startActivities();
         } else {
@@ -224,9 +193,8 @@ public abstract class BaseActivity extends AppCompatActivity
         switch (itemId) {
             case R.id.nav_add_event:
                 intent = new Intent(this, CreateEventActivity.class);
-                intent.setAction(TutorialActivity.ACTION_SHOW_ANYWAYS);
+                intent.setAction(CreateEventActivity.ACTION_SHOW_ANYWAYS);
                 createBackStack(intent);
-
                 break;
             case R.id.nav_log_out:
                 intent = new Intent(this, SignInActivity.class);
@@ -273,7 +241,9 @@ public abstract class BaseActivity extends AppCompatActivity
             setSupportActionBar(toolbar);
         }
 
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+
+        mDrawerLayout = findViewById(R.id.drawer_layout);
+
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, mDrawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         mDrawerLayout.addDrawerListener(toggle);
@@ -367,11 +337,38 @@ public abstract class BaseActivity extends AppCompatActivity
 
     }
 
+    public void showSnackBarWithAction(String message) {
+        Snackbar snackbar = Snackbar
+                .make(mDrawerLayout, message, Snackbar.LENGTH_LONG)
+                .setAction("UNDO", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Snackbar snackbar1 = Snackbar.make(mDrawerLayout, "Message is restored!", Snackbar.LENGTH_SHORT);
+                        snackbar1.show();
+                    }
+                });
+
+        snackbar.show();
+
+
+    }
+    public void showSnackBar(String message) {
+        Snackbar snackbar = Snackbar
+                .make(mDrawerLayout, message, Snackbar.LENGTH_LONG);
+        snackbar.show();
+
+    }
+
+
+
+
+
 
     @Override
     public void onResponse(Object response) {
         Log.d(TAG,response.toString());
     }
+
 
 
 

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.EditText;
@@ -34,6 +35,7 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
 
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+
 
         Intent intent  = getIntent();
         mEventId = intent.getStringExtra(EVENT_ID);

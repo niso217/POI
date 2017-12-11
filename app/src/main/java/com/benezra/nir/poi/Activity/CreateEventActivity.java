@@ -81,6 +81,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
+import com.toptoche.searchablespinnerlibrary.SearchableSpinner;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -164,7 +165,7 @@ public class CreateEventActivity extends BaseActivity
     final static String TAG = CreateEventActivity.class.getSimpleName();
     private Calendar mEventTime;
     private FirebaseDatabase mFirebaseInstance;
-    private Spinner mspinnerCustom;
+    private SearchableSpinner mspinnerCustom;
     private ArrayList<String> mInterestsList;
     private CustomSpinnerAdapter mCustomSpinnerAdapter;
     private EditText mEventDetails, mTitle;
@@ -189,6 +190,8 @@ public class CreateEventActivity extends BaseActivity
     private ArrayList<String> mEventImagesList;
     private TextView mTextViewDistance;
     private LinearLayout mNavigationBarLayout;
+    public static final String ACTION_SHOW_ANYWAYS = TAG + ".ACTION_SHOW_ANYWAYS";
+
 
     private TabLayout mTabLayout;
 
@@ -302,6 +305,8 @@ public class CreateEventActivity extends BaseActivity
         tvDatePicker.setText(DateUtil.CalendartoDate(Calendar.getInstance().getTime()));
         tvTimePicker = findViewById(R.id.tv_time);
         mspinnerCustom = findViewById(R.id.spinnerCustom);
+        mspinnerCustom.setTitle("Select Item");
+        mspinnerCustom.setPositiveButton("OK");
         mProgressBar = findViewById(R.id.pb_loading);
         mSwitch = findViewById(R.id.tgl_allday);
         mNestedScrollView = findViewById(R.id.nestedscrollview);
@@ -549,19 +554,21 @@ public class CreateEventActivity extends BaseActivity
     private void checkEvent() {
         if (mCurrentEvent != null) {
             if (mCurrentEvent.getDetails() == null || mCurrentEvent.getDetails().equals("")) {
-                Toast.makeText(this, getString(R.string.missing_details), Toast.LENGTH_SHORT).show();
+                showSnackBar(getString(R.string.missing_details));
                 return;
             }
             if (mCurrentEvent.getInterest() == null || mCurrentEvent.getInterest().equals("")) {
-                Toast.makeText(this, getString(R.string.missing_interest), Toast.LENGTH_SHORT).show();
+                showSnackBar(getString(R.string.missing_interest));
+
                 return;
             }
             if (mCurrentEvent.getLatitude() == 0 || mCurrentEvent.getLongitude() == 0) {
-                Toast.makeText(this, getString(R.string.missing_location), Toast.LENGTH_SHORT).show();
+                showSnackBar(getString(R.string.missing_location));
+
                 return;
             }
-            if (mCurrentEvent.getTitle() == null || mCurrentEvent.getTitle().equals(getString(R.string.collapsingtoolbar_title))) {
-                Toast.makeText(this, getString(R.string.missing_title), Toast.LENGTH_SHORT).show();
+            if (mCurrentEvent.getTitle() == null || mCurrentEvent.getTitle().equals("")) {
+                showSnackBar(getString(R.string.missing_title));
                 return;
             }
         }
@@ -634,9 +641,9 @@ public class CreateEventActivity extends BaseActivity
                 if (action == ACTION_REMOVE)
                     delete();
                 else {
-                    Intent intent = new Intent(this, MainActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    startActivity(intent);
+//                    Intent intent = new Intent(this, MainActivity.class);
+//                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//                    startActivity(intent);
                     finish();
                 }
                 break;
@@ -1021,7 +1028,7 @@ public class CreateEventActivity extends BaseActivity
             @Override
             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                 hideProgressMessage();
-                Toast.makeText(CreateEventActivity.this, getString(R.string.event_created), Toast.LENGTH_SHORT).show();
+                showSnackBar(getString(R.string.event_created));
                 //finish();
                 if (mMode)
                 {

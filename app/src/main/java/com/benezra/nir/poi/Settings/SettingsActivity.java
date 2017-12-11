@@ -1,12 +1,9 @@
 package com.benezra.nir.poi.Settings;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -18,12 +15,10 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 
 import com.benezra.nir.poi.Activity.MainActivity;
-import com.benezra.nir.poi.Activity.SignInActivity;
 import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
-import com.pavelsikun.seekbarpreference.SeekBarPreference;
 
 
 public class SettingsActivity extends AppCompatPreferenceActivity {
@@ -45,7 +40,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             addPreferencesFromResource(R.xml.pref_main);
 
             // notification preference change listener
-            bindPreferenceSummaryToValue(findPreference(getString(R.string.key_notifications_new_message_ringtone)));
+            bindPreferenceSummaryToValue(findPreference(getString(R.string.key_notifications_new_event_ringtone)));
 
         }
     }

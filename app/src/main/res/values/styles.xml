@@ -64,6 +64,11 @@
         <item name="android:fontFamily">sans-serif-light</item>
     </style>
 
+    <style name="transparent" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
+    </style>
+
 
     <style name="PermissionsDialogFragmentStyle" parent="Base.Theme.AppCompat.Dialog">
         <item name="android:backgroundDimEnabled">false</item>

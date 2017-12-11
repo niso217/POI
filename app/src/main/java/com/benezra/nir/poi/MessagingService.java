@@ -4,6 +4,7 @@ package com.benezra.nir.poi;
  * Created by nirb on 29/11/2017.
  */
 
+import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -14,6 +15,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Build;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -22,9 +26,12 @@ import android.view.View;
 import com.benezra.nir.poi.Activity.BaseActivity;
 import com.benezra.nir.poi.Activity.MainActivity;
 import com.benezra.nir.poi.Activity.ViewEventActivity;
+import com.benezra.nir.poi.Geofencing.GeofencingActivity;
+import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.Interface.Constants;
 import com.benezra.nir.poi.Objects.Event;
 import com.benezra.nir.poi.R;
+import com.benezra.nir.poi.Utils.NotificationUtil;
 import com.benezra.nir.poi.Utils.NotificationUtils;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -59,9 +66,11 @@ public class MessagingService extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
 
+
         Log.e(TAG, "From: " + remoteMessage.getFrom());
 
-        if (remoteMessage == null)
+
+        if (remoteMessage == null || !SharePref.getInstance(this).isNotificationOn())
             return;
 
         // Check if message contains a notification payload.
@@ -93,7 +102,7 @@ public class MessagingService extends FirebaseMessagingService {
             // play notification sound
             NotificationUtils notificationUtils = new NotificationUtils(getApplicationContext());
             notificationUtils.playNotificationSound();
-        }else{
+        } else {
             // If the app is in background, firebase itself handles the notification
         }
     }
@@ -130,22 +139,22 @@ public class MessagingService extends FirebaseMessagingService {
 //                            NotificationUtils notificationUtils = new NotificationUtils(getApplicationContext());
 //                            notificationUtils.playNotificationSound();
 //                        } else {
-                            // app is in background, show the notification in notification tray
-                            Intent resultIntent = new Intent(getApplicationContext(), ViewEventActivity.class);
-                            //resultIntent.putExtra("message", body);
-                            resultIntent.putExtra(EVENT_ID, event.getId());
-                            resultIntent.putExtra(EVENT_TITLE, event.getTitle());
-                            resultIntent.putExtra(EVENT_OWNER, event.getOwner());
-                            resultIntent.putExtra(EVENT_IMAGE, event.getImage());
-                            resultIntent.putExtra(EVENT_DETAILS, event.getDetails());
-                            resultIntent.putExtra(EVENT_LATITUDE, event.getLatitude());
-                            resultIntent.putExtra(EVENT_LONGITUDE, event.getLongitude());
-                            resultIntent.putExtra(EVENT_INTEREST, event.getInterest());
-                            resultIntent.putExtra(EVENT_START, event.getStart());
-                            resultIntent.putExtra(EVENT_ADDRESS, event.getAddress());
-                            showNotificationMessage(getApplicationContext(), title, body, "", resultIntent);
+                        // app is in background, show the notification in notification tray
+                        Intent resultIntent = new Intent(getApplicationContext(), ViewEventActivity.class);
+                        //resultIntent.putExtra("message", body);
+                        resultIntent.putExtra(EVENT_ID, event.getId());
+                        resultIntent.putExtra(EVENT_TITLE, event.getTitle());
+                        resultIntent.putExtra(EVENT_OWNER, event.getOwner());
+                        resultIntent.putExtra(EVENT_IMAGE, event.getImage());
+                        resultIntent.putExtra(EVENT_DETAILS, event.getDetails());
+                        resultIntent.putExtra(EVENT_LATITUDE, event.getLatitude());
+                        resultIntent.putExtra(EVENT_LONGITUDE, event.getLongitude());
+                        resultIntent.putExtra(EVENT_INTEREST, event.getInterest());
+                        resultIntent.putExtra(EVENT_START, event.getStart());
+                        resultIntent.putExtra(EVENT_ADDRESS, event.getAddress());
+                        showNotificationMessage(getApplicationContext(), title, body, "", resultIntent);
 
-                       // }
+                        // }
                     }
                 }
 
@@ -156,9 +165,7 @@ public class MessagingService extends FirebaseMessagingService {
             });
 
 
-
-        }
-         catch (Exception e) {
+        } catch (Exception e) {
             Log.e(TAG, "Exception: " + e.getMessage());
         }
     }
@@ -167,9 +174,14 @@ public class MessagingService extends FirebaseMessagingService {
      * Showing notification with text only
      */
     private void showNotificationMessage(Context context, String title, String message, String timeStamp, Intent intent) {
-        notificationUtils = new NotificationUtils(context);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        notificationUtils.showNotificationMessage(title, message, timeStamp, intent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            sendNotification(title,message,context,intent);
+        } else {
+            notificationUtils = new NotificationUtils(context);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            notificationUtils.showNotificationMessage(title, message, timeStamp, intent);
+        }
+
     }
 
     /**
@@ -180,4 +192,38 @@ public class MessagingService extends FirebaseMessagingService {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         notificationUtils.showNotificationMessage(title, message, timeStamp, intent, imageUrl);
     }
+
+    @TargetApi(Build.VERSION_CODES.O)
+    private void sendNotification(String title, String message, Context context, Intent notificationIntent) {
+        // Create an explicit content Intent that starts the main Activity.
+
+        // Construct a task stack.
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+
+        // Add the main Activity to the task stack as the parent.
+        stackBuilder.addParentStack(GeofencingActivity.class);
+
+        // Push the content Intent onto the stack.
+        stackBuilder.addNextIntent(notificationIntent);
+
+        // Get a PendingIntent containing the entire back stack.
+        PendingIntent notificationPendingIntent =
+                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+
+        //Get an instance of the Notification manager
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        NotificationUtil mNotificationUtils = new NotificationUtil(this);
+
+        Notification.Builder nb = mNotificationUtils.
+                getAndroidChannelNotification(title, message, notificationPendingIntent, context);
+
+
+        mNotificationManager.notify(0, nb.build());
+
+
+    }
+
 }

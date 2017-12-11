@@ -8,13 +8,17 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import android.support.v4.app.NotificationCompat;
 
+import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.R;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
@@ -22,9 +26,7 @@ public class NotificationUtil extends ContextWrapper {
 
     private NotificationManager mManager;
     public static final String ANDROID_CHANNEL_ID = "com.benezra.nir.poi.Utils.ANDROID";
-    public static final String IOS_CHANNEL_ID = "com.benezra.nir.poi.Utils.IOS";
     public static final String ANDROID_CHANNEL_NAME = "ANDROID CHANNEL";
-    public static final String IOS_CHANNEL_NAME = "IOS CHANNEL";
     private NotificationChannel androidChannel;
 
     public NotificationUtil(Context base) {
@@ -57,13 +59,23 @@ public class NotificationUtil extends ContextWrapper {
         return mManager;
     }
 
-    public Notification.Builder getAndroidChannelNotification(String title, String body, PendingIntent notificationPendingIntent) {
+    public Notification.Builder getAndroidChannelNotification(String title, String body, PendingIntent notificationPendingIntent,Context context) {
+
+        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+
+        inboxStyle.addLine(body);
+
+        final Uri alarmSound = Uri.parse(SharePref.getInstance(context).getNotificationSound());
+
+
+
         return new Notification.Builder(getApplicationContext(), ANDROID_CHANNEL_ID)
+                .setAutoCancel(true)
                 .setContentTitle(title)
                 .setContentText(body)
-                .setLargeIcon(BitmapFactory.decodeResource(getResources(),
-                        R.drawable.ic_like))
-                .setSmallIcon(android.R.drawable.stat_notify_more)
+                .setSound(alarmSound)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher))
                 .setContentIntent(notificationPendingIntent)
                 .setAutoCancel(true);
     }

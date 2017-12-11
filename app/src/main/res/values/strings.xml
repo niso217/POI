@@ -51,6 +51,14 @@
     <string name="new_event_body">We found new event for you...</string>
 
 
+    <!--SnackBar Messages-->
+    <string name="no_location_determined">Your location could not be determined</string>
+
+
+
+
+
+
 
     <!--Alert Dialog Titles-->
     <string name="unsave_saved">Unsaved changes</string>
@@ -165,14 +173,14 @@
     <string name="title_version">Version</string>
     <string name="choose_email_client">Choose email client</string>
     <string name="title_gallery_storage">Default Storage</string>
-    <string name="title_new_notification_sound">New message notification</string>
+    <string name="title_new_notification_sound">New event notification</string>
     <string name="title_vibrate">Vibrate</string>
     <string name="summary_vibrate">Vibrate on new notification</string>
     <string name="key_upload_over_wifi">key_upload_over_wifi</string>
     <string name="key_gallery_name">key_gallery_name</string>
     <string name="key_upload_quality">key_upload_quality</string>
-    <string name="notifications_new_message">notifications_new_message</string>
-    <string name="key_notifications_new_message_ringtone">key_notifications_new_message_ringtone</string>
+    <string name="notifications_new_event">notifications_new_message</string>
+    <string name="key_notifications_new_event_ringtone">key_notifications_new_message_ringtone</string>
     <string name="key_vibrate">key_vibrate</string>
     <string name="key_send_feedback">key_send_feedback</string>
 
@@ -274,11 +282,24 @@
         Click notification to return to app
     </string>
 
+    <!--Permissions-->
+
+    <string name="camera_permission_settings">In order to take pictures, access to the camera is needed. Please enable these permissions from the app settings.</string>
+    <string name="camera_permission">In order to take pictures, the app needs access to the camera.</string>
+
+    <string name="location_permission_settings">for distance accuracy, access to your location is needed. Please enable these permissions from the app settings.</string>
+    <string name="location_permission">for distance accuracy, the app needs to know your location.</string>
+
     <string name="insufficient_permissions">Insufficient permissions.</string>
     <string name="permission_rationale">Location permission is needed for core functionality</string>
-    <string name="permission_denied_explanation">Permission was denied, but is needed for core
-        functionality.</string>
+    <string name="permission_denied_explanation">Permission was denied, but is needed for corefunctionality.</string>
     <string name="settings">Settings</string>
+
+
+    <!--CreateEvent-->
+    <string name="event_details">Tell us about your event</string>
+    <string name="event_title">title here</string>
+
 
 
 
