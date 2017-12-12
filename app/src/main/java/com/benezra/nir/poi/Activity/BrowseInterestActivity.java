@@ -12,6 +12,8 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.ToggleButton;
 
@@ -50,6 +52,10 @@ public class BrowseInterestActivity extends BaseActivity implements
 
         mFirebaseInstance = FirebaseDatabase.getInstance();
 
+
+        Window window = getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.setStatusBarColor(ContextCompat.getColor(this,R.color.colorPrimary));
 
         Intent intent = getIntent();
         mSelectedInterest = intent.getStringExtra("interest");

@@ -84,7 +84,8 @@
 
 
         <activity
-            android:name=".Activity.ChatActivity">
+            android:name=".Activity.ChatActivity"
+            android:theme="@style/AppTheme.NoTitle">
             </activity>
         <activity
             android:name=".Activity.MainActivity"
@@ -107,10 +108,10 @@
     </activity>
         <activity
             android:name=".Activity.GalleryActivity"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoTitle"></activity>
         <activity
             android:name=".Activity.PhotoActivity"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoTitle"></activity>
         <activity
             android:name=".Activity.BrowseInterestActivity"
             android:theme="@style/AppTheme.NoActionBar"></activity>

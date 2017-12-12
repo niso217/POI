@@ -73,6 +73,7 @@ dependencies {
     annotationProcessor 'android.arch.persistence.room:compiler:1.0.0';
 
     compile 'com.pavelsikun:material-seekbar-preference:2.3.0+'
+    compile 'com.wang.avi:library:2.1.3'
 
 }
 

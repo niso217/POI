@@ -48,6 +48,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
+import com.wang.avi.AVLoadingIndicatorView;
 import com.xw.repo.BubbleSeekBar;
 
 import java.util.ArrayList;
@@ -92,7 +93,9 @@ public class EventByInterestListFragment extends Fragment implements
     private BubbleSeekBar mBbubbleSeekBar;
     private String mImageUrl;
     private NestedScrollView mNestedScrollView;
-    private ProgressBar mProgressBar;
+    private AVLoadingIndicatorView mProgressBar;
+    private FloatingActionButton mFloatingActionButton;
+    private AVLoadingIndicatorView mAVLoadingIndicatorView;
 
 
     @Override
@@ -168,29 +171,32 @@ public class EventByInterestListFragment extends Fragment implements
         mEventsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mEventsRecyclerView.setNestedScrollingEnabled(false);
         mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
-        mEventsRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(),DividerItemDecoration.VERTICAL_LIST));
+        mEventsRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL_LIST));
         mEventsRecyclerView.setAdapter(mEventsAdapter);
 
         mNestedScrollView = rootView.findViewById(R.id.nestedscrollview);
 
         mProgressBar = rootView.findViewById(R.id.pb_loading);
 
+        mAVLoadingIndicatorView = rootView.findViewById(R.id.avi);
+
         ImageView background = (ImageView) rootView.findViewById(R.id.backdrop);
         if (!mImageUrl.equals(""))
             Picasso.with(getContext()).load(mImageUrl).into(background, new com.squareup.picasso.Callback() {
                 @Override
                 public void onSuccess() {
-                    mProgressBar.setVisibility(View.GONE);
+                    mProgressBar.smoothToHide();
                 }
 
                 @Override
                 public void onError() {
 
                 }
-            });;
+            });
+        ;
 
-        FloatingActionButton fab = (FloatingActionButton) rootView.findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        mFloatingActionButton = rootView.findViewById(R.id.fab);
+        mFloatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Bundle bundle = new Bundle();
@@ -202,7 +208,7 @@ public class EventByInterestListFragment extends Fragment implements
             }
         });
 
-        mBbubbleSeekBar = (BubbleSeekBar) rootView.findViewById(R.id.sb_km);
+        mBbubbleSeekBar = rootView.findViewById(R.id.sb_km);
 
 
         mBbubbleSeekBar.setOnProgressChangedListener(new BubbleSeekBar.OnProgressChangedListener() {
@@ -264,6 +270,7 @@ public class EventByInterestListFragment extends Fragment implements
 
 
     private void initGeoFire(int radius) {
+        startAnim();
         mEventHashSet.clear();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("events");
         GeoFire geoFire = new GeoFire(ref);
@@ -340,7 +347,6 @@ public class EventByInterestListFragment extends Fragment implements
     }
 
 
-
     private void getAllEventsByInterests() {
         Query query = mFirebaseInstance.getReference("events").orderByChild("interest").equalTo(mSelectedInterest);
         query.addValueEventListener(new ValueEventListener() {
@@ -358,8 +364,11 @@ public class EventByInterestListFragment extends Fragment implements
                     mEventsAdapter.notifyDataSetChanged();
                     Collections.sort(mEventList);
                 }
-                mListener.finishLoadingData();
 
+                stopAnim();
+                setFabVisibility();
+
+                mListener.finishLoadingData();
             }
 
             @Override
@@ -367,6 +376,21 @@ public class EventByInterestListFragment extends Fragment implements
 
             }
         });
+    }
+
+    private void setFabVisibility() {
+        if (mEventList.size() > 0)
+            mFloatingActionButton.setVisibility(View.VISIBLE);
+        else
+            mFloatingActionButton.setVisibility(View.GONE);
+    }
+
+    private void startAnim() {
+        mAVLoadingIndicatorView.smoothToShow();
+    }
+
+    private void stopAnim() {
+        mAVLoadingIndicatorView.smoothToHide();
     }
 
 

@@ -10,7 +10,6 @@
     <!--tools:showIn="@layactivity_browse_interestents">-->
 
 
-
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appbar"
         android:layout_width="match_parent"
@@ -28,11 +27,10 @@
 
             <ImageView
                 android:id="@+id/backdrop"
-                android:fitsSystemWindows="true"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
-                android:scaleType="fitXY"
-                 />
+                android:fitsSystemWindows="true"
+                android:scaleType="fitXY" />
 
 
             <com.xw.repo.BubbleSeekBar
@@ -56,19 +54,20 @@
 
             <Button
                 android:id="@+id/dummy"
-                android:visibility="gone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                />
+                android:visibility="gone" />
 
-            <ProgressBar
+
+            <com.wang.avi.AVLoadingIndicatorView
                 android:id="@+id/pb_loading"
+                style="@style/AVLoadingIndicatorView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:indeterminate="true"
-                android:indeterminateTint="#F00"
-                android:indeterminateTintMode="src_in"
-                android:layout_gravity="center_vertical|center_horizontal" />
+                android:layout_gravity="center_vertical|center_horizontal"
+                android:visibility="visible"
+                app:indicatorColor="@color/white"
+                app:indicatorName="BallClipRotatePulseIndicator" />
 
 
         </android.support.design.widget.CollapsingToolbarLayout>
@@ -82,22 +81,34 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:orientation="vertical"
-            android:layout_height="match_parent">
-
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
 
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/events_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scrollbars="none" />
+                android:scrollbars="none">
 
-        </LinearLayout>
+            </android.support.v7.widget.RecyclerView>
 
+            <com.wang.avi.AVLoadingIndicatorView
+                android:id="@+id/avi"
+                style="@style/AVLoadingIndicatorView"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_centerHorizontal="true"
+                android:layout_centerInParent="false"
+                android:layout_centerVertical="false"
+                android:layout_marginTop="150dp"
+                android:visibility="visible"
+                app:indicatorColor="@color/colorPrimary"
+                app:indicatorName="BallPulseIndicator" />
 
+        </RelativeLayout>
 
 
     </android.support.v4.widget.NestedScrollView>
@@ -111,6 +122,7 @@
         android:layout_margin="10dp"
         android:clickable="true"
         android:elevation="8dp"
-        android:src="@drawable/ic_map_white_36dp" />
+        android:src="@drawable/ic_map_white_36dp"
+        android:visibility="gone" />
 
 </android.support.design.widget.CoordinatorLayout>
