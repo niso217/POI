@@ -25,12 +25,15 @@ import android.view.WindowManager;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.Objects.EventsInterestData;
+import com.benezra.nir.poi.Objects.LocationHistory;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Adapter.FragmentPagerAdapter;
+import com.benezra.nir.poi.Utils.DateUtil;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.core.GeoHash;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -58,6 +61,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
@@ -78,7 +82,6 @@ public class MainActivity extends BaseActivity implements
     EventsInterestData temp;
     List<String> images;
     private FragmentPagerAdapter mFragmentPagerAdapter;
-
 
 
     @Override
@@ -118,14 +121,13 @@ public class MainActivity extends BaseActivity implements
         mToolbar.setLayoutParams(layoutParams);
 //        setSupportActionBar(mToolbar);
         //getSupportActionBar().setDisplayShowTitleEnabled(false);
-        if (savedInstanceState==null)
-        navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+        if (savedInstanceState == null)
+            navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
         else
             initPages();
 
 
     }
-
 
 
     private void setupTabIcons() {
@@ -215,8 +217,15 @@ public class MainActivity extends BaseActivity implements
             GeoHash geoHash = new GeoHash(new GeoLocation(location.getLatitude(), location.getLongitude()));
             FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
                     .child("/g").setValue(geoHash.getGeoHashString());
+            List<Double> loc = Arrays.asList(location.getLatitude(), location.getLongitude());
             FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
-                    .child("/l").setValue(Arrays.asList(location.getLatitude(), location.getLongitude()));
+                    .child("/l").setValue(loc);
+
+
+            FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
+                    .child("location_history").push().setValue(
+                    new LocationHistory(loc,DateUtil.getCurrentDateTimeInMilliseconds()));
+
         }
 
         initPages();
@@ -282,6 +291,7 @@ public class MainActivity extends BaseActivity implements
 
                                             if (!title.equals("") && !isListContainsInterest(list, title)) {
 
+
                                                 Document tempdoc = null;
                                                 try {
                                                     tempdoc = Jsoup.connect(el.attr("abs:href")).timeout(20000).get();
@@ -312,13 +322,18 @@ public class MainActivity extends BaseActivity implements
 
                                                         }
                                                     }
+                                                    Random r = new Random();
+                                                    int Low = 0;
+                                                    int High = 5;
+                                                    int Result = r.nextInt(High-Low) + Low;
 
                                                     String userAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36";
-                                                    String url = "https://www.google.com/search?site=imghp&tbm=isch&source=hp&q=" + title + "&gws_rd=cr";
+                                                    String url = "https://www.google.com/search?site=imghp&tbm=isch&source=hp&q=" + title + "&gws_rd=cr&tbs=isz:m,sur:f";
 
                                                     List<String> resultUrls = new ArrayList<String>();
 
                                                     try {
+
                                                         Document google_doc = Jsoup.connect(url).userAgent(userAgent).referrer("https://www.google.com/").get();
 
                                                         Elements google_elements = google_doc.select("div.rg_meta");
@@ -351,8 +366,10 @@ public class MainActivity extends BaseActivity implements
                                                     temp.setTitle(title);
                                                     temp.setInterest(title);
                                                     temp.setCategories(categories_list);
-                                                    temp.setDetails(paragraphs == null ? "" : paragraphs.text());
+                                                    String upToNCharacters = paragraphs.text().substring(0, Math.min(paragraphs.text().length(), 100));
+                                                    temp.setDetails(paragraphs == null ? "" : upToNCharacters);
                                                     list.add(temp);
+                                                    Log.d(TAG, "==========" + list.size() + "==========");
 
 
                                                     Bitmap myBitmap = null;
@@ -376,7 +393,9 @@ public class MainActivity extends BaseActivity implements
                                                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                                                     myBitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
                                                     byte[] data = baos.toByteArray();
-                                                    final String pic_id = UUID.randomUUID().toString() + ".jpg";
+                                                    //final String pic_id = UUID.randomUUID().toString() + ".jpg";
+
+                                                    final String pic_id = title.replaceAll(" ", "_").toLowerCase() + ".jpg";
 
 
                                                     StorageReference fileRef = FirebaseStorage.getInstance().getReference().child("interests_images").child(pic_id);
@@ -467,7 +486,7 @@ public class MainActivity extends BaseActivity implements
 
     private boolean isListContainsInterest(List<EventsInterestData> list, String interest) {
         for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).getInterest().equals(interest)) return true;
+            if (list.get(i).getInterest().toLowerCase().equals(interest.toLowerCase())) return true;
         }
         return false;
     }

@@ -35,4 +35,8 @@ public class DateUtil {
         String formattedNow = simpleDateFormat.format(date);
         return formattedNow;
     }
+
+    public static long getCurrentDateTimeInMilliseconds(){
+        return Calendar.getInstance().getTimeInMillis();
+    }
 }

@@ -53,7 +53,8 @@
 
     <!--SnackBar Messages-->
     <string name="no_location_determined">Your location could not be determined</string>
-
+    <string name="notification_on">Notification on</string>
+    <string name="notification_off">Notification off</string>
 
 
 

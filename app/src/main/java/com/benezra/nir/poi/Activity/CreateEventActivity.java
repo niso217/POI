@@ -87,9 +87,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -166,7 +169,7 @@ public class CreateEventActivity extends BaseActivity
     private Calendar mEventTime;
     private FirebaseDatabase mFirebaseInstance;
     private SearchableSpinner mspinnerCustom;
-    private ArrayList<String> mInterestsList;
+    private ArrayList<EventsInterestData> mInterestsList;
     private CustomSpinnerAdapter mCustomSpinnerAdapter;
     private EditText mEventDetails, mTitle;
     private ProgressBar mProgressBar;
@@ -233,7 +236,7 @@ public class CreateEventActivity extends BaseActivity
         if (savedInstanceState != null) {
             mCurrentEvent = savedInstanceState.getParcelable("event");
             mCurrentEventChangeFlag = savedInstanceState.getParcelable("event_clone");
-            mInterestsList = savedInstanceState.getStringArrayList("interests");
+            mInterestsList = savedInstanceState.getParcelableArrayList("interests");
             mParticipates = savedInstanceState.getParcelableArrayList("participates");
             mMode = savedInstanceState.getBoolean("mode");
             mTabSelectedIndex = savedInstanceState.getInt("tab_selected_index");
@@ -846,7 +849,8 @@ public class CreateEventActivity extends BaseActivity
         if (mCurrentEvent.getLatitude() != 0)
             mapFragment.addSingeMarkerToMap(mCurrentEvent.getLatlng(), mCurrentEvent.getAddress());
 
-        SelectCurrentEventPoint();
+//        else if (mMode)
+//        SelectCurrentEventPoint();
 
 
     }
@@ -894,8 +898,16 @@ public class CreateEventActivity extends BaseActivity
 
 
     private void initCustomSpinner() {
-        mCustomSpinnerAdapter = new CustomSpinnerAdapter(this, new ArrayList<String>(mInterestsList));
+        mCustomSpinnerAdapter = new CustomSpinnerAdapter(this, getInterests(mInterestsList));
         mspinnerCustom.setAdapter(mCustomSpinnerAdapter);
+    }
+
+    private ArrayList<String> getInterests(ArrayList<EventsInterestData> eventsInterestData){
+        ArrayList<String> interest = new ArrayList<>();
+        for (int i = 0; i < eventsInterestData.size(); i++) {
+            interest.add(eventsInterestData.get(i).getInterest());
+        }
+        return interest;
     }
 
 
@@ -907,11 +919,12 @@ public class CreateEventActivity extends BaseActivity
 
                 for (DataSnapshot data : snapshot.getChildren()) {
                     EventsInterestData interestData = data.getValue(EventsInterestData.class);
-                    mInterestsList.add(interestData.getInterest());
+                    mInterestsList.add(interestData);
+                    sortList();
                 }
 
                 if (mInterestsList != null) {
-                    mCustomSpinnerAdapter.updateInterestList(new ArrayList<String>(mInterestsList));
+                    mCustomSpinnerAdapter.updateInterestList(getInterests(mInterestsList));
                     mspinnerCustom.setSelection(mCustomSpinnerAdapter.getPosition(mCurrentEvent.getInterest()));
                 }
 
@@ -924,13 +937,22 @@ public class CreateEventActivity extends BaseActivity
         });
     }
 
+    private void sortList(){
+        Collections.sort(mInterestsList, new Comparator<EventsInterestData>() {
+            @Override
+            public int compare(EventsInterestData s1, EventsInterestData s2) {
+                return s1.getInterest().compareToIgnoreCase(s2.getInterest());
+            }
+        });
+    }
+
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable("event", mCurrentEvent);
         outState.putParcelable("event_clone", mCurrentEventChangeFlag);
-        outState.putStringArrayList("interests", mInterestsList);
+        outState.putParcelableArrayList("interests", mInterestsList);
         outState.putParcelableArrayList("participates", mParticipates);
         outState.putBoolean("mode", mMode);
 
@@ -1010,17 +1032,26 @@ public class CreateEventActivity extends BaseActivity
             showProgress(getString(R.string.updating_event), getString(R.string.please_wait));
 
 
+
         updates.put(ID, mCurrentEvent.getId());
         updates.put(DETAILS, mCurrentEvent.getDetails());
         updates.put(START, mCurrentEvent.getStart());
         updates.put(END, mCurrentEvent.getEnd());
-        updates.put(IMAGE, mCurrentEvent.getImage());
         updates.put(LATITUDE, mCurrentEvent.getLatitude());
         updates.put(LONGITUDE, mCurrentEvent.getLongitude());
         updates.put(TITLE, mCurrentEvent.getTitle());
         updates.put(INTEREST, mCurrentEvent.getInterest());
         updates.put(ADDRESS, mCurrentEvent.getAddress());
         updates.put(OWNER, mCurrentEvent.getOwner());
+
+        if (mCurrentEvent.getImage()==null || mCurrentEvent.getImage().equals("")){
+            int index =  mCustomSpinnerAdapter.getPosition((String)mspinnerCustom.getSelectedItem());
+            if (index>-1)
+            updates.put(IMAGE,mInterestsList.get(index).getImage());
+        }
+        else
+            updates.put(IMAGE, mCurrentEvent.getImage());
+
 
         updates.put("/g", geoHash.getGeoHashString());
         updates.put("/l", Arrays.asList(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude()));

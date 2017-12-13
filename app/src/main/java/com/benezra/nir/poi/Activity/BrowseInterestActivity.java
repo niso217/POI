@@ -71,6 +71,18 @@ public class BrowseInterestActivity extends BaseActivity implements
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mFirebaseInstance.getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("notification").child(mSelectedInterest).setValue(isChecked);
+
+
+
+            }
+        });
+        mToggleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mToggleButton.isChecked())
+                    showSnackBar(getString(R.string.notification_on));
+                else
+                    showSnackBar(getString(R.string.notification_off));
             }
         });
 

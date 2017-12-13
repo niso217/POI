@@ -37,11 +37,11 @@ import static com.benezra.nir.poi.Interface.Constants.NOTIFY_TOKEN;
 public class SignInActivity extends AppCompatActivity implements LoginCallBackInterface, View.OnClickListener {
 
     private EditText inputEmail, inputPassword;
-    private FirebaseAuth mAuth;
     private ProgressBar progressBar;
     private Button btnSignup, btnLogin, btnReset;
     AnimationDrawable animationDrawable;
     ScrollView scrollView;
+    private FirebaseAuth mAuth;
     private FirebaseDatabase mFirebaseInstance;
     private static final String TAG = SignInActivity.class.getSimpleName();
 
@@ -53,9 +53,7 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
         mAuth = FirebaseAuth.getInstance();
         mFirebaseInstance = FirebaseDatabase.getInstance();
 
-        if (mAuth.getCurrentUser() != null)
-            saveUserToFireBase();
-        else {
+
             // set the view now
             setContentView(R.layout.activity_login);
 
@@ -79,7 +77,7 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
 
 
             btnLogin.setOnClickListener(this);
-        }
+
 
 
     }

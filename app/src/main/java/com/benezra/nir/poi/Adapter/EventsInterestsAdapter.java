@@ -19,6 +19,8 @@ import com.benezra.nir.poi.R;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -73,6 +75,15 @@ public class EventsInterestsAdapter extends RecyclerView.Adapter<EventsInterests
 
         customViewHolder.tvName.setText(listItem.getInterest());
 
+    }
+
+    public void sortList(){
+        Collections.sort(listInterestData, new Comparator<EventsInterestData>() {
+            @Override
+            public int compare(EventsInterestData s1, EventsInterestData s2) {
+                return s1.getInterest().compareToIgnoreCase(s2.getInterest());
+            }
+        });
     }
 
     @Override

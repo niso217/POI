@@ -32,7 +32,6 @@ public class CustomSpinnerAdapter extends ArrayAdapter<String> implements Spinne
         super(context,0, asr);
         this.activity = context;
         this.asr = asr;
-        sortList();
     }
 
 //    public CustomSpinnerAdapter(Context context, ArrayList<String> asr) {
@@ -45,19 +44,11 @@ public class CustomSpinnerAdapter extends ArrayAdapter<String> implements Spinne
     public void updateInterestList(List<String> list) {
         asr.clear();
         asr.addAll(list);
-        sortList();
         this.notifyDataSetChanged();
     }
 
 
-    private void sortList(){
-        Collections.sort(asr, new Comparator<String>() {
-            @Override
-            public int compare(String s1, String s2) {
-                return s1.compareToIgnoreCase(s2);
-            }
-        });
-    }
+
 
     public int getPosition(String interest){
        return  asr.indexOf(interest);

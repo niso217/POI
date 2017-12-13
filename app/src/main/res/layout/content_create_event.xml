@@ -46,10 +46,10 @@
 
                     <EditText
                         android:id="@+id/tv_title"
-                        android:backgroundTint="@android:color/transparent"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
+                        android:backgroundTint="@android:color/transparent"
                         android:hint="@string/event_title"
                         android:maxLength="30"
                         android:padding="10dp"
@@ -74,11 +74,11 @@
                     android:layout_height="wrap_content">
 
                     <EditText
-                        android:backgroundTint="@android:color/transparent"
                         android:id="@+id/tv_desciption"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
+                        android:backgroundTint="@android:color/transparent"
                         android:hint="@string/event_details"
                         android:maxLength="250"
                         android:padding="10dp"

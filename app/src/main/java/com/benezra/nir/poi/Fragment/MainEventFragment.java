@@ -71,7 +71,7 @@ public class MainEventFragment extends Fragment implements
         setRetainInstance(true);
         mEventsInterestDataList = new ArrayList<>();
         mEventsInterestsAdapter = new EventsInterestsAdapter(getContext(), mEventsInterestDataList);
-        mEventsInterestDataList.addAll(DatabaseInitializer.populateSync(AppDatabase.getAppDatabase(getApplicationContext())));
+        //mEventsInterestDataList.addAll(DatabaseInitializer.populateSync(AppDatabase.getAppDatabase(getApplicationContext())));
 
 
     }
@@ -97,7 +97,7 @@ public class MainEventFragment extends Fragment implements
             getAllInterests(); //update database
         } else {
             mProgressBar.setVisibility(View.GONE);
-            getAllInterests(); //update database
+            //getAllInterests(); //update database
 
         }
 
@@ -121,6 +121,7 @@ public class MainEventFragment extends Fragment implements
 
                 }
                 mProgressBar.setVisibility(View.GONE);
+                mEventsInterestsAdapter.sortList();
                 mEventsInterestsAdapter.filter("");
             }
 
@@ -130,6 +131,7 @@ public class MainEventFragment extends Fragment implements
             }
         });
 
+        mEventsInterestsAdapter.sortList();
         mEventsInterestsAdapter.filter("");
 
     }
