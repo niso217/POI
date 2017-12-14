@@ -1,19 +1,28 @@
 package com.benezra.nir.poi.Utils;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Geocoder;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.NumberPicker;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.benezra.nir.poi.Activity.MainActivity;
+import com.benezra.nir.poi.Helper.RetrieveInterestsImagesTask;
+import com.benezra.nir.poi.Helper.RetrieveInterestsTask;
 import com.benezra.nir.poi.Objects.Event;
 import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Helper.AsyncGeocoder;
@@ -31,17 +40,38 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnPausedListener;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.jsoup.HttpStatusException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
@@ -63,9 +93,8 @@ import static com.benezra.nir.poi.Interface.Constants.TITLE;
  */
 
 public class DataFaker extends AppCompatActivity implements
-        MapFragment.MapFragmentCallback,
+        MapFragment.MapFragmentCallback, RetrieveInterestsTask.AsyncResponse,
         PlaceSelectionListener {
-
 
 
     ArrayList<EventsInterestData> mInterestData;
@@ -77,9 +106,19 @@ public class DataFaker extends AppCompatActivity implements
     GoogleMap mMap;
     int mRadius = 1;
     int mNumber = 1;
+    private DatabaseReference mFirebaseEventPicReference;
+    private Element nextsib;
+    List<String> images;
+    EventsInterestData temp;
+    private Button start, stop;
+    private ProgressBar mProgressBar;
+    private ImageView imageView;
+    private TextView textview;
+    private RetrieveInterestsTask mRetrieveFeedTask;
+    private RetrieveInterestsImagesTask mRetrieveInterestsImagesTask;
+
 
     Handler handler;
-
 
 
     @Override
@@ -89,9 +128,42 @@ public class DataFaker extends AppCompatActivity implements
         mInterestData = new ArrayList<>();
         handler = new Handler();
         mRandom = new Random();
-        mCurrentPin  = new LatLng(32.0852999,34.78176759999997);
+        images = new ArrayList<>();
+
+        start = findViewById(R.id.btn_start);
+        stop = findViewById(R.id.btn_stop);
+        mProgressBar = findViewById(R.id.pb_interest);
+        textview = findViewById(R.id.tv_interest_name);
+
+
+        imageView = findViewById(R.id.interest_image);
+
+        mCurrentPin = new LatLng(32.0852999, 34.78176759999997);
         Button btn = (Button) findViewById(R.id.btn_go);
         addEventChangeListener();
+
+
+        start.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                mRetrieveFeedTask = new RetrieveInterestsTask(DataFaker.this, imageView, mProgressBar, textview,DataFaker.this);
+                mRetrieveFeedTask.execute();
+
+            }
+        });
+
+        stop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mRetrieveFeedTask != null)
+                    mRetrieveFeedTask.cancel(true);
+                if (mRetrieveInterestsImagesTask != null)
+                    mRetrieveInterestsImagesTask.cancel(true);
+
+            }
+        });
+
 
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -101,14 +173,14 @@ public class DataFaker extends AppCompatActivity implements
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            LatLng latLng = LocationUtil.getLocationInLatLngRad(mRadius * 1000,mCurrentPin);
+                            LatLng latLng = LocationUtil.getLocationInLatLngRad(mRadius * 1000, mCurrentPin);
                             getAddress(latLng);
 
 
                         }
-                    },1000);
+                    }, 1000);
                 }
-                Toast.makeText(DataFaker.this,"finished creating events",Toast.LENGTH_LONG).show();
+                Toast.makeText(DataFaker.this, "finished creating events", Toast.LENGTH_LONG).show();
 
 
             }
@@ -150,11 +222,11 @@ public class DataFaker extends AppCompatActivity implements
 
     }
 
-    private Runnable periodicUpdate = new Runnable () {
+    private Runnable periodicUpdate = new Runnable() {
         public void run() {
             // scheduled another events to be in 10 seconds later
-            handler.postDelayed(periodicUpdate, 1*1000); //milliseconds);
-                    // below is whatever you want to do
+            handler.postDelayed(periodicUpdate, 1 * 1000); //milliseconds);
+            // below is whatever you want to do
 
         }
     };
@@ -184,14 +256,14 @@ public class DataFaker extends AppCompatActivity implements
                 new Geocoder(this), LatLongToLocation(latLng)));
     }
 
-    private Location LatLongToLocation(LatLng latLng){
+    private Location LatLongToLocation(LatLng latLng) {
         Location loc = new Location("");
         loc.setLatitude(latLng.latitude);
         loc.setLongitude(latLng.longitude);
         return loc;
     }
 
-    private void save(Event event){
+    private void save(Event event) {
         DatabaseReference eventReference = FirebaseDatabase.getInstance().getReference("events").child(event.getId());
 
 
@@ -221,14 +293,14 @@ public class DataFaker extends AppCompatActivity implements
     }
 
 
-    private long randomDate(){
+    private long randomDate() {
         Calendar now = Calendar.getInstance();
         Calendar min = Calendar.getInstance();
         Calendar randomDate = (Calendar) now.clone();
         int minYear = 2017;
         int minMonth = 12;
         int minDay = 1;
-        min.set(minYear, minMonth-1, minDay);
+        min.set(minYear, minMonth - 1, minDay);
         int numberOfDaysToAdd = (int) (Math.random() * (daysBetween(min, now) + 1));
         randomDate.add(Calendar.DAY_OF_YEAR, -numberOfDaysToAdd);
 
@@ -249,29 +321,28 @@ public class DataFaker extends AppCompatActivity implements
 
     private void addEventChangeListener() {
 
-            Query query = FirebaseDatabase.getInstance().getReference("interests_data");
-            query.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.exists()) {
-                        // dataSnapshot is the "issue" node with all children with id 0
-                        for (DataSnapshot data : dataSnapshot.getChildren()) {
-                            EventsInterestData event_data = data.getValue(EventsInterestData.class);
-                            if (event_data!=null)
-                                mInterestData.add(event_data);
-                        }
-                        Toast.makeText(DataFaker.this,"Good to go",Toast.LENGTH_LONG).show();
-
+        Query query = FirebaseDatabase.getInstance().getReference("interests_data");
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    // dataSnapshot is the "issue" node with all children with id 0
+                    for (DataSnapshot data : dataSnapshot.getChildren()) {
+                        EventsInterestData event_data = data.getValue(EventsInterestData.class);
+                        if (event_data != null)
+                            mInterestData.add(event_data);
                     }
+                    Toast.makeText(DataFaker.this, "Good to go", Toast.LENGTH_LONG).show();
 
                 }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
+            }
 
-                }
-            });
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
 
+            }
+        });
 
 
     }
@@ -321,6 +392,20 @@ public class DataFaker extends AppCompatActivity implements
         startActivity(intent);
         finish();
 
+    }
+
+
+    @Override
+    public void processFinish(boolean output, List<EventsInterestData> list) {
+        if (output) {
+            // Do something awesome here
+            Toast.makeText(this, "Task completed uploading to firebase", Toast.LENGTH_SHORT).show();
+            mProgressBar.setProgress(0);
+            mRetrieveInterestsImagesTask = new RetrieveInterestsImagesTask(this, imageView, mProgressBar, textview);
+            mRetrieveInterestsImagesTask.execute(list);
+        } else {
+            Toast.makeText(this, "Task failed, network issue", Toast.LENGTH_SHORT).show();
+        }
     }
 }
 

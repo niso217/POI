@@ -51,6 +51,7 @@ import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Settings.AboutActivity;
 import com.benezra.nir.poi.Settings.SettingsActivity;
+import com.benezra.nir.poi.Utils.DataFaker;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.squareup.picasso.Picasso;
@@ -221,6 +222,9 @@ public abstract class BaseActivity extends AppCompatActivity
                 createBackStack(intent);
                 break;
             case R.id.fake_data:
+                intent = new Intent(this, DataFaker.class);
+                intent.setAction(TutorialActivity.ACTION_SHOW_ANYWAYS);
+                createBackStack(intent);
                 //intent = new Intent(this, GeofencingActivity.class);
                 //createBackStack(intent);
                 //intent = new Intent(this, BlaBlaActivity.class);

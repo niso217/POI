@@ -60,6 +60,10 @@ public interface Constants {
     public static final String WALKING = "walking";
     public static final String CYCLING = "cycling";
 
+    public static final String WIKI_INTERESTS = "https://en.wikipedia.org/wiki/List_of_hobbies";
+
+
+
     // global topic to receive app wide push notifications
     public static final String TOPIC_GLOBAL = "global";
 
