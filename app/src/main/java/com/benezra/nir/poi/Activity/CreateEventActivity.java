@@ -1084,6 +1084,8 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
+
+
     private Map<String, User> setOwnerAsParticipate() {
         User owner = new User();
         owner.setName(mFirebaseUser.getDisplayName());

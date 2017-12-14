@@ -27,6 +27,7 @@ import com.benezra.nir.poi.Objects.Event;
 import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Helper.AsyncGeocoder;
 import com.benezra.nir.poi.Objects.EventsInterestData;
+import com.benezra.nir.poi.Objects.User;
 import com.benezra.nir.poi.R;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.core.GeoHash;
@@ -85,6 +86,7 @@ import static com.benezra.nir.poi.Interface.Constants.INTEREST;
 import static com.benezra.nir.poi.Interface.Constants.LATITUDE;
 import static com.benezra.nir.poi.Interface.Constants.LONGITUDE;
 import static com.benezra.nir.poi.Interface.Constants.OWNER;
+import static com.benezra.nir.poi.Interface.Constants.PARTICIPATES;
 import static com.benezra.nir.poi.Interface.Constants.START;
 import static com.benezra.nir.poi.Interface.Constants.TITLE;
 
@@ -270,6 +272,9 @@ public class DataFaker extends AppCompatActivity implements
         GeoHash geoHash = new GeoHash(new GeoLocation(event.getLatitude(), event.getLongitude()));
         Map<String, Object> updates = new HashMap<>();
 
+        Map<String, User> map = setOwnerAsParticipate();
+        updates.put(PARTICIPATES, map);
+
         updates.put(ID, event.getId());
         updates.put(DETAILS, event.getDetails());
         updates.put(START, event.getStart());
@@ -280,7 +285,7 @@ public class DataFaker extends AppCompatActivity implements
         updates.put(TITLE, event.getTitle());
         updates.put(INTEREST, event.getInterest());
         updates.put(ADDRESS, event.getAddress());
-        updates.put(OWNER, event.getOwner());
+        updates.put(OWNER, "9bZ1hOMJlYcmXgMfHQXmsuJONoz1");
 
         updates.put("/g", geoHash.getGeoHashString());
         updates.put("/l", Arrays.asList(event.getLatitude(), event.getLongitude()));
@@ -291,6 +296,18 @@ public class DataFaker extends AppCompatActivity implements
         });
 
     }
+
+    private Map<String, User> setOwnerAsParticipate() {
+        User owner = new User();
+        owner.setName("Shara");
+        owner.setEmail("sara@gmail.com");
+        owner.setAvatar("https://i.pinimg.com/736x/d0/b1/c1/d0b1c100c871ee188bfb7e6357c61a38--profile-photography-white-photography.jpg");
+        HashMap<String, User> map = new HashMap<>();
+        map.put("9bZ1hOMJlYcmXgMfHQXmsuJONoz1", owner);
+        return map;
+    }
+
+
 
 
     private long randomDate() {
