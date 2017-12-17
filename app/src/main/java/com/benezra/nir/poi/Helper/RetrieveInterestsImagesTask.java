@@ -11,6 +11,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import com.benezra.nir.poi.Objects.EventsInterestData;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -18,15 +19,11 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnPausedListener;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.squareup.picasso.Picasso;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -35,29 +32,26 @@ import org.jsoup.select.Elements;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
 
-import static com.benezra.nir.poi.Interface.Constants.WIKI_INTERESTS;
 import static com.google.android.gms.internal.zzahg.runOnUiThread;
 
 /**
  * Created by nirb on 14/12/2017.
  */
 
-public class RetrieveInterestsImagesTask extends AsyncTask<List<EventsInterestData>, Integer, Boolean> {
+public class RetrieveInterestsImagesTask extends AsyncTask<Map<String,Object>, Integer, Boolean> {
 
     private Context mContext;
     private ImageView mImageView;
     private ProgressBar mProgressBar;
     private TextView mTextView;
-    private List<EventsInterestData> mEventsInterestDataList;
-    private List<String> mFireBaseImages;
+    Map<String, Object> mEventsInterestDataMap;
 
     private int mIndex;
 
@@ -65,8 +59,7 @@ public class RetrieveInterestsImagesTask extends AsyncTask<List<EventsInterestDa
 
 
     protected void onPreExecute() {
-        mEventsInterestDataList = new ArrayList<>();
-        mFireBaseImages = new ArrayList<>();
+        mEventsInterestDataMap = new HashMap<>();
         mIndex = 0;
     }
 
@@ -84,20 +77,20 @@ public class RetrieveInterestsImagesTask extends AsyncTask<List<EventsInterestDa
 
     }
 
-    protected Boolean doInBackground(List<EventsInterestData>[] lists) {
+    protected Boolean doInBackground(Map<String,Object>[] lists) {
 
-        mEventsInterestDataList = lists[0];
+        mEventsInterestDataMap = lists[0];
 
 
-        for (mIndex = 0; mIndex < mEventsInterestDataList.size(); mIndex++) {
+        for (Map.Entry<String, Object> entry : mEventsInterestDataMap.entrySet()) {
 
             if(isCancelled()) {
                 return null;
             }
 
-            String interest = mEventsInterestDataList.get(mIndex).getInterest();
+            String interest = entry.getKey();
 
-            int presentage = (int) (100 * ((double) mIndex / mEventsInterestDataList.size()));
+            int presentage = (int) (100 * ((double) mIndex / mEventsInterestDataMap.size()));
 
             String userAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36";
             String url = "https://www.google.com/search?site=imghp&tbm=isch&source=lnt&q=" + interest + "&tbs=isz:m";
@@ -149,7 +142,7 @@ public class RetrieveInterestsImagesTask extends AsyncTask<List<EventsInterestDa
                 byte[] data = baos.toByteArray();
                 //final String pic_id = UUID.randomUUID().toString() + ".jpg";
 
-                final String pic_id = interest.replaceAll(" ", "_").toLowerCase() + ".jpg";
+                final String pic_id = interest + ".jpg";
 
                 StorageReference fileRef = FirebaseStorage.getInstance().getReference().child("interests_images").child(pic_id);
                 fileRef.putBytes(data)
@@ -157,9 +150,19 @@ public class RetrieveInterestsImagesTask extends AsyncTask<List<EventsInterestDa
                             @Override
                             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
-                                mFireBaseImages.add(taskSnapshot.getDownloadUrl().toString());
-                                Log.d(TAG, "========File Uploaded =========");
-                                publishProgress(mIndex);
+                                String key = taskSnapshot.getMetadata().getName().substring(0, taskSnapshot.getMetadata().getName().lastIndexOf("."));
+                                EventsInterestData eventsInterestData = (EventsInterestData) mEventsInterestDataMap.get(key);
+                                if (eventsInterestData!=null){
+                                    eventsInterestData.setImage(taskSnapshot.getDownloadUrl().toString());
+                                    mEventsInterestDataMap.put(key,eventsInterestData);
+                                    Log.d(TAG, "========File Uploaded =========");
+                                }
+                                else
+                                {
+                                    Log.d(TAG,"null");
+                                }
+
+                                publishProgress(mIndex++);
 
                             }
                         })
@@ -183,13 +186,7 @@ public class RetrieveInterestsImagesTask extends AsyncTask<List<EventsInterestDa
 
         }
 
-        while (mEventsInterestDataList.size() != mFireBaseImages.size()){
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+
 
 
         return true;
@@ -226,9 +223,8 @@ public class RetrieveInterestsImagesTask extends AsyncTask<List<EventsInterestDa
 
         if (result) {
 
-            if (addFireBaseUrl()) {
                 Toast.makeText(mContext, "Task completed uploading to firebase", Toast.LENGTH_SHORT).show();
-                FirebaseDatabase.getInstance().getReference("interests_data").setValue(mEventsInterestDataList).addOnCompleteListener(new OnCompleteListener<Void>() {
+                FirebaseDatabase.getInstance().getReference("interests_data").updateChildren(mEventsInterestDataMap).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         Toast.makeText(mContext, "Finished uploading to firebase", Toast.LENGTH_SHORT).show();
@@ -241,19 +237,7 @@ public class RetrieveInterestsImagesTask extends AsyncTask<List<EventsInterestDa
                 mTextView.setText("Sizes are incorrect");
 
 
-        } else {
-            mTextView.setText("Task failed");
-            Toast.makeText(mContext, "Task failed, network issue", Toast.LENGTH_SHORT).show();
         }
-
     }
 
-    private boolean addFireBaseUrl() {
-        if (mEventsInterestDataList.size() != mFireBaseImages.size()) return false;
-        for (int i = 0; i < mEventsInterestDataList.size(); i++) {
-            mEventsInterestDataList.get(i).setImage(mFireBaseImages.get(i));
-        }
-        return true;
-    }
-}
 

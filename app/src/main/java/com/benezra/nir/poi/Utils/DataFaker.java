@@ -412,8 +412,10 @@ public class DataFaker extends AppCompatActivity implements
     }
 
 
+
+
     @Override
-    public void processFinish(boolean output, List<EventsInterestData> list) {
+    public void processFinish(boolean output, Map<String, Object> list) {
         if (output) {
             // Do something awesome here
             Toast.makeText(this, "Task completed uploading to firebase", Toast.LENGTH_SHORT).show();
