@@ -29,6 +29,12 @@ public class DateUtil {
         return formattedNow;
     }
 
+    public static String TimeString(int hour, int minute){
+        int twehour = hour % 12;
+        return String.format("%2d:%02d %s", twehour == 0 ? 12 : twehour,
+                minute, hour < 12 ? "AM" : "PM");
+    }
+
     public static String CalendartoTime(Date date) {
         String format = "hh:mm a";
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format, Locale.US);

@@ -42,6 +42,8 @@
     <string name="missing_location">Please tell us the location of the event</string>
     <string name="missing_interest">Please fill the theme of the event</string>
     <string name="missing_details">Please give us details about the event</string>
+    <string name="time_def">wrong time</string>
+
     <string name="missing_title">Please add a tittle to the event</string>
     <string name="collapsingtoolbar_title">Click to add title...</string>
 
@@ -55,7 +57,7 @@
     <string name="no_location_determined">Your location could not be determined</string>
     <string name="notification_on">Notification on</string>
     <string name="notification_off">Notification off</string>
-
+    <string name="event_finished">Event is finished. would you like to leave?</string>
 
 
 

@@ -5,7 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -14,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 
 import com.benezra.nir.poi.Activity.ViewEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
@@ -59,6 +62,8 @@ public class ParticipateEventFragment extends Fragment implements RecyclerTouchL
     private FragmentDataCallBackInterface mListener;
     private ProgressBar mProgressBar;
     private Location mLastKnownLocation;
+    private RelativeLayout mRootLayout;
+    private Event mCurrentEvent;
 
 
     @Override
@@ -73,22 +78,25 @@ public class ParticipateEventFragment extends Fragment implements RecyclerTouchL
 
     @Override
     public void onClick(View view, int position) {
-        Event event = mEventList.get(position);
+        mCurrentEvent = mEventList.get(position);
 
+        if (mCurrentEvent.isStatus()){
         Intent userEvent = new Intent(getActivity(), ViewEventActivity.class);
-        userEvent.putExtra(EVENT_ID, event.getId());
-        userEvent.putExtra(EVENT_TITLE, event.getTitle());
-        userEvent.putExtra(EVENT_OWNER, event.getOwner());
-        userEvent.putExtra(EVENT_IMAGE, event.getImage());
-        userEvent.putExtra(EVENT_DETAILS, event.getDetails());
-        userEvent.putExtra(EVENT_LATITUDE, event.getLatitude());
-        userEvent.putExtra(EVENT_LONGITUDE, event.getLongitude());
-        userEvent.putExtra(EVENT_INTEREST, event.getInterest());
-        userEvent.putExtra(EVENT_START, event.getStart());
-        userEvent.putExtra(EVENT_ADDRESS, event.getAddress());
-
-
+        userEvent.putExtra(EVENT_ID, mCurrentEvent.getId());
+        userEvent.putExtra(EVENT_TITLE, mCurrentEvent.getTitle());
+        userEvent.putExtra(EVENT_OWNER, mCurrentEvent.getOwner());
+        userEvent.putExtra(EVENT_IMAGE, mCurrentEvent.getImage());
+        userEvent.putExtra(EVENT_DETAILS, mCurrentEvent.getDetails());
+        userEvent.putExtra(EVENT_LATITUDE, mCurrentEvent.getLatitude());
+        userEvent.putExtra(EVENT_LONGITUDE, mCurrentEvent.getLongitude());
+        userEvent.putExtra(EVENT_INTEREST, mCurrentEvent.getInterest());
+        userEvent.putExtra(EVENT_START, mCurrentEvent.getStart());
+        userEvent.putExtra(EVENT_ADDRESS, mCurrentEvent.getAddress());
         startActivity(userEvent);
+        }
+        else{
+            showSnackBarWithAction(getString(R.string.event_finished));
+        }
     }
 
     @Override
@@ -106,6 +114,9 @@ public class ParticipateEventFragment extends Fragment implements RecyclerTouchL
         mEventList = new ArrayList<>();
         mEventsAdapter = new EventsAdapter(getContext(), mEventList);
         mLastKnownLocation = (Location) getArguments().get(USER_LOCATION);
+
+        if (savedInstanceState != null)
+            mCurrentEvent = savedInstanceState.getParcelable("event");
     }
 
 
@@ -121,7 +132,7 @@ public class ParticipateEventFragment extends Fragment implements RecyclerTouchL
 
 
         mProgressBar = (ProgressBar) rootView.findViewById(R.id.pb);
-
+        mRootLayout = rootView.findViewById(R.id.rootlayout);
         mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.my_events_list);
         mEventsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
@@ -138,6 +149,12 @@ public class ParticipateEventFragment extends Fragment implements RecyclerTouchL
         return rootView;
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable("event", mCurrentEvent);
+
+    }
 
     private void getUserParticipateEventsChangeListener(List<String> events) {
         mEventList.clear();
@@ -200,4 +217,26 @@ public class ParticipateEventFragment extends Fragment implements RecyclerTouchL
             }
         });
     }
+
+    public void showSnackBarWithAction(String message) {
+        Snackbar snackbar = Snackbar
+                .make(mRootLayout, message, Snackbar.LENGTH_LONG)
+                .setAction("LEAVE", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        LeaveEvent();
+                    }
+                });
+
+        snackbar.show();
+
+
+    }
+
+    private void LeaveEvent() {
+        mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates").child(mFirebaseUser.getUid()).removeValue();
+        mFirebaseInstance.getReference("users").child(mFirebaseUser.getUid()).child("events").child(mCurrentEvent.getId()).removeValue();
+
+    }
 }
+

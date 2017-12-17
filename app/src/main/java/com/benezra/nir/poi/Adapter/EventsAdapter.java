@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.benezra.nir.poi.Utils.DateUtil;
@@ -39,6 +40,7 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
     public class EventsViewHolder extends RecyclerView.ViewHolder {
         public TextView title, theme, address,start,distance;
         public ImageView image;
+        public LinearLayout linearlayout_frame;
 
         public EventsViewHolder(View view) {
             super(view);
@@ -48,6 +50,7 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
             start = (TextView) view.findViewById(R.id.tv_start);
             distance = (TextView) view.findViewById(R.id.tv_distance);
             image = (ImageView) view.findViewById(R.id.iv_image);
+            linearlayout_frame = view.findViewById(R.id.linearlayout_frame);
 
         }
     }
@@ -78,7 +81,6 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
         holder.title.setText(event.getTitle());
         holder.theme.setText(event.getInterest());
         holder.address.setText(event.getAddress());
-        holder.start.setText(setStart(event.getStart()));
         holder.distance.setText(event.getDistance()+"");
         if (event.getImage()!=null && !event.getImage().equals(""))
         Picasso.with(context)
@@ -86,6 +88,17 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
                 .placeholder(R.drawable.ic_cloud_off_red)
                 .into(holder.image);
 
+        if (!event.isStatus()){
+            holder.linearlayout_frame.setAlpha(0.4f);
+            holder.start.setText("Finished");
+
+        }
+        else{
+            holder.linearlayout_frame.setAlpha(1f);
+            holder.start.setText(setStart(event.getStart()));
+
+
+        }
 
     }
 
@@ -99,4 +112,6 @@ public class EventsAdapter extends RecyclerView.Adapter<EventsAdapter.EventsView
     public int getItemCount() {
         return eventsList.size();
     }
+
+
 }

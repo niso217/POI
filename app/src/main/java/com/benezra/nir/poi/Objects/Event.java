@@ -41,7 +41,15 @@ public class Event implements Parcelable , Cloneable,Comparable{
     private Map<String,User> participates;
 
     private Marker marker;
+    private boolean status;
 
+    public boolean isStatus() {
+        return status;
+    }
+
+    public void setStatus(boolean status) {
+        this.status = status;
+    }
 
     @Exclude
     public Marker getMarker() {

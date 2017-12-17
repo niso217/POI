@@ -13,6 +13,7 @@ public interface Constants {
     public static final String EVENT_LATITUDE = "event_latitude";
     public static final String EVENT_LONGITUDE = "event_longitude";
     public static final String EVENT_START = "event_start";
+    public static final String EVENT_END = "event_end";
     public static final String EVENT_IMAGE = "event_image";
     public static final String EVENT_TITLE = "event_title";
     public static final String EVENT_ADDRESS = "event_address";
@@ -27,6 +28,7 @@ public interface Constants {
     public static final String ADDRESS = "address";
     public static final String PARTICIPATES = "participates";
     public static final String OWNER = "owner";
+    public static final String STATUS = "status";
     public static final String ID = "id";
     public static final String URI = "uri";
 

@@ -32,12 +32,11 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
-import android.widget.Toast;
 
+import java.time.Period;
 import java.util.Arrays;
 import java.util.Calendar;
 
@@ -92,7 +91,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -104,11 +102,11 @@ import static android.content.DialogInterface.BUTTON_POSITIVE;
 import static com.benezra.nir.poi.Fragment.MapFragment.EVENT_LOC_TAB;
 import static com.benezra.nir.poi.Fragment.MapFragment.LOCATION_TAB;
 import static com.benezra.nir.poi.Fragment.MapFragment.SEARCH_TAB;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_END;
 import static com.benezra.nir.poi.Interface.Constants.ID_TOKEN;
-import static com.benezra.nir.poi.Interface.Constants.MAIN_ADDRESS;
 import static com.benezra.nir.poi.Interface.Constants.PROD_ADD;
 import static com.benezra.nir.poi.Interface.Constants.PROD_UPDATE;
-import static com.benezra.nir.poi.Interface.Constants.UPDATE_ADDRESS;
+import static com.benezra.nir.poi.Interface.Constants.STATUS;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_ANCHORED;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_DRAGGING;
@@ -144,8 +142,6 @@ import static com.benezra.nir.poi.Interface.Constants.TITLE;
 public class CreateEventActivity extends BaseActivity
         implements View.OnClickListener,
         RecyclerTouchListener.ClickListener,
-        DatePickerDialog.OnDateSetListener,
-        TimePickerDialog.OnTimeSetListener,
         CompoundButton.OnCheckedChangeListener,
         ImageCameraDialogFragment.ImageCameraDialogCallbackNew,
         TextWatcher,
@@ -161,12 +157,13 @@ public class CreateEventActivity extends BaseActivity
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
-    TextView tvDatePicker, tvTimePicker;
+    private TextView tvDatePickerStart, tvDatePickerEnd, tvTimePickerStart, tvTimePickerEnd;
     private Switch mSwitch;
     private Event mCurrentEvent;
     private Event mCurrentEventChangeFlag;
     final static String TAG = CreateEventActivity.class.getSimpleName();
-    private Calendar mEventTime;
+    private Calendar mEventTimeStart;
+    private Calendar mEventTimeEnd;
     private FirebaseDatabase mFirebaseInstance;
     private SearchableSpinner mspinnerCustom;
     private ArrayList<EventsInterestData> mInterestsList;
@@ -213,7 +210,8 @@ public class CreateEventActivity extends BaseActivity
 
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance = FirebaseDatabase.getInstance();
-        mEventTime = Calendar.getInstance();
+        mEventTimeStart = Calendar.getInstance();
+        mEventTimeEnd = Calendar.getInstance();
         mEventImagesList = new ArrayList<>();
         mEventImagesAdapter = new EventImagesAdapter(this, mEventImagesList);
 
@@ -304,9 +302,14 @@ public class CreateEventActivity extends BaseActivity
         mPlaceAutoCompleteLayout = findViewById(R.id.place_autocomplete_layout);
         mEventDetails = findViewById(R.id.tv_desciption);
         mTitle = findViewById(R.id.tv_title);
-        tvDatePicker = findViewById(R.id.tv_date);
-        tvDatePicker.setText(DateUtil.CalendartoDate(Calendar.getInstance().getTime()));
-        tvTimePicker = findViewById(R.id.tv_time);
+        tvDatePickerStart = findViewById(R.id.tv_date_start);
+        tvDatePickerStart.setText(DateUtil.CalendartoDate(Calendar.getInstance().getTime()));
+        tvDatePickerEnd = findViewById(R.id.tv_date_end);
+        tvDatePickerEnd.setText(DateUtil.CalendartoDate(Calendar.getInstance().getTime()));
+        tvTimePickerStart = findViewById(R.id.tv_time_start);
+        tvTimePickerStart.setText(DateUtil.TimeString(mEventTimeStart.get(Calendar.HOUR), mEventTimeStart.get(Calendar.MINUTE)));
+        tvTimePickerEnd = findViewById(R.id.tv_time_end);
+        tvTimePickerEnd.setText(DateUtil.TimeString(mEventTimeEnd.get(Calendar.HOUR), mEventTimeEnd.get(Calendar.MINUTE)));
         mspinnerCustom = findViewById(R.id.spinnerCustom);
         mspinnerCustom.setTitle("Select Item");
         mspinnerCustom.setPositiveButton("OK");
@@ -321,8 +324,10 @@ public class CreateEventActivity extends BaseActivity
     }
 
     private void initListeners() {
-        tvDatePicker.setOnClickListener(this);
-        tvTimePicker.setOnClickListener(this);
+        tvDatePickerStart.setOnClickListener(this);
+        tvDatePickerEnd.setOnClickListener(this);
+        tvTimePickerStart.setOnClickListener(this);
+        tvTimePickerEnd.setOnClickListener(this);
         mSwitch.setOnCheckedChangeListener(this);
         mspinnerCustom.setOnItemSelectedListener(this);
         mShare.setOnClickListener(this);
@@ -479,22 +484,59 @@ public class CreateEventActivity extends BaseActivity
     public void onClick(View v) {
 
         switch (v.getId()) {
-            case R.id.tv_date:
+
+            case R.id.tv_date_end:
                 // Get Current Date
-                int year = Calendar.getInstance().get(Calendar.YEAR);
-                int month = Calendar.getInstance().get(Calendar.MONTH);
-                int day = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
+                int year_end = mEventTimeEnd.get(Calendar.YEAR);
+                int month_end = mEventTimeEnd.get(Calendar.MONTH);
+                int day_end = mEventTimeEnd.get(Calendar.DAY_OF_MONTH);
                 // Launch Date Picker Dialog
-                DatePickerDialog datePickerDialog = new DatePickerDialog(this, this, year, month, day);
-                datePickerDialog.show();
+                DatePickerDialog datePickerDialog_end = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                        endDateChange(view, year, month, dayOfMonth);
+                    }
+                }, year_end, month_end, day_end);
+                datePickerDialog_end.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
+                datePickerDialog_end.show();
                 break;
-            case R.id.tv_time:
+            case R.id.tv_date_start:
+                // Get Current Date
+                int year_start = Calendar.getInstance().get(Calendar.YEAR);
+                int month_start = Calendar.getInstance().get(Calendar.MONTH);
+                int day_start = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
+                // Launch Date Picker Dialog
+                DatePickerDialog datePickerDialog_start = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                        startDateChange(view, year, month, dayOfMonth);
+
+                    }
+                }, year_start, month_start, day_start);
+                datePickerDialog_start.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
+                datePickerDialog_start.show();
+                break;
+            case R.id.tv_time_start:
                 // Get Current Time
-                int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-                int minute = Calendar.getInstance().get(Calendar.MINUTE);
-                // Launch Time Picker Dialog
-                TimePickerDialog timePickerDialog = new TimePickerDialog(this, this, hour, minute, false);
-                timePickerDialog.show();
+                int hour_start = mEventTimeStart.get(Calendar.HOUR_OF_DAY);
+                int minute_start = mEventTimeStart.get(Calendar.MINUTE);
+                new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        startTimeChanged(view, hourOfDay, minute);
+
+                    }
+                }, hour_start, minute_start, false).show();
+                break;
+            case R.id.tv_time_end:
+                int hour_end = mEventTimeEnd.get(Calendar.HOUR_OF_DAY);
+                int minute_end = mEventTimeEnd.get(Calendar.MINUTE);
+                new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        endTimeChanged(view, hourOfDay, minute);
+                    }
+                }, hour_end, minute_end, false).show();
                 break;
             case R.id.btn_chat:
                 Intent i = new Intent(CreateEventActivity.this, ChatActivity.class);
@@ -556,6 +598,14 @@ public class CreateEventActivity extends BaseActivity
 
     private void checkEvent() {
         if (mCurrentEvent != null) {
+
+            if (timeDifferences(mEventTimeStart, mEventTimeEnd) < 1) {
+                showSnackBar(getString(R.string.time_def));
+
+                return;
+            }
+
+
             if (mCurrentEvent.getDetails() == null || mCurrentEvent.getDetails().equals("")) {
                 showSnackBar(getString(R.string.missing_details));
                 return;
@@ -603,7 +653,7 @@ public class CreateEventActivity extends BaseActivity
                 mCurrentEvent.getStart() != mCurrentEventChangeFlag.getStart());
     }
 
-    private boolean isLocationChanged(){
+    private boolean isLocationChanged() {
         return LocationUtil.distance(mCurrentEvent.getLatlng(), mCurrentEventChangeFlag.getLatlng()) > 0.02;
     }
 
@@ -644,9 +694,6 @@ public class CreateEventActivity extends BaseActivity
                 if (action == ACTION_REMOVE)
                     delete();
                 else {
-//                    Intent intent = new Intent(this, MainActivity.class);
-//                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-//                    startActivity(intent);
                     finish();
                 }
                 break;
@@ -655,12 +702,6 @@ public class CreateEventActivity extends BaseActivity
         }
     }
 
-    private void saveEvent() {
-//        if (mCurrentEvent.getUri() != null)
-//            uploadBytes(mCurrentEvent.getUri());
-//        else
-        saveEventToFirebase();
-    }
 
     @Override
     protected void onResume() {
@@ -696,38 +737,118 @@ public class CreateEventActivity extends BaseActivity
         });
     }
 
-    @Override
-    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-        String thedate = DateUtil.FormatDate(year, month, dayOfMonth);
-        tvDatePicker.setText(thedate);
 
-        mEventTime.set(Calendar.YEAR, year);
-        mEventTime.set(Calendar.MONTH, month);
-        mEventTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-        mCurrentEvent.setStart(mEventTime.getTimeInMillis());
+    private void startDateChange(DatePicker view, int year, int month, int dayOfMonth) {
+        String thedate = DateUtil.FormatDate(year, month, dayOfMonth);
+        tvDatePickerStart.setText(thedate);
+
+        mEventTimeStart.set(Calendar.YEAR, year);
+        mEventTimeStart.set(Calendar.MONTH, month);
+        mEventTimeStart.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+        mEventTimeStart.set(Calendar.HOUR_OF_DAY, mEventTimeStart.get(Calendar.HOUR));
+        mEventTimeStart.set(Calendar.MINUTE, mEventTimeStart.get(Calendar.MINUTE));
+        String time = DateUtil.TimeString(mEventTimeStart.get(Calendar.HOUR), mEventTimeStart.get(Calendar.MINUTE));
+        tvTimePickerStart.setText(time);
+
+        mCurrentEvent.setStart(mEventTimeStart.getTimeInMillis());
 
         isChangeMade();
-
     }
 
-    @Override
-    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-        int hour = hourOfDay % 12;
-        tvTimePicker.setText(String.format("%2d:%02d %s", hour == 0 ? 12 : hour,
-                minute, hourOfDay < 12 ? "AM" : "PM"));
 
-        mEventTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
-        mEventTime.set(Calendar.MINUTE, minute);
-        mCurrentEvent.setStart(mEventTime.getTimeInMillis());
+    private void startTimeChanged(TimePicker view, int hourOfDay, int minute) {
+        Calendar now = Calendar.getInstance();
+        now.add(Calendar.HOUR, 1);
 
+        Calendar datetime = Calendar.getInstance();
+        datetime.set(Calendar.YEAR, mEventTimeStart.get(Calendar.YEAR));
+        datetime.set(Calendar.MONTH, mEventTimeStart.get(Calendar.MONTH));
+        datetime.set(Calendar.DAY_OF_MONTH, mEventTimeStart.get(Calendar.DAY_OF_MONTH));
+        datetime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+        datetime.set(Calendar.MINUTE, minute);
+        if (datetime.getTimeInMillis() >= now.getTimeInMillis()) {
+            int hour = hourOfDay % 12;
+            tvTimePickerStart.setText(String.format("%2d:%02d %s", hour == 0 ? 12 : hour,
+                    minute, hourOfDay < 12 ? "AM" : "PM"));
+
+            mEventTimeStart.set(Calendar.HOUR_OF_DAY, hourOfDay);
+            mEventTimeStart.set(Calendar.MINUTE, minute);
+            mCurrentEvent.setStart(mEventTimeStart.getTimeInMillis());
+        } else {
+            //it's before current'
+            showSnackBar("Event time must be at least one hour from now");
+        }
     }
+
+
+    private void endDateChange(DatePicker view, int year, int month, int dayOfMonth) {
+
+
+        String thedate = "";
+        Calendar datetime = Calendar.getInstance();
+        datetime.set(Calendar.YEAR, year);
+        datetime.set(Calendar.MONTH, month);
+        datetime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+        datetime.set(Calendar.HOUR_OF_DAY, mEventTimeEnd.get(Calendar.HOUR));
+        datetime.set(Calendar.MINUTE, mEventTimeEnd.get(Calendar.MINUTE));
+
+        if (datetime.getTimeInMillis() > mEventTimeStart.getTimeInMillis()) {
+
+            mEventTimeEnd.set(Calendar.YEAR, year);
+            mEventTimeEnd.set(Calendar.MONTH, month);
+            mEventTimeEnd.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+            mCurrentEvent.setEnd(mEventTimeEnd.getTimeInMillis());
+            thedate = DateUtil.FormatDate(year, month, dayOfMonth);
+
+        } else {
+            //it's before current'
+            mEventTimeEnd = mEventTimeStart;
+            showSnackBar("End time must be greather then the start");
+            thedate = DateUtil.FormatDate(mEventTimeStart.get(Calendar.YEAR), mEventTimeStart.get(Calendar.MONTH), mEventTimeStart.get(Calendar.DAY_OF_MONTH));
+
+        }
+        tvDatePickerEnd.setText(thedate);
+        isChangeMade();
+    }
+
+    private void endTimeChanged(TimePicker view, int hourOfDay, int minute) {
+        Calendar now = Calendar.getInstance();
+        now.add(Calendar.HOUR, 1);
+
+        Calendar datetime = Calendar.getInstance();
+        datetime.set(Calendar.YEAR, mEventTimeEnd.get(Calendar.YEAR));
+        datetime.set(Calendar.MONTH, mEventTimeEnd.get(Calendar.MONTH));
+        datetime.set(Calendar.DAY_OF_MONTH, mEventTimeEnd.get(Calendar.DAY_OF_MONTH));
+        datetime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+        datetime.set(Calendar.MINUTE, minute);
+        if (datetime.getTimeInMillis() > mEventTimeStart.getTimeInMillis()) {
+
+            mEventTimeEnd.set(Calendar.HOUR_OF_DAY, hourOfDay);
+            mEventTimeEnd.set(Calendar.MINUTE, minute);
+            String time = DateUtil.TimeString(mEventTimeEnd.get(Calendar.HOUR), mEventTimeEnd.get(Calendar.MINUTE));
+            tvTimePickerEnd.setText(time);
+
+
+            mCurrentEvent.setEnd(mEventTimeEnd.getTimeInMillis());
+        } else {
+            //it's before current'
+            showSnackBar("End time must be greather then the start");
+        }
+    }
+
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        if (isChecked)
-            tvTimePicker.setVisibility(View.INVISIBLE);
-        else
-            tvTimePicker.setVisibility(View.VISIBLE);
+        if (isChecked) {
+            tvTimePickerStart.setVisibility(View.INVISIBLE);
+            tvTimePickerEnd.setVisibility(View.INVISIBLE);
+
+        } else {
+            tvTimePickerStart.setVisibility(View.VISIBLE);
+            tvTimePickerEnd.setVisibility(View.VISIBLE);
+
+
+        }
     }
 
     @Override
@@ -807,6 +928,7 @@ public class CreateEventActivity extends BaseActivity
         mCurrentEvent.setOwner(intent.getStringExtra(EVENT_OWNER));
         mCurrentEvent.setTitle(intent.getStringExtra(EVENT_TITLE));
         mCurrentEvent.setStart(intent.getLongExtra(EVENT_START, 0));
+        mCurrentEvent.setEnd(intent.getLongExtra(EVENT_END, 0));
         mCurrentEvent.setLatitude(intent.getDoubleExtra(EVENT_LATITUDE, 0));
         mCurrentEvent.setLongitude(intent.getDoubleExtra(EVENT_LONGITUDE, 0));
         mCurrentEvent.setImage(intent.getStringExtra(EVENT_IMAGE));
@@ -902,7 +1024,7 @@ public class CreateEventActivity extends BaseActivity
         mspinnerCustom.setAdapter(mCustomSpinnerAdapter);
     }
 
-    private ArrayList<String> getInterests(ArrayList<EventsInterestData> eventsInterestData){
+    private ArrayList<String> getInterests(ArrayList<EventsInterestData> eventsInterestData) {
         ArrayList<String> interest = new ArrayList<>();
         for (int i = 0; i < eventsInterestData.size(); i++) {
             interest.add(eventsInterestData.get(i).getInterest());
@@ -937,7 +1059,7 @@ public class CreateEventActivity extends BaseActivity
         });
     }
 
-    private void sortList(){
+    private void sortList() {
         Collections.sort(mInterestsList, new Comparator<EventsInterestData>() {
             @Override
             public int compare(EventsInterestData s1, EventsInterestData s2) {
@@ -966,11 +1088,21 @@ public class CreateEventActivity extends BaseActivity
         if (mCurrentEvent != null) {
             mTitle.setText(mCurrentEvent.getTitle());
             mEventDetails.setText(mCurrentEvent.getDetails());
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(mCurrentEvent.getStart());
-            tvDatePicker.setText(DateUtil.CalendartoDate(calendar.getTime()));
+            mEventTimeStart.setTimeInMillis(mCurrentEvent.getStart());
+            mEventTimeEnd.setTimeInMillis(mCurrentEvent.getEnd());
+            tvDatePickerStart.setText(DateUtil.CalendartoDate(mEventTimeStart.getTime()));
+            tvTimePickerStart.setText(DateUtil.TimeString(mEventTimeStart.get(Calendar.HOUR), mEventTimeStart.get(Calendar.MINUTE)));
+            tvDatePickerEnd.setText(DateUtil.CalendartoDate(mEventTimeEnd.getTime()));
+            tvTimePickerEnd.setText(DateUtil.TimeString(mEventTimeEnd.get(Calendar.HOUR), mEventTimeEnd.get(Calendar.MINUTE)));
+
         }
 
+    }
+
+    private int timeDifferences(Calendar c1, Calendar c2) {
+        long seconds = (c2.getTimeInMillis() - c1.getTimeInMillis()) / 1000;
+        int hours = (int) (seconds / 3600);
+        return hours;
     }
 
 
@@ -1032,7 +1164,6 @@ public class CreateEventActivity extends BaseActivity
             showProgress(getString(R.string.updating_event), getString(R.string.please_wait));
 
 
-
         updates.put(ID, mCurrentEvent.getId());
         updates.put(DETAILS, mCurrentEvent.getDetails());
         updates.put(START, mCurrentEvent.getStart());
@@ -1043,13 +1174,13 @@ public class CreateEventActivity extends BaseActivity
         updates.put(INTEREST, mCurrentEvent.getInterest());
         updates.put(ADDRESS, mCurrentEvent.getAddress());
         updates.put(OWNER, mCurrentEvent.getOwner());
+        updates.put(STATUS, true);
 
-        if (mCurrentEvent.getImage()==null || mCurrentEvent.getImage().equals("")){
-            int index =  mCustomSpinnerAdapter.getPosition((String)mspinnerCustom.getSelectedItem());
-            if (index>-1)
-            updates.put(IMAGE,mInterestsList.get(index).getImage());
-        }
-        else
+        if (mCurrentEvent.getImage() == null || mCurrentEvent.getImage().equals("")) {
+            int index = mCustomSpinnerAdapter.getPosition((String) mspinnerCustom.getSelectedItem());
+            if (index > -1)
+                updates.put(IMAGE, mInterestsList.get(index).getImage());
+        } else
             updates.put(IMAGE, mCurrentEvent.getImage());
 
 
@@ -1061,13 +1192,10 @@ public class CreateEventActivity extends BaseActivity
                 hideProgressMessage();
                 showSnackBar(getString(R.string.event_created));
                 //finish();
-                if (mMode)
-                {
+                if (mMode) {
                     NotifyAllUsersNewEvent();
 
-                }
-                else
-                {
+                } else {
                     NotifyAllUsersUpdateEvent();
 
 
@@ -1082,8 +1210,6 @@ public class CreateEventActivity extends BaseActivity
 
 
     }
-
-
 
 
     private Map<String, User> setOwnerAsParticipate() {
@@ -1214,7 +1340,6 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
-
     @Override
     public void onFinishDialog(String image) {
         mCurrentEvent.setImage(image);
@@ -1268,30 +1393,28 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
-    public void NotifyAllUsersNewEvent(){
+    public void NotifyAllUsersNewEvent() {
 
         JSONObject manJson = new JSONObject();
 
         try {
             manJson.put("user_id", FirebaseAuth.getInstance().getCurrentUser().getUid());
-            manJson.put("title", getString(R.string.new_event_title) +  mCurrentEvent.getInterest());
+            manJson.put("title", getString(R.string.new_event_title) + mCurrentEvent.getInterest());
             manJson.put("body", getString(R.string.new_event_body));
             manJson.put("interest", mCurrentEvent.getInterest());
             manJson.put("event_id", mCurrentEvent.getId());
             manJson.put("mode", mMode);
             manJson.put("lat", mCurrentEvent.getLatitude());
             manJson.put("lon", mCurrentEvent.getLongitude());
-            manJson.put("id_token", SharePref.getInstance(this).getString(ID_TOKEN,""));
+            manJson.put("id_token", SharePref.getInstance(this).getString(ID_TOKEN, ""));
             VolleyHelper.getInstance(this).put(PROD_ADD, manJson, this, this);
 
-        }
-
-        catch (JSONException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    public void NotifyAllUsersUpdateEvent(){
+    public void NotifyAllUsersUpdateEvent() {
 
         if (!isLocationChanged()) return;
 
@@ -1302,13 +1425,11 @@ public class CreateEventActivity extends BaseActivity
             manJson.put("title", getString(R.string.location_changed_title));
             manJson.put("body", getString(R.string.location_changed_body));
             manJson.put("event_id", mCurrentEvent.getId());
-            manJson.put("id_token", SharePref.getInstance(this).getString(ID_TOKEN,""));
+            manJson.put("id_token", SharePref.getInstance(this).getString(ID_TOKEN, ""));
 
             VolleyHelper.getInstance(this).put(PROD_UPDATE, manJson, this, this);
 
-        }
-
-        catch (JSONException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }

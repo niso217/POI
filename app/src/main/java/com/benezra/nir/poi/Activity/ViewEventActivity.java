@@ -215,8 +215,8 @@ public class ViewEventActivity extends BaseActivity
         mChat = findViewById(R.id.btn_chat);
         mProgressBar = findViewById(R.id.pb_loading);
         mPrivateLinearLayout = findViewById(R.id.private_layout);
-        tvDatePicker = findViewById(R.id.tv_date);
-        tvTimePicker = findViewById(R.id.tv_time);
+        tvDatePicker = findViewById(R.id.tv_date_start);
+        tvTimePicker = findViewById(R.id.tv_time_start);
         mParticipateRecyclerView = findViewById(R.id.participate_recycler_view);
         mNestedScrollView = findViewById(R.id.nestedscrollview);
         mDetails = findViewById(R.id.tv_desciption);

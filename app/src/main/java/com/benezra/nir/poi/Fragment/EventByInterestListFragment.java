@@ -129,6 +129,8 @@ public class EventByInterestListFragment extends Fragment implements
     public void onClick(View view, int position) {
         Event event = mEventList.get(position);
 
+        if (!event.isStatus()) return;
+
         Intent userEvent = new Intent(getActivity(), ViewEventActivity.class);
         userEvent.putExtra(EVENT_ID, event.getId());
         userEvent.putExtra(EVENT_TITLE, event.getTitle());
@@ -358,6 +360,7 @@ public class EventByInterestListFragment extends Fragment implements
                         if (!mUserEvents.contains(data.getKey()) && mEventHashSet.contains(data.getKey())) {
                             Event event = data.getValue(Event.class);
                             event.setDistance(mLastLocation);
+                            if (event.isStatus())
                             mEventList.add(event);
                         }
                     }
