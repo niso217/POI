@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by nir on 08/10/2017.
@@ -29,17 +30,17 @@ public class DateUtil {
         return formattedNow;
     }
 
-    public static String TimeString(int hour, int minute){
-        int twehour = hour % 12;
-        return String.format("%2d:%02d %s", twehour == 0 ? 12 : twehour,
-                minute, hour < 12 ? "AM" : "PM");
-    }
-
     public static String CalendartoTime(Date date) {
         String format = "hh:mm a";
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format, Locale.US);
         String formattedNow = simpleDateFormat.format(date);
         return formattedNow;
+    }
+
+    public static long getTimeDiff(long dateOne, long dateTwo) {
+        String diff = "";
+        long timeDiff = Math.abs(dateOne - dateTwo);
+        return TimeUnit.MILLISECONDS.toHours(timeDiff);
     }
 
     public static long getCurrentDateTimeInMilliseconds(){

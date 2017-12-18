@@ -27,6 +27,8 @@ import static com.benezra.nir.poi.Interface.Constants.NOTIFY_TOKEN;
 public class FirebaseTokenService extends FirebaseInstanceIdService {
     private static final String TAG = FirebaseTokenService.class.getSimpleName();
     @Override public void onTokenRefresh() {
+        Log.d(TAG, "onTokenRefresh");
+
         saveUserToFireBase();
     }
 
