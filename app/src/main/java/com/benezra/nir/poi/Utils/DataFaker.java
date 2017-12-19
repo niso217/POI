@@ -88,6 +88,7 @@ import static com.benezra.nir.poi.Interface.Constants.LONGITUDE;
 import static com.benezra.nir.poi.Interface.Constants.OWNER;
 import static com.benezra.nir.poi.Interface.Constants.PARTICIPATES;
 import static com.benezra.nir.poi.Interface.Constants.START;
+import static com.benezra.nir.poi.Interface.Constants.STATUS;
 import static com.benezra.nir.poi.Interface.Constants.TITLE;
 
 /**
@@ -118,6 +119,9 @@ public class DataFaker extends AppCompatActivity implements
     private TextView textview;
     private RetrieveInterestsTask mRetrieveFeedTask;
     private RetrieveInterestsImagesTask mRetrieveInterestsImagesTask;
+    private static int MIN_YEAR = 2018;
+    private static int MIN_MONTH = 4;
+    private static int MIN_DAY = 1;
 
 
     Handler handler;
@@ -244,13 +248,16 @@ public class DataFaker extends AppCompatActivity implements
             public void onAddressFound(String result) {
                 event.setAddress(result);
                 event.setId(UUID.randomUUID().toString());
-                event.setStart(randomDate());
+                Calendar cal = randomStartDate();
+                event.setStart(cal.getTimeInMillis());
+                event.setEnd(randomEndDate(cal.getTimeInMillis()));
                 int rand = mRandom.nextInt(mInterestData.size());
                 event.setInterest(mInterestData.get(rand).getInterest());
                 event.setImage(mInterestData.get(rand).getImage());
                 event.setTitle(mInterestData.get(rand).getTitle());
                 event.setDetails(mInterestData.get(rand).getDetails());
                 event.setOwner(UUID.randomUUID().toString());
+                event.setStatus(true);
                 save(event);
 
             }
@@ -285,6 +292,7 @@ public class DataFaker extends AppCompatActivity implements
         updates.put(TITLE, event.getTitle());
         updates.put(INTEREST, event.getInterest());
         updates.put(ADDRESS, event.getAddress());
+        updates.put(STATUS, event.isStatus());
         updates.put(OWNER, "9bZ1hOMJlYcmXgMfHQXmsuJONoz1");
 
         updates.put("/g", geoHash.getGeoHashString());
@@ -310,29 +318,19 @@ public class DataFaker extends AppCompatActivity implements
 
 
 
-    private long randomDate() {
+    private Calendar randomStartDate() {
         Calendar now = Calendar.getInstance();
-        Calendar min = Calendar.getInstance();
-        Calendar randomDate = (Calendar) now.clone();
-        int minYear = 2017;
-        int minMonth = 12;
-        int minDay = 1;
-        min.set(minYear, minMonth - 1, minDay);
-        int numberOfDaysToAdd = (int) (Math.random() * (daysBetween(min, now) + 1));
-        randomDate.add(Calendar.DAY_OF_YEAR, -numberOfDaysToAdd);
-
-        return randomDate.getTimeInMillis();
+        now.add(Calendar.DAY_OF_YEAR, new Random().nextInt(20 - 1) + 1);
+        Log.d(TAG,"Start : " + DateUtil.CalendartoDate(now.getTime()) + " " + DateUtil.CalendartoTime(now.getTime()));
+        return now;
     }
 
-    public static int daysBetween(Calendar from, Calendar to) {
-        Calendar date = (Calendar) from.clone();
-        int daysBetween = 0;
-        while (date.before(to)) {
-            date.add(Calendar.DAY_OF_MONTH, 1);
-            daysBetween++;
-        }
-        System.out.println(daysBetween);
-        return daysBetween;
+    private long randomEndDate(long cal) {
+        Calendar newCal = Calendar.getInstance();
+        newCal.setTimeInMillis(cal);
+        newCal.add(Calendar.DAY_OF_YEAR, new Random().nextInt(6 - 1) + 1);
+        Log.d(TAG,"End : " + DateUtil.CalendartoDate(newCal.getTime()) + " " + DateUtil.CalendartoTime(newCal.getTime()));
+        return newCal.getTimeInMillis();
     }
 
 

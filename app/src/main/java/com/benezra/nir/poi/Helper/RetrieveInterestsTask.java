@@ -98,7 +98,7 @@ public class RetrieveInterestsTask extends AsyncTask<String,Integer,Boolean> {
                                         String title = el.text();
 
 
-                                        if (!title.equals("") && !mEventsInterestDataMap.containsKey(title.toLowerCase())) {
+                                        if (!title.equals("") && !title.contains("/") && !mEventsInterestDataMap.containsKey(title.toLowerCase())) {
 
                                             int presentage = (int)(100 * ((double) mEventsInterestDataMap.size() / 287));
                                             setInterestText(title + System.getProperty ("line.separator") + presentage + " %");

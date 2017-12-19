@@ -10,6 +10,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.CalendarContract;
 import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -64,6 +65,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_END;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_ANCHORED;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_DRAGGING;
@@ -116,7 +118,7 @@ public class ViewEventActivity extends BaseActivity
     private int mCurrentOffset;
     private int mScrollDirection;
     private boolean mTouchEventFired;
-    private ImageButton mNavigate, mAddImage, mChat, mShare;
+    private ImageButton mNavigate, mAddImage, mChat, mShare, mCalender;
     private ToggleButton mJoin;
     private Toolbar mToolbar;
     private TextView mTitle, mDetails,mTextViewDistance;
@@ -213,6 +215,8 @@ public class ViewEventActivity extends BaseActivity
         mNavigate = findViewById(R.id.btn_navigate);
         mAddImage = findViewById(R.id.btn_add_image);
         mChat = findViewById(R.id.btn_chat);
+        mCalender = findViewById(R.id.btn_cal);
+
         mProgressBar = findViewById(R.id.pb_loading);
         mPrivateLinearLayout = findViewById(R.id.private_layout);
         tvDatePicker = findViewById(R.id.tv_date_start);
@@ -251,6 +255,7 @@ public class ViewEventActivity extends BaseActivity
         mNavigate.setOnClickListener(this);
         mAddImage.setOnClickListener(this);
         mChat.setOnClickListener(this);
+        mCalender.setOnClickListener(this);
         mNestedScrollView.getViewTreeObserver().addOnGlobalLayoutListener(this);
         behavior.setBottomSheetCallback(this);
         mTabLayout.addOnTabSelectedListener(this);
@@ -314,6 +319,9 @@ public class ViewEventActivity extends BaseActivity
                 break;
             case R.id.btn_add_image:
                 navigateToCaptureFragment(new String[]{Manifest.permission.CAMERA});
+                break;
+            case R.id.btn_cal:
+                addToCalender();
                 break;
         }
     }
@@ -536,6 +544,7 @@ public class ViewEventActivity extends BaseActivity
         mNavigate.setEnabled(state);
         mShare.setEnabled(state);
         mChat.setEnabled(state);
+        mCalender.setEnabled(true);
         mAddImage.setEnabled(state);
     }
 
@@ -570,6 +579,7 @@ public class ViewEventActivity extends BaseActivity
         mCurrentEvent.setOwner(intent.getStringExtra(EVENT_OWNER));
         mCurrentEvent.setTitle(intent.getStringExtra(EVENT_TITLE));
         mCurrentEvent.setStart(intent.getLongExtra(EVENT_START, 0));
+        mCurrentEvent.setEnd(intent.getLongExtra(EVENT_END, 0));
         mCurrentEvent.setLatitude(intent.getDoubleExtra(EVENT_LATITUDE, 0));
         mCurrentEvent.setLongitude(intent.getDoubleExtra(EVENT_LONGITUDE, 0));
         mCurrentEvent.setImage(intent.getStringExtra(EVENT_IMAGE));
@@ -590,6 +600,19 @@ public class ViewEventActivity extends BaseActivity
 
 
 
+    }
+
+
+    public void addToCalender() {
+        Intent intent = new Intent(Intent.ACTION_INSERT)
+                .setData(CalendarContract.Events.CONTENT_URI)
+                .putExtra(CalendarContract.Events.TITLE, mCurrentEvent.getTitle())
+                .putExtra(CalendarContract.Events.EVENT_LOCATION, mCurrentEvent.getAddress())
+                .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, mCurrentEvent.getStart())
+                .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, mCurrentEvent.getEnd());
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        }
     }
 
 

@@ -38,9 +38,9 @@ public class DateUtil {
     }
 
     public static long getTimeDiff(long dateOne, long dateTwo) {
-        String diff = "";
-        long timeDiff = Math.abs(dateOne - dateTwo);
-        return TimeUnit.MILLISECONDS.toHours(timeDiff);
+        long timeDiff = dateOne - dateTwo;
+        if (timeDiff<=0) return -1;
+        else return TimeUnit.MILLISECONDS.toHours(timeDiff);
     }
 
     public static long getCurrentDateTimeInMilliseconds(){

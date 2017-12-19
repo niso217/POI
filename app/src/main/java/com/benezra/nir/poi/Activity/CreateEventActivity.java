@@ -84,6 +84,7 @@ import com.toptoche.searchablespinnerlibrary.SearchableSpinner;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.jsoup.helper.DataUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -142,7 +143,6 @@ import static com.benezra.nir.poi.Interface.Constants.TITLE;
 public class CreateEventActivity extends BaseActivity
         implements View.OnClickListener,
         RecyclerTouchListener.ClickListener,
-        CompoundButton.OnCheckedChangeListener,
         ImageCameraDialogFragment.ImageCameraDialogCallbackNew,
         TextWatcher,
         AdapterView.OnItemSelectedListener,
@@ -158,7 +158,7 @@ public class CreateEventActivity extends BaseActivity
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
     private TextView tvDatePickerStart, tvDatePickerEnd, tvTimePickerStart, tvTimePickerEnd;
-    private Switch mSwitch;
+    private LinearLayout mLayoutStart, mLayoutEnd;
     private Event mCurrentEvent;
     private Event mCurrentEventChangeFlag;
     final static String TAG = CreateEventActivity.class.getSimpleName();
@@ -211,9 +211,10 @@ public class CreateEventActivity extends BaseActivity
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventTimeStart = Calendar.getInstance();
-        mEventTimeStart.add(Calendar.HOUR, 1);
         mEventTimeEnd = Calendar.getInstance();
-        mEventTimeEnd.add(Calendar.HOUR, 2);
+
+
+
         mEventImagesList = new ArrayList<>();
         mEventImagesAdapter = new EventImagesAdapter(this, mEventImagesList);
 
@@ -256,6 +257,9 @@ public class CreateEventActivity extends BaseActivity
                 mTabSelectedIndex = 0;
                 mMode = true; //new event
                 mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
+                setAllDayStartTime();
+                setAllDayEndTime();
+
 
             }
 
@@ -304,19 +308,25 @@ public class CreateEventActivity extends BaseActivity
         mPlaceAutoCompleteLayout = findViewById(R.id.place_autocomplete_layout);
         mEventDetails = findViewById(R.id.tv_desciption);
         mTitle = findViewById(R.id.tv_title);
+
+        mLayoutStart = findViewById(R.id.layout_start);
+        mLayoutEnd = findViewById(R.id.layout_end);
+
         tvDatePickerStart = findViewById(R.id.tv_date_start);
-        tvDatePickerStart.setText(DateUtil.CalendartoDate(Calendar.getInstance().getTime()));
         tvDatePickerEnd = findViewById(R.id.tv_date_end);
-        tvDatePickerEnd.setText(DateUtil.CalendartoDate(Calendar.getInstance().getTime()));
         tvTimePickerStart = findViewById(R.id.tv_time_start);
-        tvTimePickerStart.setText(DateUtil.CalendartoTime(mEventTimeStart.getTime()));
         tvTimePickerEnd = findViewById(R.id.tv_time_end);
-        tvTimePickerEnd.setText(DateUtil.CalendartoTime(mEventTimeEnd.getTime()));
+
+        setTimeText();
+
+
+
+
+
         mspinnerCustom = findViewById(R.id.spinnerCustom);
         mspinnerCustom.setTitle("Select Item");
         mspinnerCustom.setPositiveButton("OK");
         mProgressBar = findViewById(R.id.pb_loading);
-        mSwitch = findViewById(R.id.tgl_allday);
         mNestedScrollView = findViewById(R.id.nestedscrollview);
         behavior = GoogleMapsBottomSheetBehavior.from(mNestedScrollView);
         mTabLayout = findViewById(R.id.tab_layout_tab);
@@ -326,11 +336,8 @@ public class CreateEventActivity extends BaseActivity
     }
 
     private void initListeners() {
-        tvDatePickerStart.setOnClickListener(this);
-        tvDatePickerEnd.setOnClickListener(this);
-        tvTimePickerStart.setOnClickListener(this);
-        tvTimePickerEnd.setOnClickListener(this);
-        mSwitch.setOnCheckedChangeListener(this);
+        mLayoutStart.setOnClickListener(this);
+        mLayoutEnd.setOnClickListener(this);
         mspinnerCustom.setOnItemSelectedListener(this);
         mShare.setOnClickListener(this);
         mAddImage.setOnClickListener(this);
@@ -487,58 +494,12 @@ public class CreateEventActivity extends BaseActivity
 
         switch (v.getId()) {
 
-            case R.id.tv_date_end:
-                // Get Current Date
-                int year_end = mEventTimeEnd.get(Calendar.YEAR);
-                int month_end = mEventTimeEnd.get(Calendar.MONTH);
-                int day_end = mEventTimeEnd.get(Calendar.DAY_OF_MONTH);
-                // Launch Date Picker Dialog
-                DatePickerDialog datePickerDialog_end = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
-                    @Override
-                    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                        endDateChange(view, year, month, dayOfMonth);
-                    }
-                }, year_end, month_end, day_end);
-                datePickerDialog_end.getDatePicker().setMinDate(mEventTimeStart.getTimeInMillis());
-                datePickerDialog_end.show();
+            case R.id.layout_start:
+                initEventStart();
                 break;
-            case R.id.tv_date_start:
-                // Get Current Date
-                int year_start = mEventTimeStart.get(Calendar.YEAR);
-                int month_start = mEventTimeStart.get(Calendar.MONTH);
-                int day_start = mEventTimeStart.get(Calendar.DAY_OF_MONTH);
-                // Launch Date Picker Dialog
-                DatePickerDialog datePickerDialog_start = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
-                    @Override
-                    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                        startDateChange(view, year, month, dayOfMonth);
 
-                    }
-                }, year_start, month_start, day_start);
-                datePickerDialog_start.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
-                datePickerDialog_start.show();
-                break;
-            case R.id.tv_time_start:
-                // Get Current Time
-                int hour_start = mEventTimeStart.get(Calendar.HOUR_OF_DAY);
-                int minute_start = mEventTimeStart.get(Calendar.MINUTE);
-                new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
-                    @Override
-                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                        startTimeChanged(view, hourOfDay, minute);
-
-                    }
-                }, hour_start, minute_start, false).show();
-                break;
-            case R.id.tv_time_end:
-                int hour_end = mEventTimeEnd.get(Calendar.HOUR_OF_DAY);
-                int minute_end = mEventTimeEnd.get(Calendar.MINUTE);
-                new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
-                    @Override
-                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                        endTimeChanged(view, hourOfDay, minute);
-                    }
-                }, hour_end, minute_end, false).show();
+            case R.id.layout_end:
+                initEventEnd();
                 break;
             case R.id.btn_chat:
                 Intent i = new Intent(CreateEventActivity.this, ChatActivity.class);
@@ -565,6 +526,68 @@ public class CreateEventActivity extends BaseActivity
                 break;
 
         }
+    }
+
+    private void initEventEnd() {
+        Calendar cal = Calendar.getInstance(); // creates calendar
+        cal.setTimeInMillis(mEventTimeStart.getTimeInMillis());
+        cal.add(Calendar.HOUR_OF_DAY, 1); // adds one hour
+        int year_end = mEventTimeEnd.get(Calendar.YEAR);
+        int month_end = mEventTimeEnd.get(Calendar.MONTH);
+        int day_end = mEventTimeEnd.get(Calendar.DAY_OF_MONTH);
+        DatePickerDialog datePickerDialog_end = new DatePickerDialog(CreateEventActivity.this, new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                endDateChange(year, month, dayOfMonth);
+                int hour_start = mEventTimeEnd.get(Calendar.HOUR_OF_DAY);
+                int minute_start = mEventTimeEnd.get(Calendar.MINUTE);
+                    new TimePickerDialog(CreateEventActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                        @Override
+                        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                            endTimeChanged(hourOfDay, minute);
+
+                        }
+                    }, hour_start, minute_start, false).show();
+
+
+            }
+        }, year_end, month_end, day_end);
+        datePickerDialog_end.getDatePicker().setMinDate(cal.getTimeInMillis());
+        datePickerDialog_end.show();
+    }
+
+    private void initEventStart() {
+        int year_start = mEventTimeStart.get(Calendar.YEAR);
+        int month_start = mEventTimeStart.get(Calendar.MONTH);
+        int day_start = mEventTimeStart.get(Calendar.DAY_OF_MONTH);
+        Calendar now = Calendar.getInstance();
+        now.add(Calendar.HOUR, 1);
+
+        DatePickerDialog datePickerDialog_start = new DatePickerDialog(CreateEventActivity.this, new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                startDateChange(year, month, dayOfMonth);
+                int hour_start = mEventTimeStart.get(Calendar.HOUR_OF_DAY);
+                int minute_start = mEventTimeStart.get(Calendar.MINUTE);
+
+                if (mEventTimeStart.getTimeInMillis() > mEventTimeEnd.getTimeInMillis()){
+                    mEventTimeEnd.setTimeInMillis(mEventTimeStart.getTimeInMillis());
+                    endDateChange(mEventTimeEnd.get(Calendar.YEAR),mEventTimeEnd.get(Calendar.MONTH),mEventTimeEnd.get(Calendar.DAY_OF_MONTH));
+                    endTimeChanged(mEventTimeEnd.get(Calendar.HOUR),mEventTimeEnd.get(Calendar.MINUTE));
+                }
+
+                    new TimePickerDialog(CreateEventActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                        @Override
+                        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                            startTimeChanged(hourOfDay, minute);
+
+                        }
+                    }, hour_start, minute_start, false).show();
+
+            }
+        }, year_start, month_start, day_start);
+        datePickerDialog_start.getDatePicker().setMinDate(now.getTimeInMillis());
+        datePickerDialog_start.show();
     }
 
     private void delete() {
@@ -601,12 +624,10 @@ public class CreateEventActivity extends BaseActivity
     private void checkEvent() {
         if (mCurrentEvent != null) {
 
-            if (timeDifferences(mEventTimeStart, mEventTimeEnd) < 1) {
+            if (DateUtil.getTimeDiff(mEventTimeEnd.getTimeInMillis(), mEventTimeStart.getTimeInMillis()) < 0) {
                 showSnackBar(getString(R.string.time_def));
-
                 return;
             }
-
 
             if (mCurrentEvent.getDetails() == null || mCurrentEvent.getDetails().equals("")) {
                 showSnackBar(getString(R.string.missing_details));
@@ -741,125 +762,67 @@ public class CreateEventActivity extends BaseActivity
     }
 
 
-    private void startDateChange(DatePicker view, int year, int month, int dayOfMonth) {
-        String thedate = DateUtil.FormatDate(year, month, dayOfMonth);
-        tvDatePickerStart.setText(thedate);
-
+    private void startDateChange(int year, int month, int dayOfMonth) {
         mEventTimeStart.set(Calendar.YEAR, year);
         mEventTimeStart.set(Calendar.MONTH, month);
         mEventTimeStart.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-        mEventTimeStart.set(Calendar.HOUR_OF_DAY, mEventTimeStart.get(Calendar.HOUR));
-        mEventTimeStart.set(Calendar.MINUTE, mEventTimeStart.get(Calendar.MINUTE));
-        String time = DateUtil.CalendartoTime(mEventTimeStart.getTime());
-        tvTimePickerStart.setText(time);
-
-        if (mEventTimeEnd.getTimeInMillis() < mEventTimeStart.getTimeInMillis()) {
-            mEventTimeEnd.setTimeInMillis(mEventTimeStart.getTimeInMillis());
-            mCurrentEvent.setEnd(mEventTimeEnd.getTimeInMillis());
-            tvTimePickerEnd.setText(time);
-            tvDatePickerEnd.setText(thedate);
-
-
-        }
-
         mCurrentEvent.setStart(mEventTimeStart.getTimeInMillis());
+        setTimeText();
 
-        isChangeMade();
     }
 
 
-    private void startTimeChanged(TimePicker view, int hourOfDay, int minute) {
+    private void endDateChange(int year, int month, int dayOfMonth) {
+        mEventTimeEnd.set(Calendar.YEAR, year);
+        mEventTimeEnd.set(Calendar.MONTH, month);
+        mEventTimeEnd.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+        mCurrentEvent.setEnd(mEventTimeEnd.getTimeInMillis());
+        setTimeText();
 
-        Calendar datetime = Calendar.getInstance();
-        datetime.set(Calendar.YEAR, mEventTimeStart.get(Calendar.YEAR));
-        datetime.set(Calendar.MONTH, mEventTimeStart.get(Calendar.MONTH));
-        datetime.set(Calendar.DAY_OF_MONTH, mEventTimeStart.get(Calendar.DAY_OF_MONTH));
-        datetime.set(Calendar.HOUR_OF_DAY, hourOfDay);
-        datetime.set(Calendar.MINUTE, minute);
+    }
 
-        if (datetime.getTimeInMillis() < Calendar.getInstance().getTimeInMillis() + 1000) {
-            showSnackBar("Event time must be at least one hour from now");
-        } else if (datetime.getTimeInMillis() > mEventTimeEnd.getTimeInMillis()) {
-            showSnackBar("Start time must be smaller then the end time");
-        } else {
-            mEventTimeStart.set(Calendar.HOUR_OF_DAY, hourOfDay);
-            mEventTimeStart.set(Calendar.MINUTE, minute);
-            String time = DateUtil.CalendartoTime(mEventTimeStart.getTime());
-            tvTimePickerStart.setText(time);
-            mCurrentEvent.setStart(mEventTimeStart.getTimeInMillis());
+    private void startTimeChanged(int hourOfDay, int minute) {
+        mEventTimeStart.set(Calendar.MINUTE, minute);
+        mEventTimeStart.set(Calendar.HOUR_OF_DAY, hourOfDay);
+        mCurrentEvent.setStart(mEventTimeStart.getTimeInMillis());
+        setTimeText();
+    }
 
-        }
+    private void endTimeChanged(int hourOfDay, int minute) {
+        mEventTimeEnd.set(Calendar.MINUTE, minute);
+        mEventTimeEnd.set(Calendar.HOUR_OF_DAY, hourOfDay);
+        mCurrentEvent.setEnd(mEventTimeEnd.getTimeInMillis());
+        setTimeText();
     }
 
 
-    private void endDateChange(DatePicker view, int year, int month, int dayOfMonth) {
+    private void setAllDayStartTime(){
+        mEventTimeStart.set(Calendar.HOUR_OF_DAY, 0);
+        mEventTimeStart.set(Calendar.MINUTE, 0);
+        mEventTimeStart.set(Calendar.SECOND, 0);
+        mCurrentEvent.setStart(mEventTimeStart.getTimeInMillis());
+        setTimeText();
 
-        String thedate = "";
-        Calendar datetime = Calendar.getInstance();
-        datetime.set(Calendar.YEAR, year);
-        datetime.set(Calendar.MONTH, month);
-        datetime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-        datetime.set(Calendar.HOUR_OF_DAY, mEventTimeEnd.get(Calendar.HOUR));
-        datetime.set(Calendar.MINUTE, mEventTimeEnd.get(Calendar.MINUTE));
-
-        if (datetime.getTimeInMillis() > mEventTimeStart.getTimeInMillis()) {
-
-            mEventTimeEnd.set(Calendar.YEAR, year);
-            mEventTimeEnd.set(Calendar.MONTH, month);
-            mEventTimeEnd.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            mCurrentEvent.setEnd(mEventTimeEnd.getTimeInMillis());
-            thedate = DateUtil.FormatDate(year, month, dayOfMonth);
-
-        } else {
-            //it's before current'
-            mEventTimeEnd.setTimeInMillis(mEventTimeStart.getTimeInMillis());
-            showSnackBar("End time must be greather then the start");
-            thedate = DateUtil.FormatDate(mEventTimeStart.get(Calendar.YEAR), mEventTimeStart.get(Calendar.MONTH), mEventTimeStart.get(Calendar.DAY_OF_MONTH));
-
-        }
-        tvDatePickerEnd.setText(thedate);
-        isChangeMade();
     }
 
-    private void endTimeChanged(TimePicker view, int hourOfDay, int minute) {
-        Calendar now = Calendar.getInstance();
-        now.add(Calendar.HOUR, 1);
+    private void setAllDayEndTime(){
+        mEventTimeEnd.set(Calendar.HOUR_OF_DAY, 23);
+        mEventTimeEnd.set(Calendar.MINUTE, 59);
+        mEventTimeEnd.set(Calendar.SECOND, 0);
+        mCurrentEvent.setEnd(mEventTimeEnd.getTimeInMillis());
+        setTimeText();
 
-        Calendar datetime = Calendar.getInstance();
-        datetime.set(Calendar.YEAR, mEventTimeEnd.get(Calendar.YEAR));
-        datetime.set(Calendar.MONTH, mEventTimeEnd.get(Calendar.MONTH));
-        datetime.set(Calendar.DAY_OF_MONTH, mEventTimeEnd.get(Calendar.DAY_OF_MONTH));
-        datetime.set(Calendar.HOUR_OF_DAY, hourOfDay);
-        datetime.set(Calendar.MINUTE, minute);
-        if (datetime.getTimeInMillis() < mEventTimeStart.getTimeInMillis()) {
-            showSnackBar("event cannot end before its start");
-        } else if (DateUtil.getTimeDiff(datetime.getTimeInMillis(),mEventTimeStart.getTimeInMillis())<1) {
-            showSnackBar("event must be at least one hour");
-        } else {
-            //it's before current'
-            mEventTimeEnd.set(Calendar.HOUR_OF_DAY, hourOfDay);
-            mEventTimeEnd.set(Calendar.MINUTE, minute);
-            String time = DateUtil.CalendartoTime(mEventTimeEnd.getTime());
-            tvTimePickerEnd.setText(time);
-            mCurrentEvent.setEnd(mEventTimeEnd.getTimeInMillis());
+    }
 
-        }
+    private void setTimeText(){
+        tvTimePickerStart.setText(DateUtil.CalendartoTime(mEventTimeStart.getTime()));
+        tvDatePickerEnd.setText(DateUtil.CalendartoDate(mEventTimeEnd.getTime()));
+        tvDatePickerStart.setText(DateUtil.CalendartoDate(mEventTimeStart.getTime()));
+        tvTimePickerEnd.setText(DateUtil.CalendartoTime(mEventTimeEnd.getTime()));
+
     }
 
 
-    @Override
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        if (isChecked) {
-            tvTimePickerStart.setVisibility(View.INVISIBLE);
-            tvTimePickerEnd.setVisibility(View.INVISIBLE);
-
-        } else {
-            tvTimePickerStart.setVisibility(View.VISIBLE);
-            tvTimePickerEnd.setVisibility(View.VISIBLE);
-
-
-        }
-    }
 
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -1100,10 +1063,7 @@ public class CreateEventActivity extends BaseActivity
             mEventDetails.setText(mCurrentEvent.getDetails());
             mEventTimeStart.setTimeInMillis(mCurrentEvent.getStart());
             mEventTimeEnd.setTimeInMillis(mCurrentEvent.getEnd());
-            tvDatePickerStart.setText(DateUtil.CalendartoDate(mEventTimeStart.getTime()));
-            tvTimePickerStart.setText(DateUtil.CalendartoTime(mEventTimeStart.getTime()));
-            tvDatePickerEnd.setText(DateUtil.CalendartoDate(mEventTimeEnd.getTime()));
-            tvTimePickerEnd.setText(DateUtil.CalendartoTime(mEventTimeEnd.getTime()));
+            setTimeText();
 
         }
 

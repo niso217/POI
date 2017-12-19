@@ -42,7 +42,9 @@
     <string name="missing_location">Please tell us the location of the event</string>
     <string name="missing_interest">Please fill the theme of the event</string>
     <string name="missing_details">Please give us details about the event</string>
-    <string name="time_def">wrong time</string>
+    <string name="time_def">Please provide reasonable time</string>
+
+
 
     <string name="missing_title">Please add a tittle to the event</string>
     <string name="collapsingtoolbar_title">Click to add title...</string>

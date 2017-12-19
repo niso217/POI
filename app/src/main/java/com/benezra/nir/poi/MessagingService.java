@@ -151,6 +151,7 @@ public class MessagingService extends FirebaseMessagingService {
                         resultIntent.putExtra(EVENT_LONGITUDE, event.getLongitude());
                         resultIntent.putExtra(EVENT_INTEREST, event.getInterest());
                         resultIntent.putExtra(EVENT_START, event.getStart());
+                        resultIntent.putExtra(EVENT_START, event.getStart());
                         resultIntent.putExtra(EVENT_ADDRESS, event.getAddress());
                         showNotificationMessage(getApplicationContext(), title, body, "", resultIntent);
 

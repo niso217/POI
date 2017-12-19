@@ -60,6 +60,7 @@ import java.util.Set;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_DETAILS;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_END;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_ID;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_IMAGE;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_INTEREST;
@@ -141,6 +142,7 @@ public class EventByInterestListFragment extends Fragment implements
         userEvent.putExtra(EVENT_LONGITUDE, event.getLongitude());
         userEvent.putExtra(EVENT_INTEREST, event.getInterest());
         userEvent.putExtra(EVENT_START, event.getStart());
+        userEvent.putExtra(EVENT_END, event.getEnd());
         userEvent.putExtra(EVENT_ADDRESS, event.getAddress());
 
 

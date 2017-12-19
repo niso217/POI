@@ -42,6 +42,7 @@ import java.util.ArrayList;
 
 import static com.benezra.nir.poi.Interface.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_DETAILS;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_END;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_ID;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_IMAGE;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_INTEREST;
@@ -244,6 +245,8 @@ public class EventByInterestMapFragment extends Fragment implements
         userEvent.putExtra(EVENT_LONGITUDE, mCurrentSelectedEvent.getLongitude());
         userEvent.putExtra(EVENT_INTEREST, mCurrentSelectedEvent.getInterest());
         userEvent.putExtra(EVENT_START, mCurrentSelectedEvent.getStart());
+        userEvent.putExtra(EVENT_END, mCurrentSelectedEvent.getEnd());
+
         userEvent.putExtra(EVENT_ADDRESS, mCurrentSelectedEvent.getAddress());
 
 
@@ -290,6 +293,7 @@ public class EventByInterestMapFragment extends Fragment implements
         userEvent.putExtra(EVENT_LONGITUDE, event.getLongitude());
         userEvent.putExtra(EVENT_INTEREST, event.getInterest());
         userEvent.putExtra(EVENT_START, event.getStart());
+        userEvent.putExtra(EVENT_END, event.getEnd());
         userEvent.putExtra(EVENT_ADDRESS, event.getAddress());
 
 
