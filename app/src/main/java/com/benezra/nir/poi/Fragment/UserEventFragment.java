@@ -85,7 +85,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener, R
         userEvent.putExtra(EVENT_LONGITUDE, event.getLongitude());
         userEvent.putExtra(EVENT_INTEREST, event.getInterest());
         userEvent.putExtra(EVENT_START, event.getStart());
-        userEvent.putExtra(EVENT_END, event.getStart());
+        userEvent.putExtra(EVENT_END, event.getEnd());
         userEvent.putExtra(EVENT_ADDRESS, event.getAddress());
 
 

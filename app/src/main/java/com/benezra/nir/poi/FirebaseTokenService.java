@@ -28,37 +28,14 @@ public class FirebaseTokenService extends FirebaseInstanceIdService {
     private static final String TAG = FirebaseTokenService.class.getSimpleName();
     @Override public void onTokenRefresh() {
         Log.d(TAG, "onTokenRefresh");
-
-        saveUserToFireBase();
-    }
-
-
-    public void saveUserToFireBase() {
-        final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        user.getToken(true)
-                .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
-                    public void onComplete(@NonNull Task<GetTokenResult> task) {
-                        if (task.isSuccessful()) {
-                            String idToken = task.getResult().getToken();
-                            String niftyToken = FirebaseInstanceId.getInstance().getToken().toString();
-
-                            Log.d(TAG, ID_TOKEN + idToken);
-                            Log.d(TAG, NOTIFY_TOKEN + niftyToken);
-
-                            SharePref.getInstance(FirebaseTokenService.this).putString(ID_TOKEN, idToken);
-                            SharePref.getInstance(FirebaseTokenService.this).putString(NOTIFY_TOKEN, niftyToken);
-
-                            // Send token to your backend via HTTPS
-                            FirebaseDatabase.getInstance().getReference().child("users").child(user.getUid()).child("notify_token").setValue(FirebaseInstanceId.getInstance().getToken().toString());
-                            FirebaseDatabase.getInstance().getReference().child("users").child(user.getUid()).child("user_token").setValue(task.getResult().getToken());
-
-                            // ...
-                        } else {
-                            // Handle error -> task.getException();
-                        }
-                    }
-                });
+        String refreshedToken = FirebaseInstanceId.getInstance().getToken().toString();
+        Log.d(TAG, NOTIFY_TOKEN + refreshedToken);
+        SharePref.getInstance(FirebaseTokenService.this).putString(NOTIFY_TOKEN, refreshedToken);
+        FirebaseDatabase.getInstance().getReference().child("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("notify_token").setValue(refreshedToken);
 
     }
+
+
+
 
 }

@@ -28,6 +28,7 @@ import android.view.Menu;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.CompoundButton;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -106,7 +107,7 @@ public class ViewEventActivity extends BaseActivity
     private CollapsingToolbarLayout collapsingToolbar;
     private FirebaseDatabase mFirebaseInstance;
     private ProgressBar mProgressBar;
-    private TextView tvDatePicker, tvTimePicker;
+    private TextView tvDatePickerStart, tvTimePickerStart,tvDatePickerEnd, tvTimePickerEnd;
     private boolean mJoinEvent;
     private Menu mMenu;
     private LinearLayout mPrivateLinearLayout;
@@ -130,7 +131,7 @@ public class ViewEventActivity extends BaseActivity
     private GoogleMapsBottomSheetBehavior behavior;
     private NestedScrollView mNestedScrollView;
 
-    private LinearLayout mHorizontalScrollView;
+    private HorizontalScrollView mHorizontalScrollView;
     private LinearLayout mNavigationBarLayout;
 
     private TabLayout mTabLayout;
@@ -207,6 +208,7 @@ public class ViewEventActivity extends BaseActivity
 
     private void initView() {
         mHorizontalScrollView = findViewById(R.id.scrolling_icons);
+        focusRight();
         mNavigationBarLayout = findViewById(R.id.tab_layout);
         mTitle = findViewById(R.id.tv_title);
         mTitle.setEnabled(false);
@@ -219,8 +221,10 @@ public class ViewEventActivity extends BaseActivity
 
         mProgressBar = findViewById(R.id.pb_loading);
         mPrivateLinearLayout = findViewById(R.id.private_layout);
-        tvDatePicker = findViewById(R.id.tv_date_start);
-        tvTimePicker = findViewById(R.id.tv_time_start);
+        tvDatePickerStart = findViewById(R.id.tv_date_start);
+        tvTimePickerStart = findViewById(R.id.tv_time_start);
+        tvDatePickerEnd = findViewById(R.id.tv_date_end);
+        tvTimePickerEnd = findViewById(R.id.tv_time_end);
         mParticipateRecyclerView = findViewById(R.id.participate_recycler_view);
         mNestedScrollView = findViewById(R.id.nestedscrollview);
         mDetails = findViewById(R.id.tv_desciption);
@@ -230,6 +234,14 @@ public class ViewEventActivity extends BaseActivity
 
 
 
+    }
+
+    private void focusRight(){
+        mHorizontalScrollView.postDelayed(new Runnable() {
+            public void run() {
+                mHorizontalScrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT);
+            }
+        }, 100L);
     }
 
     private void initParticipatesRecycleView() {
@@ -386,39 +398,39 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
-    private void setVisibility(final View view, final float alpha, long duration, boolean animate) {
-
-        if (animate) {
-            view.animate()
-                    .alpha(alpha)
-                    .setDuration(duration)
-                    .setListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            super.onAnimationEnd(animation);
-                            if (alpha == 1.0f)
-                                view.setVisibility(View.VISIBLE);
-                            if (alpha == 0.0f)
-                                view.setVisibility(View.GONE);
-                            Log.d(TAG, alpha + "");
-
-                        }
-                    });
-        } else {
-
-            view.setAlpha(alpha);
-
-            if (alpha == 1.0f) {
-                view.setVisibility(View.VISIBLE);
-            }
-
-            if (alpha == 0.0f) {
-                view.setVisibility(View.GONE);
-            }
-
-        }
-
-    }
+//    private void setVisibility(final View view, final float alpha, long duration, boolean animate) {
+//
+//        if (animate) {
+//            view.animate()
+//                    .alpha(alpha)
+//                    .setDuration(duration)
+//                    .setListener(new AnimatorListenerAdapter() {
+//                        @Override
+//                        public void onAnimationEnd(Animator animation) {
+//                            super.onAnimationEnd(animation);
+//                            if (alpha == 1.0f)
+//                                view.setVisibility(View.VISIBLE);
+//                            if (alpha == 0.0f)
+//                                view.setVisibility(View.GONE);
+//                            Log.d(TAG, alpha + "");
+//
+//                        }
+//                    });
+//        } else {
+//
+//            view.setAlpha(alpha);
+//
+//            if (alpha == 1.0f) {
+//                view.setVisibility(View.VISIBLE);
+//            }
+//
+//            if (alpha == 0.0f) {
+//                view.setVisibility(View.GONE);
+//            }
+//
+//        }
+//
+//    }
 
 
     private void isJoined() {
@@ -467,11 +479,12 @@ public class ViewEventActivity extends BaseActivity
                         mEventImagesList.add(eventPhotos.getUrl());
 
                     }
+                    //setVisibility(mPicturesRecyclerView, 1.0f, 300, true);
+                    mPicturesRecyclerView.setVisibility(View.VISIBLE);
                     mEventImagesAdapter.notifyDataSetChanged();
-                    setVisibility(mPicturesRecyclerView, 1.0f, 300, true);
 
-                } else
-                    setVisibility(mPicturesRecyclerView, 0.0f, 0, false);
+                } //else
+//                    setVisibility(mPicturesRecyclerView, 0.0f, 0, false);
 
             }
 
@@ -544,8 +557,8 @@ public class ViewEventActivity extends BaseActivity
         mNavigate.setEnabled(state);
         mShare.setEnabled(state);
         mChat.setEnabled(state);
-        mCalender.setEnabled(true);
         mAddImage.setEnabled(state);
+        mCalender.setEnabled(state);
     }
 
     private void JoinEvent() {
@@ -622,12 +635,12 @@ public class ViewEventActivity extends BaseActivity
         if (mCurrentEvent != null) {
             mTitle.setText(mCurrentEvent.getTitle());
             mDetails.setText(mCurrentEvent.getDetails());
-            // setImageBack();
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(mCurrentEvent.getStart());
-            tvDatePicker.setText(DateUtil.CalendartoDate(calendar.getTime()));
-            tvTimePicker.setText(DateUtil.CalendartoTime(calendar.getTime()));
 
+
+            tvDatePickerStart.setText(DateUtil.CalendartoDate(mCurrentEvent.getStartTime()));
+            tvTimePickerStart.setText(DateUtil.CalendartoTime(mCurrentEvent.getStartTime()));
+            tvDatePickerEnd.setText(DateUtil.CalendartoDate(mCurrentEvent.getEndTime()));
+            tvTimePickerEnd.setText(DateUtil.CalendartoTime(mCurrentEvent.getEndTime()));
 
         }
 

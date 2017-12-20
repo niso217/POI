@@ -113,7 +113,7 @@
                         <ImageView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_weight="0.2"
+                            android:layout_weight="0.1"
                             android:alpha="0.7"
                             android:src="@drawable/cast_ic_mini_controller_play" />
 
@@ -122,7 +122,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center_vertical"
-                            android:layout_weight="0.6" />
+                            android:layout_weight="0.7" />
 
                         <TextView
                             android:id="@+id/tv_time_start"
@@ -144,7 +144,7 @@
                         <ImageView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_weight="0.2"
+                            android:layout_weight="0.1"
                             android:alpha="0.7"
                             android:src="@drawable/quantum_ic_stop_grey600_36" />
 
@@ -153,7 +153,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center_vertical"
-                            android:layout_weight="0.6" />
+                            android:layout_weight="0.7" />
 
                         <TextView
                             android:id="@+id/tv_time_end"
@@ -176,7 +176,7 @@
                             android:id="@+id/img_repeat"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_weight="0.2"
+                            android:layout_weight="0.1"
                             android:src="@android:drawable/ic_menu_rotate" />
 
                         <TextView

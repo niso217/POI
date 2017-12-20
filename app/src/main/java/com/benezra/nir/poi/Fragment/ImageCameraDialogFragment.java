@@ -116,6 +116,7 @@ public class ImageCameraDialogFragment extends DialogFragment{
             Intent intent = new Intent(galleryIntent);
             intent.setComponent(new ComponentName(res.activityInfo.packageName, res.activityInfo.name));
             intent.setPackage(res.activityInfo.packageName);
+            intent.putExtra("name","nir");
             allIntents.add(intent);
         }
 
@@ -151,31 +152,39 @@ public class ImageCameraDialogFragment extends DialogFragment{
     }
 
     /**
-     * Get the URI of the selected mDialogImageView from {@link #getPickImageChooserIntent()}.<br/>
-     * Will return the correct URI for camera and gallery mDialogImageView.
+     * Get the URI of the selected image from {@link #getPickImageChooserIntent()}.<br/>
+     * Will return the correct URI for camera and gallery image.
      *
      * @param data the returned data of the activity result
      */
     public Uri getPickImageResultUri(Intent data) {
         boolean isCamera = true;
-        if (data != null) {
-            String action = data.getAction();
-            isCamera = action != null && action.equals(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (android.os.Build.VERSION.SDK_INT >= 23) {
+
+            if (data.getData()!=null)
+                isCamera = false;
+            else
+                isCamera = true;
+
+        } else {
+            if (data != null) {
+                String action = data.getAction();
+                isCamera = action != null && action.equals(MediaStore.ACTION_IMAGE_CAPTURE);
+            }
         }
         return isCamera ? getCaptureImageOutputUri() : data.getData();
     }
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if (resultCode == Activity.RESULT_OK) {
 
-            if (getPickImageResultUri(data) != null) {
-                mPicUri = getPickImageResultUri(data);
-                if (mPicUri!=null)
+            mPicUri = getPickImageResultUri(data);
+            if (mPicUri != null) {
                 mListener.DialogResults(mPicUri);
                 dismiss();
-
             }
         }
 

@@ -3,7 +3,7 @@
     <!-- delete me of not using -->
     <dimen name="detail_backdrop_height">256dp</dimen>
     <dimen name="card_margin">16dp</dimen>
-    <dimen name="icons_margin">10dp</dimen>
+    <dimen name="icons_margin">18dp</dimen>
     <dimen name="list_item_avatar_size">40dp</dimen>
     <dimen name="peekHeightMin">64dp</dimen>
 

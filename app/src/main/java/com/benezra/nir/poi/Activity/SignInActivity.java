@@ -119,7 +119,8 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
                                         Toast.makeText(SignInActivity.this, getString(R.string.auth_failed), Toast.LENGTH_LONG).show();
                                     }
                                 } else {
-                                    saveUserToFireBase();
+
+                                    startActivity();
                                 }
                             }
                         });
@@ -132,6 +133,13 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
                 break;
         }
 
+    }
+
+    private void startActivity(){
+
+        Intent intent = new Intent(SignInActivity.this, TutorialActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     @Override
@@ -166,42 +174,6 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
 
     }
 
-    public void saveUserToFireBase() {
-        final FirebaseUser user = mAuth.getCurrentUser();
-        user.getToken(true)
-                .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
-                    public void onComplete(@NonNull Task<GetTokenResult> task) {
-                        if (task.isSuccessful()) {
-                            String idToken = task.getResult().getToken();
-                            String niftyToken = FirebaseInstanceId.getInstance().getToken().toString();
-
-                            Log.d(TAG, ID_TOKEN + idToken);
-                            Log.d(TAG, NOTIFY_TOKEN + niftyToken);
-
-                            SharePref.getInstance(SignInActivity.this).putString(ID_TOKEN, idToken);
-                            SharePref.getInstance(SignInActivity.this).putString(NOTIFY_TOKEN, niftyToken);
-
-                            // Send token to your backend via HTTPS
-                            mFirebaseInstance.getReference().child("users").child(user.getUid()).child("notify_token").setValue(FirebaseInstanceId.getInstance().getToken().toString());
-                            mFirebaseInstance.getReference().child("users").child(user.getUid()).child("user_token").setValue(task.getResult().getToken());
-                            mFirebaseInstance.getReference("users").child(user.getUid()).child("name").setValue(user.getDisplayName());
-                            mFirebaseInstance.getReference("users").child(user.getUid()).child("email").setValue(user.getEmail());
-                            mFirebaseInstance.getReference("users").child(user.getUid()).child("avatar").setValue(user.getPhotoUrl().toString());
-                            mFirebaseInstance.getReference("users").child(user.getUid()).child("notify_radius").setValue(SharePref.getInstance(SignInActivity.this).getDefaultRadiusgetDefaultRadius());
-
-                            Intent intent = new Intent(SignInActivity.this, TutorialActivity.class);
-                            startActivity(intent);
-                            finish();
-
-                            // ...
-                        } else {
-                            // Handle error -> task.getException();
-                        }
-                    }
-                });
-
-    }
-
 
     @Override
     public void login(boolean status) {
@@ -209,7 +181,7 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
         if (!status)
             Toast.makeText(this, getString(R.string.auth_failed), Toast.LENGTH_SHORT).show();
         else
-            saveUserToFireBase();
+            startActivity();
 
     }
 

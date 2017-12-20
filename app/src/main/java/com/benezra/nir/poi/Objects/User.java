@@ -4,6 +4,7 @@ package com.benezra.nir.poi.Objects;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 
 import java.util.ArrayList;
@@ -19,6 +20,10 @@ public class User implements Parcelable {
     private ArrayList<String> interests;
     private ArrayList<String> events;
 
+
+    public static Creator<User> getCREATOR() {
+        return CREATOR;
+    }
 
     public User() {
     }

@@ -38,6 +38,7 @@ import java.util.List;
 
 import static com.benezra.nir.poi.Interface.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_DETAILS;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_END;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_ID;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_IMAGE;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_INTEREST;
@@ -80,21 +81,21 @@ public class ParticipateEventFragment extends Fragment implements RecyclerTouchL
     public void onClick(View view, int position) {
         mCurrentEvent = mEventList.get(position);
 
-        if (mCurrentEvent.isStatus()){
-        Intent userEvent = new Intent(getActivity(), ViewEventActivity.class);
-        userEvent.putExtra(EVENT_ID, mCurrentEvent.getId());
-        userEvent.putExtra(EVENT_TITLE, mCurrentEvent.getTitle());
-        userEvent.putExtra(EVENT_OWNER, mCurrentEvent.getOwner());
-        userEvent.putExtra(EVENT_IMAGE, mCurrentEvent.getImage());
-        userEvent.putExtra(EVENT_DETAILS, mCurrentEvent.getDetails());
-        userEvent.putExtra(EVENT_LATITUDE, mCurrentEvent.getLatitude());
-        userEvent.putExtra(EVENT_LONGITUDE, mCurrentEvent.getLongitude());
-        userEvent.putExtra(EVENT_INTEREST, mCurrentEvent.getInterest());
-        userEvent.putExtra(EVENT_START, mCurrentEvent.getStart());
-        userEvent.putExtra(EVENT_ADDRESS, mCurrentEvent.getAddress());
-        startActivity(userEvent);
-        }
-        else{
+        if (mCurrentEvent.isStatus()) {
+            Intent userEvent = new Intent(getActivity(), ViewEventActivity.class);
+            userEvent.putExtra(EVENT_ID, mCurrentEvent.getId());
+            userEvent.putExtra(EVENT_TITLE, mCurrentEvent.getTitle());
+            userEvent.putExtra(EVENT_OWNER, mCurrentEvent.getOwner());
+            userEvent.putExtra(EVENT_IMAGE, mCurrentEvent.getImage());
+            userEvent.putExtra(EVENT_DETAILS, mCurrentEvent.getDetails());
+            userEvent.putExtra(EVENT_LATITUDE, mCurrentEvent.getLatitude());
+            userEvent.putExtra(EVENT_LONGITUDE, mCurrentEvent.getLongitude());
+            userEvent.putExtra(EVENT_INTEREST, mCurrentEvent.getInterest());
+            userEvent.putExtra(EVENT_START, mCurrentEvent.getStart());
+            userEvent.putExtra(EVENT_END, mCurrentEvent.getEnd());
+            userEvent.putExtra(EVENT_ADDRESS, mCurrentEvent.getAddress());
+            startActivity(userEvent);
+        } else {
             showSnackBarWithAction(getString(R.string.event_finished));
         }
     }
@@ -136,7 +137,7 @@ public class ParticipateEventFragment extends Fragment implements RecyclerTouchL
         mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.my_events_list);
         mEventsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
-        mEventsRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(),DividerItemDecoration.VERTICAL_LIST));
+        mEventsRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL_LIST));
         mEventsRecyclerView.setAdapter(mEventsAdapter);
         mProgressBar.setVisibility(View.VISIBLE);
         getUserEventsChangeListener();
@@ -183,7 +184,7 @@ public class ParticipateEventFragment extends Fragment implements RecyclerTouchL
             });
 
         }
-        if (events.isEmpty()){
+        if (events.isEmpty()) {
             mProgressBar.setVisibility(View.GONE);
             mEventsAdapter.notifyDataSetChanged();
 

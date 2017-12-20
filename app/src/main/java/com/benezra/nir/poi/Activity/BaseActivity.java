@@ -27,6 +27,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
@@ -46,16 +47,26 @@ import android.widget.TextView;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.benezra.nir.poi.App;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
+import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Settings.AboutActivity;
 import com.benezra.nir.poi.Settings.SettingsActivity;
 import com.benezra.nir.poi.Utils.DataFaker;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GetTokenResult;
+import com.google.firebase.database.FirebaseDatabase;
 import com.squareup.picasso.Picasso;
 import com.google.android.gms.plus.PlusShare;
+
+import java.util.UUID;
+
+import static com.benezra.nir.poi.Interface.Constants.ID_TOKEN;
 
 
 /**
@@ -66,9 +77,9 @@ import com.google.android.gms.plus.PlusShare;
  */
 public abstract class BaseActivity extends AppCompatActivity
         implements OnNavigationItemSelectedListener,
-        PermissionsDialogFragment.PermissionsGrantedCallback ,
+        PermissionsDialogFragment.PermissionsGrantedCallback,
         Response.Listener,
-        Response.ErrorListener{
+        Response.ErrorListener {
 
     // delay to launch nav drawer item, to allow close animation to play
     static final int NAVDRAWER_LAUNCH_DELAY = 250;
@@ -85,6 +96,7 @@ public abstract class BaseActivity extends AppCompatActivity
     private NavigationView mNavigationView;
     private static final String TAG = BaseActivity.class.getSimpleName();
     private FirebaseUser mFirebaseUser;
+    private FirebaseAuth.AuthStateListener mAuthListener;
 
     // Helper
     private Handler mHandler;
@@ -103,6 +115,18 @@ public abstract class BaseActivity extends AppCompatActivity
 
         overridePendingTransition(0, 0);
 
+
+        mAuthListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if (user != null) {
+                    saveUserToFireBase(user);
+
+                }
+            }
+        };
+
     }
 
     @Override
@@ -116,6 +140,33 @@ public abstract class BaseActivity extends AppCompatActivity
     }
 
 
+    public void saveUserToFireBase(final FirebaseUser user) {
+        user.getToken(true)
+                .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
+                    public void onComplete(@NonNull Task<GetTokenResult> task) {
+                        if (task.isSuccessful()) {
+                            String idToken = task.getResult().getToken();
+
+                            Log.d(TAG, ID_TOKEN + idToken);
+
+                            SharePref.getInstance(BaseActivity.this).putString(ID_TOKEN, idToken);
+
+                            FirebaseDatabase mFirebaseInstance = FirebaseDatabase.getInstance();
+                            // Send token to your backend via HTTPS
+                            mFirebaseInstance.getReference().child("users").child(user.getUid()).child("user_token").setValue(task.getResult().getToken());
+                            mFirebaseInstance.getReference("users").child(user.getUid()).child("name").setValue(user.getDisplayName());
+                            mFirebaseInstance.getReference("users").child(user.getUid()).child("email").setValue(user.getEmail());
+                            mFirebaseInstance.getReference("users").child(user.getUid()).child("avatar").setValue(user.getPhotoUrl().toString());
+                            mFirebaseInstance.getReference("users").child(user.getUid()).child("notify_radius").setValue(SharePref.getInstance(BaseActivity.this).getDefaultRadiusgetDefaultRadius());
+
+                        } else {
+                            Log.d(TAG, "Fail update user");
+
+                        }
+                    }
+                });
+
+    }
 
 
     protected abstract int getNavigationDrawerID();
@@ -337,7 +388,7 @@ public abstract class BaseActivity extends AppCompatActivity
 
     @Override
     public void onErrorResponse(VolleyError error) {
-        Log.d(TAG,error.toString());
+        Log.d(TAG, error.toString());
 
     }
 
@@ -356,6 +407,7 @@ public abstract class BaseActivity extends AppCompatActivity
 
 
     }
+
     public void showSnackBar(String message) {
         Snackbar snackbar = Snackbar
                 .make(mDrawerLayout, message, Snackbar.LENGTH_LONG);
@@ -363,17 +415,17 @@ public abstract class BaseActivity extends AppCompatActivity
 
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        FirebaseDatabase.getInstance().getReference("events").child("dummy_event").setValue(UUID.randomUUID().toString());
 
-
-
-
+    }
 
     @Override
     public void onResponse(Object response) {
-        Log.d(TAG,response.toString());
+        Log.d(TAG, response.toString());
     }
-
-
 
 
 }

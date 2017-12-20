@@ -48,6 +48,7 @@ import java.io.IOException;
 
 import static com.benezra.nir.poi.Interface.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_DETAILS;
+import static com.benezra.nir.poi.Interface.Constants.EVENT_END;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_ID;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_IMAGE;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_INTEREST;
@@ -151,7 +152,7 @@ public class MessagingService extends FirebaseMessagingService {
                         resultIntent.putExtra(EVENT_LONGITUDE, event.getLongitude());
                         resultIntent.putExtra(EVENT_INTEREST, event.getInterest());
                         resultIntent.putExtra(EVENT_START, event.getStart());
-                        resultIntent.putExtra(EVENT_START, event.getStart());
+                        resultIntent.putExtra(EVENT_END, event.getEnd());
                         resultIntent.putExtra(EVENT_ADDRESS, event.getAddress());
                         showNotificationMessage(getApplicationContext(), title, body, "", resultIntent);
 

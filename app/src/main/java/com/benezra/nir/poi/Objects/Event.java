@@ -13,6 +13,7 @@ import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -221,6 +222,18 @@ public class Event implements Parcelable , Cloneable,Comparable{
 
     public long getStart() {
         return start;
+    }
+
+    public Date getStartTime() {
+        Calendar cal =  Calendar.getInstance();
+        cal.setTimeInMillis(start);
+        return cal.getTime();
+    }
+
+    public Date getEndTime() {
+        Calendar cal =  Calendar.getInstance();
+        cal.setTimeInMillis(end);
+        return cal.getTime();
     }
 
     public void setStart(long start) {
