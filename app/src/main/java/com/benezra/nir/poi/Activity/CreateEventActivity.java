@@ -768,6 +768,7 @@ public class CreateEventActivity extends BaseActivity
         mEventTimeStart.set(Calendar.DAY_OF_MONTH, dayOfMonth);
         mCurrentEvent.setStart(mEventTimeStart.getTimeInMillis());
         setTimeText();
+        isChangeMade();
 
     }
 
@@ -778,6 +779,8 @@ public class CreateEventActivity extends BaseActivity
         mEventTimeEnd.set(Calendar.DAY_OF_MONTH, dayOfMonth);
         mCurrentEvent.setEnd(mEventTimeEnd.getTimeInMillis());
         setTimeText();
+        isChangeMade();
+
 
     }
 
@@ -786,6 +789,8 @@ public class CreateEventActivity extends BaseActivity
         mEventTimeStart.set(Calendar.HOUR_OF_DAY, hourOfDay);
         mCurrentEvent.setStart(mEventTimeStart.getTimeInMillis());
         setTimeText();
+        isChangeMade();
+
     }
 
     private void endTimeChanged(int hourOfDay, int minute) {
@@ -793,6 +798,8 @@ public class CreateEventActivity extends BaseActivity
         mEventTimeEnd.set(Calendar.HOUR_OF_DAY, hourOfDay);
         mCurrentEvent.setEnd(mEventTimeEnd.getTimeInMillis());
         setTimeText();
+        isChangeMade();
+
     }
 
 

@@ -12,6 +12,10 @@
             android:icon="@drawable/ic_settings_white_24dp"
             android:title="@string/action_settings" />
         <item
+            android:id="@+id/nav_add_interest"
+            android:icon="@drawable/ic_email_white_18dp"
+            android:title="@string/add_interest" />
+        <item
             android:id="@+id/nav_help"
             android:icon="@drawable/ic_local_library_white_24dp"
             android:title="@string/action_help" />

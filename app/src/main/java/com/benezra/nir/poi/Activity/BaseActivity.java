@@ -97,6 +97,7 @@ public abstract class BaseActivity extends AppCompatActivity
     private static final String TAG = BaseActivity.class.getSimpleName();
     private FirebaseUser mFirebaseUser;
     private FirebaseAuth.AuthStateListener mAuthListener;
+    private FirebaseAuth mAuth;
 
     // Helper
     private Handler mHandler;
@@ -106,7 +107,7 @@ public abstract class BaseActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        mAuth = FirebaseAuth.getInstance();
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mHandler = new Handler();
 
@@ -115,6 +116,10 @@ public abstract class BaseActivity extends AppCompatActivity
 
         overridePendingTransition(0, 0);
 
+        if (mAuth!=null){
+            mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+            saveUserToFireBase(mFirebaseUser);
+        }
 
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -160,7 +165,7 @@ public abstract class BaseActivity extends AppCompatActivity
                             mFirebaseInstance.getReference("users").child(user.getUid()).child("notify_radius").setValue(SharePref.getInstance(BaseActivity.this).getDefaultRadiusgetDefaultRadius());
 
                         } else {
-                            Log.d(TAG, "Fail update user");
+                            Log.d(TAG, "Fail update user " + task.getException());
 
                         }
                     }
@@ -267,6 +272,11 @@ public abstract class BaseActivity extends AppCompatActivity
                 shareApp();
                 /// intent = new Intent(this, HelpActivity.class);
                 // createBackStack(intent);
+                break;
+            case R.id.nav_add_interest:
+                intent = new Intent(this, BrowserActivity.class);
+                intent.setAction(BrowserActivity.ACTION_SHOW_ANYWAYS);
+                createBackStack(intent);
                 break;
             case R.id.nav_settings:
                 intent = new Intent(this, SettingsActivity.class);
