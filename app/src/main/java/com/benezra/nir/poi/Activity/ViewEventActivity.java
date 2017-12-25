@@ -578,6 +578,7 @@ public class ViewEventActivity extends BaseActivity
         User currentUser = new User();
         currentUser.setName(mFirebaseUser.getDisplayName());
         currentUser.setEmail(mFirebaseUser.getEmail());
+        if (mFirebaseUser.getPhotoUrl()!=null)
         currentUser.setAvatar(mFirebaseUser.getPhotoUrl().toString());
         return currentUser;
     }

@@ -67,6 +67,7 @@ import com.google.android.gms.plus.PlusShare;
 import java.util.UUID;
 
 import static com.benezra.nir.poi.Interface.Constants.ID_TOKEN;
+import static com.benezra.nir.poi.Interface.Constants.NOTIFY_TOKEN;
 
 
 /**
@@ -156,13 +157,24 @@ public abstract class BaseActivity extends AppCompatActivity
 
                             SharePref.getInstance(BaseActivity.this).putString(ID_TOKEN, idToken);
 
+                            String notificationToken  = SharePref.getInstance(BaseActivity.this).getString(NOTIFY_TOKEN, "");
+
                             FirebaseDatabase mFirebaseInstance = FirebaseDatabase.getInstance();
                             // Send token to your backend via HTTPS
-                            mFirebaseInstance.getReference().child("users").child(user.getUid()).child("user_token").setValue(task.getResult().getToken());
                             mFirebaseInstance.getReference("users").child(user.getUid()).child("name").setValue(user.getDisplayName());
                             mFirebaseInstance.getReference("users").child(user.getUid()).child("email").setValue(user.getEmail());
+                            if (user.getPhotoUrl()!=null)
                             mFirebaseInstance.getReference("users").child(user.getUid()).child("avatar").setValue(user.getPhotoUrl().toString());
                             mFirebaseInstance.getReference("users").child(user.getUid()).child("notify_radius").setValue(SharePref.getInstance(BaseActivity.this).getDefaultRadiusgetDefaultRadius());
+                            mFirebaseInstance.getReference().child("users").child(user.getUid()).child("notify_token").setValue(notificationToken);
+                            mFirebaseInstance.getReference().child("users").child(user.getUid()).child("user_token").setValue(idToken).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    Log.d(TAG,"done");
+                                }
+                            });
+
+
 
                         } else {
                             Log.d(TAG, "Fail update user " + task.getException());
@@ -269,7 +281,7 @@ public abstract class BaseActivity extends AppCompatActivity
                 createBackStack(intent);
                 break;
             case R.id.nav_share:
-                shareApp();
+                //shareApp();
                 /// intent = new Intent(this, HelpActivity.class);
                 // createBackStack(intent);
                 break;
@@ -322,7 +334,11 @@ public abstract class BaseActivity extends AppCompatActivity
         ImageView image = (ImageView) headerView.findViewById(R.id.iv_profile);
 
         name.setText(getString(R.string.hello) + " " + mFirebaseUser.getDisplayName());
+        if (mFirebaseUser.getPhotoUrl()!=null)
         Picasso.with(this).load(mFirebaseUser.getPhotoUrl().toString()).into(image);
+        else
+            Picasso.with(this).load(R.drawable.profile).into(image);
+
 
         selectNavigationItem(getNavigationDrawerID());
 

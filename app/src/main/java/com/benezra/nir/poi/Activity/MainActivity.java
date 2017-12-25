@@ -2,6 +2,7 @@ package com.benezra.nir.poi.Activity;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -86,16 +87,10 @@ public class MainActivity extends BaseActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // getImagefromGoogle();
 
-        //new RetrieveFeedTask().execute();
-
-        // Set the content of the activity to use the activity_main.xml layout file
         setContentView(R.layout.activity_main);
 
-
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
-
 
         mToolbar.setTitle("");
 
@@ -114,10 +109,16 @@ public class MainActivity extends BaseActivity implements
 
         mToolbar.setBackgroundResource(R.drawable.alcohol_party_dark);
         ViewGroup.LayoutParams layoutParams = mToolbar.getLayoutParams();
-        layoutParams.height = dpToPx(250);
+
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
+            layoutParams.height = dpToPx(250);
+        }
+        else{
+            layoutParams.height = dpToPx(150);
+        }
+
         mToolbar.setLayoutParams(layoutParams);
-//        setSupportActionBar(mToolbar);
-        //getSupportActionBar().setDisplayShowTitleEnabled(false);
+
         if (savedInstanceState == null)
             navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
         else

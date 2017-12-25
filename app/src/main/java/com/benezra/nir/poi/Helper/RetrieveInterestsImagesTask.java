@@ -186,10 +186,17 @@ public class RetrieveInterestsImagesTask extends AsyncTask<Map<String,Object>, I
 
         }
 
+        while (mIndex != mEventsInterestDataMap.size()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+            return true;
 
 
-
-        return true;
     }
 
     @Override

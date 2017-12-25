@@ -3,6 +3,7 @@ package com.benezra.nir.poi.Fragment;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -74,6 +75,8 @@ public class MainEventFragment extends Fragment implements
         //mEventsInterestDataList.addAll(DatabaseInitializer.populateSync(AppDatabase.getAppDatabase(getApplicationContext())));
 
 
+
+
     }
 
 
@@ -81,10 +84,12 @@ public class MainEventFragment extends Fragment implements
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_interests, container, false);
-
+        RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getContext(), 4);
         mSearchView = (SearchView) rootView.findViewById(R.id.search_view);
         mProgressBar = (ProgressBar) rootView.findViewById(R.id.pb);
-        RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getContext(), 4);
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
+            layoutManager = new GridLayoutManager(getContext(), 7);
+        }
         mInteresRecyclerView = (RecyclerView) rootView.findViewById(R.id.main_event_list);
         mInteresRecyclerView.setLayoutManager(layoutManager);
         mInteresRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mInteresRecyclerView, this));

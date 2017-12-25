@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.webkit.URLUtil;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.benezra.nir.poi.Interface.Constants.WIKI_INTERESTS;
 import static com.google.android.gms.internal.zzahg.runOnUiThread;
@@ -53,6 +55,7 @@ public class RetrieveWikiPageTask extends AsyncTask<String, Integer, Boolean> {
     public RetrieveInterestsTask.AsyncResponse mDelegate;
     Map<String, Object> mEventsInterestDataMap;
     private Context mContext;
+    private int result = -1;
 
 
     protected void onPreExecute() {
@@ -69,16 +72,35 @@ public class RetrieveWikiPageTask extends AsyncTask<String, Integer, Boolean> {
 
         String html = urls[0];
 
+        if (!URLUtil.isHttpsUrl(html)) {
+            return false;
+        }
 
         Document mEventsInterestDatadoc = null;
         try {
-            mEventsInterestDatadoc = Jsoup.connect(html).timeout(20000).get();
+            mEventsInterestDatadoc = Jsoup.connect(html).timeout(5000).get();
 
 
             if (mEventsInterestDatadoc != null) {
 
+
                 int index = html.lastIndexOf('/');
-                String title = html.substring(index+1,html.length());
+
+                if (index == html.length() - 1) {
+                    return false;
+                }
+
+
+                final String title = html.substring(index + 1, html.length()).toLowerCase().replaceAll("_", " ");
+
+
+                Pattern p = Pattern.compile("^([a-zA-Z_ ])[a-zA-Z_-]*[\\w_-]*[\\S]$|^([a-zA-Z_ ])[0-9_-]*[\\S]$|^[a-zA-Z_ ]*[\\S]$");
+                boolean hasSpecialChar = p.matcher(title).find();
+
+                if (!hasSpecialChar)
+                    return false;
+
+
                 Elements categories = mEventsInterestDatadoc.select("div#mw-normal-catlinks");
                 Elements cat_list = new Elements();
                 cat_list = categories.select("a[href][title]");
@@ -102,7 +124,7 @@ public class RetrieveWikiPageTask extends AsyncTask<String, Integer, Boolean> {
                 mEventsInterestData.setCategories(categories_list);
                 String upToNCharacters = paragraphs.text().substring(0, Math.min(paragraphs.text().length(), 100));
                 mEventsInterestData.setDetails(paragraphs == null ? "" : upToNCharacters);
-                mEventsInterestDataMap.put(title,mEventsInterestData);
+                mEventsInterestDataMap.put(title, mEventsInterestData);
 
 
                 String userAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36";
@@ -160,16 +182,14 @@ public class RetrieveWikiPageTask extends AsyncTask<String, Integer, Boolean> {
                             @Override
                             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
-                                String key = taskSnapshot.getMetadata().getName().substring(0, taskSnapshot.getMetadata().getName().lastIndexOf("."));
-                                EventsInterestData eventsInterestData = (EventsInterestData) mEventsInterestDataMap.get(key);
+                                EventsInterestData eventsInterestData = (EventsInterestData) mEventsInterestDataMap.get(title);
                                 if (eventsInterestData != null) {
                                     eventsInterestData.setImage(taskSnapshot.getDownloadUrl().toString());
-                                    mEventsInterestDataMap.put(key, eventsInterestData);
+                                    mEventsInterestDataMap.put(title, eventsInterestData);
                                     Log.d(TAG, "========File Uploaded =========");
-                                    mDelegate.processFinish(true,mEventsInterestDataMap);
+                                    result = 0;
 
                                 } else {
-                                    mDelegate.processFinish(false,mEventsInterestDataMap);
                                     Log.d(TAG, "null");
                                 }
 
@@ -179,7 +199,7 @@ public class RetrieveWikiPageTask extends AsyncTask<String, Integer, Boolean> {
                             @Override
                             public void onFailure(@NonNull Exception exception) {
                                 Log.d(TAG, exception.getMessage());
-
+                                result = 1;
                             }
                         });
 
@@ -199,9 +219,26 @@ public class RetrieveWikiPageTask extends AsyncTask<String, Integer, Boolean> {
             return false;
         }
 
+        while (result < 0) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
-        return true;
+        if (result > 0)
+            return false;
+        else
+            return true;
 
+
+    }
+
+    @Override
+    protected void onPostExecute(Boolean state) {
+        super.onPostExecute(state);
+        mDelegate.processFinish(state, mEventsInterestDataMap);
 
     }
 

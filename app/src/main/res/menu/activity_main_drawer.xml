@@ -8,13 +8,13 @@
             android:icon="@drawable/ic_add_circle_outline_white_24dp"
             android:title="@string/action_add" />
         <item
+            android:id="@+id/nav_add_interest"
+            android:icon="@drawable/ic_mode_edit_white_48dp"
+            android:title="@string/add_interest" />
+        <item
             android:id="@+id/nav_settings"
             android:icon="@drawable/ic_settings_white_24dp"
             android:title="@string/action_settings" />
-        <item
-            android:id="@+id/nav_add_interest"
-            android:icon="@drawable/ic_email_white_18dp"
-            android:title="@string/add_interest" />
         <item
             android:id="@+id/nav_help"
             android:icon="@drawable/ic_local_library_white_24dp"
@@ -31,9 +31,15 @@
             android:id="@+id/nav_log_out"
             android:icon="@drawable/ic_exit_to_app_white_24dp"
             android:title="@string/action_logout" />
+
+    </group>
+
+    <group android:id="@+id/nav_group_dev"
+        android:checkableBehavior="all"
+        >
         <item
             android:id="@+id/fake_data"
-            android:icon="@drawable/ic_clear_white_36dp"
+            android:icon="@drawable/ic_adb_white_24dp"
             android:title="@string/action_fake" />
 
     </group>

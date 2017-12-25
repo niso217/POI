@@ -31,6 +31,7 @@ public class FirebaseTokenService extends FirebaseInstanceIdService {
         String refreshedToken = FirebaseInstanceId.getInstance().getToken().toString();
         Log.d(TAG, NOTIFY_TOKEN + refreshedToken);
         SharePref.getInstance(FirebaseTokenService.this).putString(NOTIFY_TOKEN, refreshedToken);
+        if (FirebaseAuth.getInstance()!=null && FirebaseAuth.getInstance().getCurrentUser()!=null)
         FirebaseDatabase.getInstance().getReference().child("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("notify_token").setValue(refreshedToken);
 
     }

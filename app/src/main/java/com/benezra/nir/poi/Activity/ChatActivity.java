@@ -48,12 +48,16 @@ public class ChatActivity extends AppCompatActivity {
 
                 // Read the input field and push a new instance
                 // of ChatMessage to the Firebase database
+                String image = "";
+                if (mFirebaseUser.getPhotoUrl()!=null)
+                    image = mFirebaseUser.getPhotoUrl().toString();
+
                 FirebaseDatabase.getInstance()
                         .getReference().child("events").child(mEventId).child("chat")
                         .push()
                         .setValue(new ChatMessage(input.getText().toString(),
                                 mFirebaseUser.getDisplayName(),
-                                mFirebaseUser.getPhotoUrl().toString())
+                                image)
                         );
 
                 // Clear the input
@@ -84,6 +88,7 @@ public class ChatActivity extends AppCompatActivity {
                 messageTime.setText(DateFormat.format("hh:mm a",
                         model.getMessageTime()));
 
+                if (!model.getMessageImage().equals(""))
                 Picasso.with(getApplicationContext()).load(model.getMessageImage()).into(messageImage);
             }
         };

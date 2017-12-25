@@ -35,4 +35,14 @@
         android:visibility="gone"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
+    <com.wang.avi.AVLoadingIndicatorView
+        android:id="@+id/pb_loading"
+        style="@style/AVLoadingIndicatorView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:visibility="gone"
+        app:indicatorColor="@color/colorAccent"
+        app:indicatorName="BallClipRotatePulseIndicator" />
+
 </android.support.design.widget.CoordinatorLayout>

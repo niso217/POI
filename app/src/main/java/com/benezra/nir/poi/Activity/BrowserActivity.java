@@ -24,15 +24,23 @@ import android.widget.Toast;
 
 import com.benezra.nir.poi.Helper.RetrieveInterestsTask;
 import com.benezra.nir.poi.Helper.RetrieveWikiPageTask;
+import com.benezra.nir.poi.Objects.EventsInterestData;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Utils.Utils;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+import com.wang.avi.AVLoadingIndicatorView;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-public class BrowserActivity extends AppCompatActivity implements RetrieveInterestsTask.AsyncResponse{
+public class BrowserActivity extends AppCompatActivity implements RetrieveInterestsTask.AsyncResponse {
 
     // private String TAG = BrowserActivity.class.getSimpleName();
     private String url;
@@ -42,6 +50,8 @@ public class BrowserActivity extends AppCompatActivity implements RetrieveIntere
     CoordinatorLayout coordinatorLayout;
     final static String TAG = BrowserActivity.class.getSimpleName();
     public static final String ACTION_SHOW_ANYWAYS = TAG + ".ACTION_SHOW_ANYWAYS";
+    private AVLoadingIndicatorView mProgressBar;
+
 
 
     @Override
@@ -51,7 +61,10 @@ public class BrowserActivity extends AppCompatActivity implements RetrieveIntere
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle("");
+        getSupportActionBar().setTitle("Add Interest");
+
+        mProgressBar = findViewById(R.id.pb_loading);
+
 
         url = "https://www.wikipedia.org";
 
@@ -68,6 +81,7 @@ public class BrowserActivity extends AppCompatActivity implements RetrieveIntere
 
         webView.loadUrl(url);
     }
+
 
     private void initWebView() {
         webView.setWebChromeClient(new MyWebChromeClient(this));
@@ -137,12 +151,12 @@ public class BrowserActivity extends AppCompatActivity implements RetrieveIntere
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.browser, menu);
 
-        if (Utils.isBookmarked(this, webView.getUrl())) {
-            // change icon color
-            Utils.tintMenuIcon(getApplicationContext(), menu.getItem(0), R.color.colorAccent);
-        } else {
-            Utils.tintMenuIcon(getApplicationContext(), menu.getItem(0), android.R.color.white);
-        }
+//        if (Utils.isBookmarked(this, webView.getUrl())) {
+//            // change icon color
+//            Utils.tintMenuIcon(getApplicationContext(), menu.getItem(0), R.color.colorAccent);
+//        } else {
+//            Utils.tintMenuIcon(getApplicationContext(), menu.getItem(0), android.R.color.white);
+//        }
         return true;
     }
 
@@ -181,6 +195,9 @@ public class BrowserActivity extends AppCompatActivity implements RetrieveIntere
         }
 
         if (item.getItemId() == R.id.action_bookmark) {
+            setProgress(true);
+
+
             // bookmark / unbookmark the url
             Utils.bookmarkUrl(this, webView.getUrl());
 
@@ -226,18 +243,15 @@ public class BrowserActivity extends AppCompatActivity implements RetrieveIntere
     @Override
     public void processFinish(boolean output, Map<String, Object> list) {
         if (output) {
-            FirebaseDatabase.getInstance().getReference("interests_data").updateChildren(list).addOnCompleteListener(new OnCompleteListener<Void>() {
-                @Override
-                public void onComplete(@NonNull Task<Void> task) {
-                    Toast.makeText(BrowserActivity.this, "Finished uploading", Toast.LENGTH_SHORT).show();
-                    //mTextView.setText("Finished uploading to firebase");
-                    Log.d(TAG, "==========finish===============");
-
-                }
-            });
+            if (list != null && list.size() > 0)
+                getAllInterests(list);
         } else
+        {
+            showSnackBar("Nothing found");
+            setProgress(false);
 
-            Toast.makeText(BrowserActivity.this, "Failed to update interest", Toast.LENGTH_SHORT).show();
+        }
+
     }
 
     private class MyWebChromeClient extends WebChromeClient {
@@ -248,4 +262,64 @@ public class BrowserActivity extends AppCompatActivity implements RetrieveIntere
             this.context = context;
         }
     }
+
+    private void getAllInterests(final Map<String, Object> list) { //flag=false - first run flag=true - update database
+        Map.Entry<String, Object> entry = list.entrySet().iterator().next();
+        String key = entry.getKey();
+        Query query = FirebaseDatabase.getInstance().getReference("interests_data").orderByKey().equalTo(key);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    showSnackBar("Interest already exist");
+                    setProgress(false);
+
+                } else {
+                    FirebaseDatabase.getInstance().getReference("interests_data").updateChildren(list).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            //Toast.makeText(BrowserActivity.this, "Finished uploading", Toast.LENGTH_SHORT).show();
+                            showSnackBar("Thanks for expanding our knowledge");
+                            Log.d(TAG, "==========finish===============");
+                            setProgress(false);
+
+
+
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                showSnackBar("Something went wrong please try again later");
+                setProgress(false);
+
+
+            }
+        });
+
+    }
+
+    private void setProgress(boolean state){
+        if (state){
+            //coordinatorLayout.setEnabled(false);
+            mProgressBar.smoothToShow();
+            //webView.setAlpha(0.6f);
+        }
+            else{
+           // coordinatorLayout.setEnabled(true);
+            mProgressBar.smoothToHide();
+            //webView.setAlpha(1f);
+        }
+
+    }
+
+    public void showSnackBar(String message) {
+        Snackbar snackbar = Snackbar
+                .make(coordinatorLayout, message, Snackbar.LENGTH_LONG);
+        snackbar.show();
+
+    }
 }
+
