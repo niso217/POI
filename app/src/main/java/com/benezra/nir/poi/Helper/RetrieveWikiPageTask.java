@@ -42,7 +42,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import static com.benezra.nir.poi.Interface.Constants.WIKI_INTERESTS;
-import static com.google.android.gms.internal.zzahg.runOnUiThread;
 
 /**
  * Created by nirb on 14/12/2017.

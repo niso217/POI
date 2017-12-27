@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.benezra.nir.poi.Interface.Constants.WIKI_INTERESTS;
-import static com.google.android.gms.internal.zzahg.runOnUiThread;
+import static com.google.android.gms.internal.zzahn.runOnUiThread;
 
 /**
  * Created by nirb on 14/12/2017.
