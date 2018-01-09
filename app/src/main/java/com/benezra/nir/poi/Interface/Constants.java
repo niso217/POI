@@ -17,6 +17,13 @@ public interface Constants {
     public static final String EVENT_IMAGE = "event_image";
     public static final String EVENT_TITLE = "event_title";
     public static final String EVENT_ADDRESS = "event_address";
+    public static final String EVENT_LIST = "event_list";
+    public static final String SEARCH_RADIUS = "search_radius";
+
+    public static final String POSITION = "position";
+    public static final String LOCATION_CALLBACK = "location_callback";
+
+    public static final int APP_BAR_SIZE = 8;
 
     public static final String DETAILS = "details";
     public static final String END = "end";
@@ -51,6 +58,7 @@ public interface Constants {
     public static final String ID_TOKEN = "id_token";
     public static final String NOTIFY_TOKEN = "notify_token";
 
+    public static final String CURRENT_FRAGMENT = "current_fragment";
 
     //permissions type
     public static final String USER_LOCATION = "user_location";

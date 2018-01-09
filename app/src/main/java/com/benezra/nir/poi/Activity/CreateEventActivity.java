@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.DatePickerDialog;
+import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -12,19 +13,23 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.NestedScrollView;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PagerSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
@@ -40,8 +45,11 @@ import java.time.Period;
 import java.util.Arrays;
 import java.util.Calendar;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
 import com.benezra.nir.poi.Adapter.EventImagesAdapter;
 import com.benezra.nir.poi.Adapter.ViewHolders;
+import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.benezra.nir.poi.Utils.DateUtil;
@@ -140,7 +148,7 @@ import static com.benezra.nir.poi.Interface.Constants.START;
 import static com.benezra.nir.poi.Interface.Constants.TITLE;
 
 
-public class CreateEventActivity extends BaseActivity
+public class CreateEventActivity extends AppCompatActivity
         implements View.OnClickListener,
         RecyclerTouchListener.ClickListener,
         ImageCameraDialogFragment.ImageCameraDialogCallbackNew,
@@ -152,8 +160,10 @@ public class CreateEventActivity extends BaseActivity
         View.OnFocusChangeListener,
         UploadToFireBaseFragment.UploadListener,
         GoogleMapsBottomSheetBehavior.BottomSheetCallback,
-        ViewTreeObserver.OnGlobalLayoutListener,
-        TabLayout.OnTabSelectedListener {
+        TabLayout.OnTabSelectedListener,
+        PermissionsDialogFragment.PermissionsGrantedCallback,
+        Response.Listener,
+        Response.ErrorListener{
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -191,6 +201,7 @@ public class CreateEventActivity extends BaseActivity
     private TextView mTextViewDistance;
     private LinearLayout mNavigationBarLayout;
     public static final String ACTION_SHOW_ANYWAYS = TAG + ".ACTION_SHOW_ANYWAYS";
+    private CoordinatorLayout mCoordinatorLayout;
 
 
     private TabLayout mTabLayout;
@@ -246,15 +257,14 @@ public class CreateEventActivity extends BaseActivity
 
 
         } else {
+            mTabSelectedIndex = LOCATION_TAB;
             mInterestsList = new ArrayList<>();
             mParticipates = new ArrayList<>();
 
             if (getIntent().getStringExtra(EVENT_ID) != null) {
-                mTabSelectedIndex = -1;
                 mMode = false; //edit  existing event
                 getEventIntent(getIntent());
             } else {
-                mTabSelectedIndex = 0;
                 mMode = true; //new event
                 mCurrentEvent = new Event(UUID.randomUUID().toString(), mFirebaseUser.getUid());
                 setAllDayStartTime();
@@ -271,28 +281,28 @@ public class CreateEventActivity extends BaseActivity
         initListeners();
 
 
-        behavior.setParallax(mPicturesRecyclerView);
-        behavior.setAnchorHeight(900);
-        behavior.setHideable(false);
-
-
     }
+
+    private int calculateDeviceHeight() {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        return displayMetrics.heightPixels;
+    }
+
 
     @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        behavior.setPeekHeight(100);
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
 
+            getWindow().getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
     }
 
-    public void SelectCurrentEventPoint() {
-        if (mTabSelectedIndex == -1) return;
-
-        else
-            mTabLayout.getTabAt(mTabSelectedIndex).select();
-
-
-    }
 
     private void initView() {
         mNavigationBarLayout = findViewById(R.id.tab_layout);
@@ -308,6 +318,8 @@ public class CreateEventActivity extends BaseActivity
         mPlaceAutoCompleteLayout = findViewById(R.id.place_autocomplete_layout);
         mEventDetails = findViewById(R.id.tv_desciption);
         mTitle = findViewById(R.id.tv_title);
+        mCoordinatorLayout = findViewById(R.id.coordinatorlayout);
+        mPicturesRecyclerView = findViewById(R.id.recycler_view_pictures);
 
         mLayoutStart = findViewById(R.id.layout_start);
         mLayoutEnd = findViewById(R.id.layout_end);
@@ -319,18 +331,21 @@ public class CreateEventActivity extends BaseActivity
 
         setTimeText();
 
-
-
-
-
         mspinnerCustom = findViewById(R.id.spinnerCustom);
         mspinnerCustom.setTitle("Select Item");
         mspinnerCustom.setPositiveButton("OK");
         mProgressBar = findViewById(R.id.pb_loading);
         mNestedScrollView = findViewById(R.id.nestedscrollview);
-        behavior = GoogleMapsBottomSheetBehavior.from(mNestedScrollView);
         mTabLayout = findViewById(R.id.tab_layout_tab);
         mTextViewDistance = findViewById(R.id.tv_distance);
+        behavior = GoogleMapsBottomSheetBehavior.from(mNestedScrollView);
+        behavior.setAnchorHeight(calculateDeviceHeight() / 2);
+        behavior.setHideable(false);
+        behavior.setPeekHeight(100);
+        behavior.setParallax(mPicturesRecyclerView);
+
+        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, calculateDeviceHeight()/2);
+        mPicturesRecyclerView.setLayoutParams(layoutParams);
 
 
     }
@@ -349,7 +364,6 @@ public class CreateEventActivity extends BaseActivity
         mEventDetails.setOnFocusChangeListener(this);
         mTitle.setOnFocusChangeListener(this);
         mEventDetails.addTextChangedListener(this);
-        mNestedScrollView.getViewTreeObserver().addOnGlobalLayoutListener(this);
         behavior.setBottomSheetCallback(this);
         mTabLayout.addOnTabSelectedListener(this);
         mTitle.addTextChangedListener(this);
@@ -397,12 +411,6 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
-    @Override
-    public void onGlobalLayout() {
-        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(mPicturesRecyclerView.getMeasuredWidth(), behavior.getAnchorOffset());
-        mPicturesRecyclerView.setLayoutParams(layoutParams);
-        mNestedScrollView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-    }
 
 
     private void initParticipatesRecycleView() {
@@ -413,7 +421,6 @@ public class CreateEventActivity extends BaseActivity
 
 
     private void initImageRecycleView() {
-        mPicturesRecyclerView = findViewById(R.id.recycler_view_pictures);
         mPicturesRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
         mPicturesRecyclerView.setNestedScrollingEnabled(false);
         mPicturesRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mPicturesRecyclerView, this));
@@ -654,6 +661,13 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
+    public void showSnackBar(String message) {
+        Snackbar snackbar = Snackbar
+                .make(mCoordinatorLayout, message, Snackbar.LENGTH_LONG);
+        snackbar.show();
+
+    }
+
     private void isChangeMade() {
 
         if (!mMode) {
@@ -734,15 +748,13 @@ public class CreateEventActivity extends BaseActivity
     }
 
     private void addKeboardChangeListener() {
-        CoordinatorLayout contentView = findViewById(R.id.coordinatorlayout);
-        contentView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+        mCoordinatorLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
 
                 Rect r = new Rect();
-                CoordinatorLayout contentView = findViewById(R.id.coordinatorlayout);
-                contentView.getWindowVisibleDisplayFrame(r);
-                int screenHeight = contentView.getRootView().getHeight();
+                mCoordinatorLayout.getWindowVisibleDisplayFrame(r);
+                int screenHeight = mCoordinatorLayout.getRootView().getHeight();
 
                 // r.bottom is the position above soft keypad or device button.
                 // if keypad is shown, the r.bottom is smaller than that before.
@@ -755,7 +767,7 @@ public class CreateEventActivity extends BaseActivity
                 } else {
                     Log.d(TAG, "close");
                     behavior.setState(STATE_ANCHORED);
-                    contentView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    mCoordinatorLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
             }
         });
@@ -892,11 +904,6 @@ public class CreateEventActivity extends BaseActivity
 
     }
 
-
-    @Override
-    protected int getNavigationDrawerID() {
-        return 0;
-    }
 
     private void getEventIntent(Intent intent) {
         //showDialog();
@@ -1328,6 +1335,11 @@ public class CreateEventActivity extends BaseActivity
     @Override
     public void onTabSelected(TabLayout.Tab tab) {
         mTabSelectedIndex = tab.getPosition();
+        onTabSelect();
+
+    }
+
+    private void onTabSelect(){
         switch (mTabSelectedIndex) {
             case LOCATION_TAB:
                 navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
@@ -1337,7 +1349,6 @@ public class CreateEventActivity extends BaseActivity
                 break;
 
         }
-
     }
 
     @Override
@@ -1347,15 +1358,7 @@ public class CreateEventActivity extends BaseActivity
 
     @Override
     public void onTabReselected(TabLayout.Tab tab) {
-        switch (mTabSelectedIndex) {
-            case LOCATION_TAB:
-                navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
-                break;
-            case SEARCH_TAB:
-                mPlaceAutocompleteFragment.performClick();
-                break;
-
-        }
+        onTabSelect();
     }
 
     private void switchViews(boolean show) {
@@ -1411,5 +1414,31 @@ public class CreateEventActivity extends BaseActivity
         }
     }
 
+    @Override
+    public void onErrorResponse(VolleyError error) {
+        Log.d(TAG, error.toString());
+    }
+
+    @Override
+    public void onResponse(Object response) {
+        Log.d(TAG, response.toString());
+    }
+
+    public void showProgress(String title, String message) {
+        ProgressDialogFragment mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
+        if (mProgressDialogFragment == null) {
+            Log.d(TAG, "opening origress dialog");
+            mProgressDialogFragment = ProgressDialogFragment.newInstance(
+                    title, message, ProgressDialog.STYLE_SPINNER);
+            mProgressDialogFragment.show(getSupportFragmentManager(), ProgressDialogFragment.class.getName());
+        }
+    }
+
+    public void hideProgressMessage() {
+        ProgressDialogFragment mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
+        if (mProgressDialogFragment != null)
+            mProgressDialogFragment.dismiss();
+
+    }
 }
 

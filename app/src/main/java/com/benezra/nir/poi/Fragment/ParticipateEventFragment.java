@@ -18,10 +18,10 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
+import com.benezra.nir.poi.Activity.MainActivity;
 import com.benezra.nir.poi.Activity.ViewEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
 import com.benezra.nir.poi.Objects.Event;
-import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.benezra.nir.poi.View.DividerItemDecoration;
@@ -47,12 +47,11 @@ import static com.benezra.nir.poi.Interface.Constants.EVENT_LONGITUDE;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_OWNER;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_START;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_TITLE;
-import static com.benezra.nir.poi.Interface.Constants.USER_LOCATION;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class ParticipateEventFragment extends Fragment implements RecyclerTouchListener.ClickListener {
+public class ParticipateEventFragment extends Fragment implements RecyclerTouchListener.ClickListener,MainActivity.LocationChangedListener {
 
     private FirebaseDatabase mFirebaseInstance;
     private FirebaseUser mFirebaseUser;
@@ -60,20 +59,19 @@ public class ParticipateEventFragment extends Fragment implements RecyclerTouchL
     private RecyclerView mEventsRecyclerView;
     private List<Event> mEventList;
     private EventsAdapter mEventsAdapter;
-    private FragmentDataCallBackInterface mListener;
+    private MainActivity mActivity;
     private ProgressBar mProgressBar;
-    private Location mLastKnownLocation;
     private RelativeLayout mRootLayout;
     private Event mCurrentEvent;
+    private static final String TAG = ParticipateEventFragment.class.getSimpleName();
+
 
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        this.mContext = context;
-        if (context instanceof FragmentDataCallBackInterface) {
-            mListener = (FragmentDataCallBackInterface) context;
-
+        if (context instanceof MainActivity) {
+            mActivity = (MainActivity) context;
         }
     }
 
@@ -114,7 +112,6 @@ public class ParticipateEventFragment extends Fragment implements RecyclerTouchL
         mFirebaseInstance.getReference().keepSynced(true);
         mEventList = new ArrayList<>();
         mEventsAdapter = new EventsAdapter(getContext(), mEventList);
-        mLastKnownLocation = (Location) getArguments().get(USER_LOCATION);
 
         if (savedInstanceState != null)
             mCurrentEvent = savedInstanceState.getParcelable("event");
@@ -167,8 +164,8 @@ public class ParticipateEventFragment extends Fragment implements RecyclerTouchL
 
                     if (dataSnapshot.exists()) {
                         Event event = dataSnapshot.getValue(Event.class);
-                        if (mLastKnownLocation != null)
-                            event.setDistance(mLastKnownLocation);
+                        if (mActivity.getUserLocation() != null)
+                            event.setDistance(mActivity.getUserLocation());
                         mEventList.add(event);
 
                     }
@@ -238,6 +235,11 @@ public class ParticipateEventFragment extends Fragment implements RecyclerTouchL
         mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates").child(mFirebaseUser.getUid()).removeValue();
         mFirebaseInstance.getReference("users").child(mFirebaseUser.getUid()).child("events").child(mCurrentEvent.getId()).removeValue();
 
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        Log.d(TAG,"location changed");
     }
 }
 

@@ -3,31 +3,24 @@ package com.benezra.nir.poi.Fragment;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.ToggleButton;
 
+import com.benezra.nir.poi.Activity.MainActivity;
 import com.benezra.nir.poi.Activity.ViewEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
 import com.benezra.nir.poi.Objects.Event;
-import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.benezra.nir.poi.View.DividerItemDecoration;
@@ -35,19 +28,13 @@ import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
 import com.firebase.geofire.GeoQueryEventListener;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.squareup.picasso.Picasso;
 import com.wang.avi.AVLoadingIndicatorView;
 import com.xw.repo.BubbleSeekBar;
 
@@ -57,7 +44,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_DETAILS;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_END;
@@ -69,20 +55,17 @@ import static com.benezra.nir.poi.Interface.Constants.EVENT_LONGITUDE;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_OWNER;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_START;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_TITLE;
+import static com.benezra.nir.poi.Interface.Constants.SEARCH_RADIUS;
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class EventByInterestListFragment extends Fragment implements
-
+        MainActivity.FABClickedListener,
         RecyclerTouchListener.ClickListener {
 
     private FirebaseDatabase mFirebaseInstance;
-    private FusedLocationProviderClient mFusedLocationClient;
-    private Location mLastLocation;
-    private FirebaseUser mFirebaseUser;
-    private FragmentDataCallBackInterface mListener;
-    private Context mContext;
+    private MainActivity mActivity;
     private RecyclerView mEventsRecyclerView;
     private ArrayList<Event> mEventList;
     private EventsAdapter mEventsAdapter;
@@ -93,36 +76,52 @@ public class EventByInterestListFragment extends Fragment implements
     private String mSelectedInterest;
     private BubbleSeekBar mBbubbleSeekBar;
     private String mImageUrl;
-    private NestedScrollView mNestedScrollView;
     private AVLoadingIndicatorView mProgressBar;
-    private FloatingActionButton mFloatingActionButton;
     private AVLoadingIndicatorView mAVLoadingIndicatorView;
+    private ToggleButton mToggleButton;
 
+    private int mRadius = 30;
+
+
+    public static EventByInterestListFragment newInstance(String interest, String image) {
+        EventByInterestListFragment eventByInterestListFragment = new EventByInterestListFragment();
+        Bundle args = new Bundle();
+        args.putString(EVENT_INTEREST, interest);
+        args.putString(EVENT_IMAGE, image);
+
+        eventByInterestListFragment.setArguments(args);
+        return eventByInterestListFragment;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
+        setRetainInstance(true);
         super.onCreate(savedInstanceState);
         mFirebaseInstance = FirebaseDatabase.getInstance();
-        mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mEventList = new ArrayList<>();
         mEventsAdapter = new EventsAdapter(getContext(), mEventList);
         mUserEvents = new ArrayList<>();
         mEventHashSet = new HashSet<>();
         mAuth = FirebaseAuth.getInstance();
-        mSelectedInterest = getArguments().getString("interest");
-        mImageUrl = getArguments().getString("image");
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
+        mSelectedInterest = getArguments().getString(EVENT_INTEREST);
+        mImageUrl = getArguments().getString(EVENT_IMAGE);
+
+
+        if (savedInstanceState!=null)
+            mRadius = savedInstanceState.getInt(SEARCH_RADIUS);
+
 
 
     }
 
 
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        this.mContext = context;
-        if (context instanceof FragmentDataCallBackInterface) {
-            mListener = (FragmentDataCallBackInterface) context;
+        if (context instanceof MainActivity) {
+            mActivity = (MainActivity) context;
+
         }
     }
 
@@ -154,15 +153,84 @@ public class EventByInterestListFragment extends Fragment implements
 
     }
 
+    private void initToggle(){
+        mToggleButton.setVisibility(View.VISIBLE);
+
+        mToggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mFirebaseInstance.getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("notification").child(mSelectedInterest).setValue(isChecked);
+
+            }
+        });
+        mToggleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mToggleButton.isChecked())
+                    mActivity.showSnackBar(getString(R.string.notification_on));
+                else
+                    mActivity.showSnackBar(getString(R.string.notification_off));
+            }
+        });
+    }
+
+    public void setNotifications() {
+        Query query = mFirebaseInstance.getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("notification").child(mSelectedInterest);
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    if ((boolean) dataSnapshot.getValue() == true)
+                        mToggleButton.setChecked(true);
+                    else
+                        mToggleButton.setChecked(false);
+
+
+                } else
+                    mToggleButton.setChecked(false);
+
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+
     public EventByInterestListFragment() {
         // Required empty public constructor
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(SEARCH_RADIUS,mRadius);
+    }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        Log.d(TAG, "onSaveInstanceState");
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        mActivity.setAppBarExpended();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mActivity.setFABCallBack(this);
+        mActivity.setmCurrentFragment(TAG);
+        setFabVisibility();
+
+
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mActivity.setFABCallBack(null);
+
     }
 
     @Override
@@ -178,39 +246,13 @@ public class EventByInterestListFragment extends Fragment implements
         mEventsRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL_LIST));
         mEventsRecyclerView.setAdapter(mEventsAdapter);
 
-        mNestedScrollView = rootView.findViewById(R.id.nestedscrollview);
-
-        mProgressBar = rootView.findViewById(R.id.pb_loading);
-
         mAVLoadingIndicatorView = rootView.findViewById(R.id.avi);
 
-        ImageView background = (ImageView) rootView.findViewById(R.id.backdrop);
-        if (!mImageUrl.equals(""))
-            Picasso.with(getContext()).load(mImageUrl).into(background, new com.squareup.picasso.Callback() {
-                @Override
-                public void onSuccess() {
-                    mProgressBar.smoothToHide();
-                }
+        mActivity.setToolbarBackground(mImageUrl);
+        mToggleButton = rootView.findViewById(R.id.switch_notify);
+        initToggle();
+        setNotifications();
 
-                @Override
-                public void onError() {
-
-                }
-            });
-        ;
-
-        mFloatingActionButton = rootView.findViewById(R.id.fab);
-        mFloatingActionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Bundle bundle = new Bundle();
-                bundle.putParcelableArrayList("event_list", mEventList);
-                EventByInterestMapFragment eventByInterestMapFragment = new EventByInterestMapFragment();
-                eventByInterestMapFragment.setArguments(bundle);
-                getActivity().getSupportFragmentManager().beginTransaction().add(R.id.framelayout, eventByInterestMapFragment, EventByInterestMapFragment.class.getSimpleName()).addToBackStack(null).commit();
-
-            }
-        });
 
         mBbubbleSeekBar = rootView.findViewById(R.id.sb_km);
 
@@ -218,58 +260,25 @@ public class EventByInterestListFragment extends Fragment implements
         mBbubbleSeekBar.setOnProgressChangedListener(new BubbleSeekBar.OnProgressChangedListener() {
             @Override
             public void onProgressChanged(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat) {
-                Log.d(TAG, progress + " Changed");
             }
 
             @Override
             public void getProgressOnActionUp(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat) {
-                Log.d(TAG, progress + " UP");
+                mRadius = progress;
                 initGeoFire(progress);
+
 
             }
 
             @Override
             public void getProgressOnFinally(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat) {
-                Log.d(TAG, progress + " Finally");
 
             }
         });
 
-//        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mEventsAdapter);
-//        mItemTouchHelper = new ItemTouchHelper(callback);
-//        mItemTouchHelper.attachToRecyclerView(mEventsRecyclerView);
-
+        getAllUserEvents();
 
         return rootView;
-    }
-
-
-    public void initFusedLocation() {
-        mListener.startLoadingData();
-
-        if (ActivityCompat.checkSelfPermission(getActivity(), ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(getActivity(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-        }
-        mFusedLocationClient.getLastLocation()
-                .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
-                            @Override
-                            public void onSuccess(Location location) {
-                                // Got last known location. In some rare situations this can be null.
-                                if (location != null) {
-                                    mLastLocation = location;
-                                    initGeoFire(30);
-                                }
-                            }
-                        }
-
-                )
-                .addOnFailureListener(getActivity(), new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.d(TAG, e.getMessage().toString());
-                    }
-                });
     }
 
 
@@ -279,9 +288,8 @@ public class EventByInterestListFragment extends Fragment implements
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("events");
         GeoFire geoFire = new GeoFire(ref);
 
-        if (mLastLocation == null) return;
-        // creates a new query around [37.7832, -122.4056] with a radius of 0.6 kilometers
-        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()), radius);
+        if (mActivity.getUserLocation() == null) return;
+        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mActivity.getUserLocation().getLatitude(), mActivity.getUserLocation().getLongitude()), radius);
 
         geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
             @Override
@@ -339,8 +347,7 @@ public class EventByInterestListFragment extends Fragment implements
                         mUserEvents.add(data.getKey());
                     }
                 }
-                initFusedLocation();
-
+                initGeoFire(mRadius);
             }
 
             @Override
@@ -361,7 +368,7 @@ public class EventByInterestListFragment extends Fragment implements
                     for (DataSnapshot data : dataSnapshot.getChildren()) {
                         if (!mUserEvents.contains(data.getKey()) && mEventHashSet.contains(data.getKey())) {
                             Event event = data.getValue(Event.class);
-                            event.setDistance(mLastLocation);
+                            event.setDistance(mActivity.getUserLocation());
                             if (event.isStatus())
                             mEventList.add(event);
                         }
@@ -373,7 +380,7 @@ public class EventByInterestListFragment extends Fragment implements
                 stopAnim();
                 setFabVisibility();
 
-                mListener.finishLoadingData();
+                //mActivity.finishLoadingData();
             }
 
             @Override
@@ -385,9 +392,9 @@ public class EventByInterestListFragment extends Fragment implements
 
     private void setFabVisibility() {
         if (mEventList.size() > 0)
-            mFloatingActionButton.setVisibility(View.VISIBLE);
+            mActivity.setFloatingActionVisibility(true);
         else
-            mFloatingActionButton.setVisibility(View.GONE);
+            mActivity.setFloatingActionVisibility(false);
     }
 
     private void startAnim() {
@@ -399,4 +406,8 @@ public class EventByInterestListFragment extends Fragment implements
     }
 
 
+    @Override
+    public void onFABClicked() {
+        mActivity.inflateFragment(EventByInterestMapFragment.newInstance(mEventList),true);
+    }
 }

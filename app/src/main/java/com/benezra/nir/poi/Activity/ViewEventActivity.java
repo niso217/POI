@@ -4,12 +4,14 @@ import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.CalendarContract;
 import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
@@ -18,14 +20,17 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.NestedScrollView;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PagerSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.CompoundButton;
 import android.widget.HorizontalScrollView;
@@ -66,6 +71,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static com.benezra.nir.poi.Fragment.MapFragment.LOCATION_TAB;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_END;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_ANCHORED;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
@@ -86,7 +92,7 @@ import static com.benezra.nir.poi.Interface.Constants.EVENT_TITLE;
 import static com.benezra.nir.poi.Interface.Constants.ID;
 
 
-public class ViewEventActivity extends BaseActivity
+public class ViewEventActivity extends AppCompatActivity
         implements View.OnClickListener,
         MapFragment.MapFragmentCallback,
         ImageCameraDialogFragment.ImageCameraDialogCallbackNew,
@@ -95,7 +101,6 @@ public class ViewEventActivity extends BaseActivity
         UploadToFireBaseFragment.UploadListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
         GoogleMapsBottomSheetBehavior.BottomSheetCallback,
-        ViewTreeObserver.OnGlobalLayoutListener,
         TabLayout.OnTabSelectedListener
 
 {
@@ -104,36 +109,24 @@ public class ViewEventActivity extends BaseActivity
     private FirebaseUser mFirebaseUser;
     private Event mCurrentEvent;
     final static String TAG = ViewEventActivity.class.getSimpleName();
-    private CollapsingToolbarLayout collapsingToolbar;
     private FirebaseDatabase mFirebaseInstance;
     private ProgressBar mProgressBar;
-    private TextView tvDatePickerStart, tvTimePickerStart,tvDatePickerEnd, tvTimePickerEnd;
+    private TextView tvDatePickerStart, tvTimePickerStart, tvDatePickerEnd, tvTimePickerEnd;
     private boolean mJoinEvent;
-    private Menu mMenu;
     private LinearLayout mPrivateLinearLayout;
-
     private MapFragment mapFragment;
-    private CoordinatorLayout mCoordinatorLayout;
-    private AppBarLayout mAppBarLayout;
-    private boolean mCanDrag = true;
-    private int mCurrentOffset;
-    private int mScrollDirection;
     private boolean mTouchEventFired;
     private ImageButton mNavigate, mAddImage, mChat, mShare, mCalender;
     private ToggleButton mJoin;
-    private Toolbar mToolbar;
-    private TextView mTitle, mDetails,mTextViewDistance;
-
+    private TextView mTitle, mDetails, mTextViewDistance;
     private RecyclerView mPicturesRecyclerView;
     private RecyclerView mParticipateRecyclerView;
     private ArrayList<String> mEventImagesList;
     private EventImagesAdapter mEventImagesAdapter;
     private GoogleMapsBottomSheetBehavior behavior;
     private NestedScrollView mNestedScrollView;
-
     private HorizontalScrollView mHorizontalScrollView;
     private LinearLayout mNavigationBarLayout;
-
     private TabLayout mTabLayout;
 
     public static final int DRIVING_TAB = 0;
@@ -141,7 +134,6 @@ public class ViewEventActivity extends BaseActivity
     public static final int CYCLING_TAB = 2;
     public static final int EVENT_LOC_TAB = 3;
     private int mTabSelectedIndex;
-
 
 
     private FirebaseRecyclerAdapter<User, ViewHolders.ParticipatesViewHolder> mParticipateAdapter;
@@ -179,7 +171,7 @@ public class ViewEventActivity extends BaseActivity
 
 
         } else {
-            mTabSelectedIndex = 0;
+            mTabSelectedIndex = LOCATION_TAB;
             mJoinEvent = false;
             getEventIntent(getIntent());
             isJoined();
@@ -187,24 +179,17 @@ public class ViewEventActivity extends BaseActivity
 
         }
 
-
         initListeners();
 
-
-        behavior.setParallax(mPicturesRecyclerView);
-        behavior.setAnchorHeight(900);
-        behavior.setHideable(false);
-
-
-
     }
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        behavior.setPeekHeight(100);
 
+    private int calculateDeviceHeight() {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        return displayMetrics.heightPixels;
     }
+
 
     private void initView() {
         mHorizontalScrollView = findViewById(R.id.scrolling_icons);
@@ -218,25 +203,31 @@ public class ViewEventActivity extends BaseActivity
         mAddImage = findViewById(R.id.btn_add_image);
         mChat = findViewById(R.id.btn_chat);
         mCalender = findViewById(R.id.btn_cal);
-
         mProgressBar = findViewById(R.id.pb_loading);
         mPrivateLinearLayout = findViewById(R.id.private_layout);
         tvDatePickerStart = findViewById(R.id.tv_date_start);
         tvTimePickerStart = findViewById(R.id.tv_time_start);
         tvDatePickerEnd = findViewById(R.id.tv_date_end);
         tvTimePickerEnd = findViewById(R.id.tv_time_end);
-        mParticipateRecyclerView = findViewById(R.id.participate_recycler_view);
         mNestedScrollView = findViewById(R.id.nestedscrollview);
         mDetails = findViewById(R.id.tv_desciption);
-        behavior = GoogleMapsBottomSheetBehavior.from(mNestedScrollView);
         mTabLayout = findViewById(R.id.tab_layout_tab);
-        mTextViewDistance =  findViewById(R.id.tv_distance);
+        mTextViewDistance = findViewById(R.id.tv_distance);
+        mPicturesRecyclerView = findViewById(R.id.recycler_view_pictures);
+        mParticipateRecyclerView = findViewById(R.id.participate_recycler_view);
+        behavior = GoogleMapsBottomSheetBehavior.from(mNestedScrollView);
+        behavior.setAnchorHeight(calculateDeviceHeight() / 2);
+        behavior.setHideable(false);
+        behavior.setPeekHeight(100);
+        behavior.setParallax(mPicturesRecyclerView);
 
+        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, calculateDeviceHeight()/2);
+        mPicturesRecyclerView.setLayoutParams(layoutParams);
 
 
     }
 
-    private void focusRight(){
+    private void focusRight() {
         mHorizontalScrollView.postDelayed(new Runnable() {
             public void run() {
                 mHorizontalScrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT);
@@ -245,7 +236,6 @@ public class ViewEventActivity extends BaseActivity
     }
 
     private void initParticipatesRecycleView() {
-        mParticipateRecyclerView = findViewById(R.id.participate_recycler_view);
         mParticipateRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
         mParticipateRecyclerView.setNestedScrollingEnabled(false);
 
@@ -268,9 +258,8 @@ public class ViewEventActivity extends BaseActivity
         mAddImage.setOnClickListener(this);
         mChat.setOnClickListener(this);
         mCalender.setOnClickListener(this);
-        mNestedScrollView.getViewTreeObserver().addOnGlobalLayoutListener(this);
-        behavior.setBottomSheetCallback(this);
         mTabLayout.addOnTabSelectedListener(this);
+        behavior.setBottomSheetCallback(this);
         getAllEventImages();
         participatesChangeListener();
 
@@ -391,48 +380,6 @@ public class ViewEventActivity extends BaseActivity
 
     }
 
-
-    @Override
-    protected int getNavigationDrawerID() {
-        return 0;
-    }
-
-
-//    private void setVisibility(final View view, final float alpha, long duration, boolean animate) {
-//
-//        if (animate) {
-//            view.animate()
-//                    .alpha(alpha)
-//                    .setDuration(duration)
-//                    .setListener(new AnimatorListenerAdapter() {
-//                        @Override
-//                        public void onAnimationEnd(Animator animation) {
-//                            super.onAnimationEnd(animation);
-//                            if (alpha == 1.0f)
-//                                view.setVisibility(View.VISIBLE);
-//                            if (alpha == 0.0f)
-//                                view.setVisibility(View.GONE);
-//                            Log.d(TAG, alpha + "");
-//
-//                        }
-//                    });
-//        } else {
-//
-//            view.setAlpha(alpha);
-//
-//            if (alpha == 1.0f) {
-//                view.setVisibility(View.VISIBLE);
-//            }
-//
-//            if (alpha == 0.0f) {
-//                view.setVisibility(View.GONE);
-//            }
-//
-//        }
-//
-//    }
-
-
     private void isJoined() {
         Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
         query.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -456,9 +403,7 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
-
     private void initImageRecycleView() {
-        mPicturesRecyclerView = findViewById(R.id.recycler_view_pictures);
         mPicturesRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
         mPicturesRecyclerView.setNestedScrollingEnabled(false);
         mPicturesRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mPicturesRecyclerView, this));
@@ -479,13 +424,10 @@ public class ViewEventActivity extends BaseActivity
                         mEventImagesList.add(eventPhotos.getUrl());
 
                     }
-                    //setVisibility(mPicturesRecyclerView, 1.0f, 300, true);
                     mPicturesRecyclerView.setVisibility(View.VISIBLE);
                     mEventImagesAdapter.notifyDataSetChanged();
 
-                } //else
-//                    setVisibility(mPicturesRecyclerView, 0.0f, 0, false);
-
+                }
             }
 
             @Override
@@ -523,7 +465,6 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
-
     @Override
     public void onBackPressed() {
         if (behavior.getState() == STATE_COLLAPSED)
@@ -552,8 +493,7 @@ public class ViewEventActivity extends BaseActivity
 
     }
 
-    private void setButtonState(boolean state)
-    {
+    private void setButtonState(boolean state) {
         mNavigate.setEnabled(state);
         mShare.setEnabled(state);
         mChat.setEnabled(state);
@@ -578,8 +518,8 @@ public class ViewEventActivity extends BaseActivity
         User currentUser = new User();
         currentUser.setName(mFirebaseUser.getDisplayName());
         currentUser.setEmail(mFirebaseUser.getEmail());
-        if (mFirebaseUser.getPhotoUrl()!=null)
-        currentUser.setAvatar(mFirebaseUser.getPhotoUrl().toString());
+        if (mFirebaseUser.getPhotoUrl() != null)
+            currentUser.setAvatar(mFirebaseUser.getPhotoUrl().toString());
         return currentUser;
     }
 
@@ -611,7 +551,6 @@ public class ViewEventActivity extends BaseActivity
         outState.putBoolean("join", mJoinEvent);
         outState.putBoolean("touch", mTouchEventFired);
         outState.putInt("tab_selected_index", mTabSelectedIndex);
-
 
 
     }
@@ -654,11 +593,9 @@ public class ViewEventActivity extends BaseActivity
         //mapFragment.ShowNavigationLayout();
         // Add a marker in the respective location and move the camera and set the zoom level to 15
         LatLng location = new LatLng(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude());
-         mapFragment.setEventLocation(location, mCurrentEvent.getAddress());
-         mapFragment.addSingeMarkerToMap(location, mCurrentEvent.getAddress());
+        mapFragment.setEventLocation(location, mCurrentEvent.getAddress());
+        mapFragment.addSingeMarkerToMap(location, mCurrentEvent.getAddress());
         SelectCurrentEventPoint();
-
-
 
 
     }
@@ -735,12 +672,6 @@ public class ViewEventActivity extends BaseActivity
 
     }
 
-    @Override
-    public void onGlobalLayout() {
-        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(mPicturesRecyclerView.getMeasuredWidth(), behavior.getAnchorOffset());
-        mPicturesRecyclerView.setLayoutParams(layoutParams);
-        mNestedScrollView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-    }
 
     @Override
     public void onStateChanged(@NonNull View bottomSheet, int newState) {
@@ -753,7 +684,7 @@ public class ViewEventActivity extends BaseActivity
                 Log.d("state", "STATE_SETTLING");
                 break;
             case STATE_EXPANDED:
-                 mHorizontalScrollView.setVisibility(View.GONE);
+                mHorizontalScrollView.setVisibility(View.GONE);
                 Log.d("state", "STATE_EXPANDED");
                 //switchViews(false);
                 break;
@@ -828,7 +759,7 @@ public class ViewEventActivity extends BaseActivity
         new AsyncGeocoder(new AsyncGeocoder.onAddressFoundListener() {
             @Override
             public void onAddressFound(String result) {
-                mapFragment.addSingeMarkerToMap(latLng,result);
+                mapFragment.addSingeMarkerToMap(latLng, result);
                 Log.d(TAG, "the address is: " + result);
 
             }
@@ -837,12 +768,27 @@ public class ViewEventActivity extends BaseActivity
     }
 
 
-    private Location LatLongToLocation(LatLng latLng){
+    private Location LatLongToLocation(LatLng latLng) {
         Location loc = new Location("");
         loc.setLatitude(latLng.latitude);
         loc.setLongitude(latLng.longitude);
         return loc;
     }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+
+            getWindow().getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
+    }
+
+
 }
 
 

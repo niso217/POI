@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">#024265</color>
-    <color name="colorPrimaryDark">#024265</color>
+    <color name="colorPrimaryDark">#8000BFFF</color>
     <color name="colorAccent">#0274B2</color>
     <color name="transparent">#00000000</color>
     <color name="black">#000000</color>
@@ -35,7 +35,6 @@
     <!--5% — 0D-->
     <!--0% — 00-->
 
-    <color name="white_80_alpha">#E6FFFFFF</color>
     <color name="white_50_alpha">#80FFFFFF</color>
     <color name="white_20_alpha">#66FFFFFF</color>
 
@@ -45,7 +44,6 @@
     <color name="aliceblue">#F0F8FF</color>
     <color name="deepskyblue">#00BFFF</color>
     <color name="deepskybluealpha">#8000BFFF</color>
-    <color name="appbar">#62D6FF</color>
 
     <color name="purple_500">#3F51B5</color>
     <color name="deep_purple_500">#2196F3</color>

@@ -59,6 +59,7 @@ public class EventImagesAdapter extends RecyclerView.Adapter<EventImagesAdapter.
 
         Picasso.with(context)
                 .load(image)
+                .placeholder(R.color.colorPrimary)
                 .into(holder.image, new com.squareup.picasso.Callback() {
                     @Override
                     public void onSuccess() {

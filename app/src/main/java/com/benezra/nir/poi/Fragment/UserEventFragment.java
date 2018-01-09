@@ -9,15 +9,16 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
+import com.benezra.nir.poi.Activity.MainActivity;
 import com.benezra.nir.poi.Activity.CreateEventActivity;
 import com.benezra.nir.poi.Adapter.EventsAdapter;
 import com.benezra.nir.poi.Objects.Event;
-import com.benezra.nir.poi.Interface.FragmentDataCallBackInterface;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.benezra.nir.poi.View.DividerItemDecoration;
@@ -43,12 +44,12 @@ import static com.benezra.nir.poi.Interface.Constants.EVENT_LONGITUDE;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_OWNER;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_START;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_TITLE;
-import static com.benezra.nir.poi.Interface.Constants.USER_LOCATION;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class UserEventFragment extends Fragment implements ValueEventListener, RecyclerTouchListener.ClickListener {
+public class UserEventFragment extends Fragment implements ValueEventListener,
+        RecyclerTouchListener.ClickListener,MainActivity.LocationChangedListener {
 
     private FirebaseDatabase mFirebaseInstance;
     private FirebaseUser mFirebaseUser;
@@ -56,17 +57,18 @@ public class UserEventFragment extends Fragment implements ValueEventListener, R
     private List<Event> mEventList;
     private EventsAdapter mEventsAdapter;
     private Context mContext;
-    private FragmentDataCallBackInterface mListener;
+    private MainActivity mActivity;
     private ProgressBar mProgressBar;
-    private Location mLastKnownLocation;
+    private static final String TAG = UserEventFragment.class.getSimpleName();
+
+
 
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        this.mContext = context;
-        if (context instanceof FragmentDataCallBackInterface) {
-            mListener = (FragmentDataCallBackInterface) context;
+        if (context instanceof MainActivity) {
+            mActivity = (MainActivity) context;
 
         }
     }
@@ -105,9 +107,7 @@ public class UserEventFragment extends Fragment implements ValueEventListener, R
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance.getReference().keepSynced(true);
         mEventList = new ArrayList<>();
-        ;
         mEventsAdapter = new EventsAdapter(getContext(), mEventList);
-        mLastKnownLocation = (Location) getArguments().get(USER_LOCATION);
 
 
     }
@@ -152,8 +152,8 @@ public class UserEventFragment extends Fragment implements ValueEventListener, R
         if (dataSnapshot.exists()) {
             for (DataSnapshot data : dataSnapshot.getChildren()) {
                 Event event = data.getValue(Event.class);
-                if (mLastKnownLocation != null)
-                    event.setDistance(mLastKnownLocation);
+                if (mActivity.getUserLocation() != null)
+                    event.setDistance(mActivity.getUserLocation());
 
                 mEventList.add(event);
 
@@ -169,5 +169,10 @@ public class UserEventFragment extends Fragment implements ValueEventListener, R
     @Override
     public void onCancelled(DatabaseError databaseError) {
 
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        Log.d(TAG,"location changed");
     }
 }

@@ -74,12 +74,9 @@
             android:name=".Activity.ChatActivity"
             android:theme="@style/AppTheme.NoTitle"></activity>
         <activity
-            android:name=".Activity.MainActivity"
-            android:theme="@style/transparent" />
-        <activity
             android:name=".Activity.CreateEventActivity"
             android:parentActivityName=".Activity.MainActivity"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoTitle">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".Activity.MainActivity" />
@@ -87,7 +84,7 @@
         <activity
             android:name=".Activity.ViewEventActivity"
             android:parentActivityName=".Activity.MainActivity"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoTitle">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".Activity.MainActivity" />
@@ -98,9 +95,6 @@
         <activity
             android:name=".Activity.PhotoActivity"
             android:theme="@style/AppTheme.NoTitle" />
-        <activity
-            android:name=".Activity.BrowseInterestActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".Utils.DataFaker"
             android:parentActivityName=".Activity.MainActivity">
@@ -125,30 +119,13 @@
         <activity
             android:name=".Activity.SignInActivity"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".Settings.SettingsActivity"
-            android:parentActivityName=".Activity.MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".Activity.MainActivity" />
-        </activity>
-        <activity
-            android:name=".Settings.AboutActivity"
-            android:parentActivityName=".Activity.MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".Activity.MainActivity" />
-        </activity>
+
         <activity android:name=".Geofencing.GeofencingActivity" />
 
+
         <activity
-            android:name=".Activity.BrowserActivity"
-            android:theme="@style/AppTheme.NoTitle"
-            android:parentActivityName=".Activity.MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".Activity.MainActivity" />
-        </activity>
+            android:name=".Activity.MainActivity"
+            android:theme="@style/AppTheme.NoTitle"></activity>
 
         <activity
             android:name=".Activity.DeepLinkActivity"
@@ -157,13 +134,17 @@
 
             <!-- [START deep_link_filter] -->
             <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
+                <action android:name="android.intent.action.VIEW" />
 
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:host="example.com" android:scheme="http"/>
-                <data android:host="example.com" android:scheme="https"/>
+                <data
+                    android:host="example.com"
+                    android:scheme="http" />
+                <data
+                    android:host="example.com"
+                    android:scheme="https" />
             </intent-filter>
             <!-- [END deep_link_filter] -->
         </activity>

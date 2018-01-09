@@ -10,27 +10,16 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Build;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
 
-import com.benezra.nir.poi.Activity.BaseActivity;
-import com.benezra.nir.poi.Activity.MainActivity;
 import com.benezra.nir.poi.Activity.ViewEventActivity;
 import com.benezra.nir.poi.Geofencing.GeofencingActivity;
 import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.Interface.Constants;
 import com.benezra.nir.poi.Objects.Event;
-import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Utils.NotificationUtil;
 import com.benezra.nir.poi.Utils.NotificationUtils;
 import com.google.firebase.database.DataSnapshot;
@@ -40,11 +29,6 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
 
 import static com.benezra.nir.poi.Interface.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_DETAILS;

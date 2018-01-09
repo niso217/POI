@@ -1,30 +1,30 @@
-package com.benezra.nir.poi.Activity;
+package com.benezra.nir.poi.Fragment;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
+import com.benezra.nir.poi.Activity.MainActivity;
 import com.benezra.nir.poi.Helper.RetrieveInterestsTask;
 import com.benezra.nir.poi.Helper.RetrieveWikiPageTask;
-import com.benezra.nir.poi.Objects.EventsInterestData;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Utils.Utils;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -36,61 +36,76 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.wang.avi.AVLoadingIndicatorView;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
-public class BrowserActivity extends AppCompatActivity implements RetrieveInterestsTask.AsyncResponse {
+public class BrowserFragment extends Fragment implements
+        RetrieveInterestsTask.AsyncResponse,
+View.OnClickListener{
 
-    // private String TAG = BrowserActivity.class.getSimpleName();
+    // private String TAG = BrowserFragment.class.getSimpleName();
     private String url;
     private WebView webView;
     private ProgressBar progressBar;
     private float m_downX;
     CoordinatorLayout coordinatorLayout;
-    final static String TAG = BrowserActivity.class.getSimpleName();
+    final static String TAG = BrowserFragment.class.getSimpleName();
     public static final String ACTION_SHOW_ANYWAYS = TAG + ".ACTION_SHOW_ANYWAYS";
     private AVLoadingIndicatorView mProgressBar;
+    private MainActivity mActivity;
+    private ImageButton upload,forward,back;
 
 
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_browser);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle("Add Interest");
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.activity_browser, container, false);
 
-        mProgressBar = findViewById(R.id.pb_loading);
+        mProgressBar = rootView.findViewById(R.id.pb_loading);
+        upload =  rootView.findViewById(R.id.btn_upload);
+        forward =  rootView.findViewById(R.id.btn_forward);
+        back =  rootView.findViewById(R.id.btn_back);
+
+
+        upload.setOnClickListener(this);
+        forward.setOnClickListener(this);
+        back.setOnClickListener(this);
 
 
         url = "https://www.wikipedia.org";
 
         // if no url is passed, close the activity
         if (TextUtils.isEmpty(url)) {
-            finish();
+            getActivity().finish();
         }
 
-        webView = (WebView) findViewById(R.id.webView);
-        progressBar = (ProgressBar) findViewById(R.id.progressBar);
-        coordinatorLayout = (CoordinatorLayout) findViewById(R.id.main_content);
+        webView = (WebView) rootView.findViewById(R.id.webView);
+        progressBar = (ProgressBar) rootView.findViewById(R.id.progressBar);
+        coordinatorLayout = (CoordinatorLayout) rootView.findViewById(R.id.main_content);
 
         initWebView();
 
         webView.loadUrl(url);
+        return rootView;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof MainActivity) {
+            mActivity = (MainActivity) context;
+        }
     }
 
 
     private void initWebView() {
-        webView.setWebChromeClient(new MyWebChromeClient(this));
+        webView.setWebChromeClient(new MyWebChromeClient(getContext()));
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
                 progressBar.setVisibility(View.VISIBLE);
-                invalidateOptionsMenu();
+                invalidateButtons();
             }
 
             @Override
@@ -103,14 +118,14 @@ public class BrowserActivity extends AppCompatActivity implements RetrieveIntere
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 progressBar.setVisibility(View.GONE);
-                invalidateOptionsMenu();
+                invalidateButtons();
             }
 
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
                 progressBar.setVisibility(View.GONE);
-                invalidateOptionsMenu();
+                invalidateButtons();
             }
         });
         webView.clearCache(true);
@@ -146,85 +161,28 @@ public class BrowserActivity extends AppCompatActivity implements RetrieveIntere
         });
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.browser, menu);
 
-//        if (Utils.isBookmarked(this, webView.getUrl())) {
-//            // change icon color
-//            Utils.tintMenuIcon(getApplicationContext(), menu.getItem(0), R.color.colorAccent);
-//        } else {
-//            Utils.tintMenuIcon(getApplicationContext(), menu.getItem(0), android.R.color.white);
-//        }
-        return true;
-    }
+    public void invalidateButtons() {
 
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-
-        // menu item 0-index is bookmark icon
-
-        // enable - disable the toolbar navigation icons
         if (!webView.canGoBack()) {
-            menu.getItem(1).setEnabled(false);
-            menu.getItem(1).getIcon().setAlpha(130);
+            back.setEnabled(false);
+            back.setAlpha(130);
         } else {
-            menu.getItem(1).setEnabled(true);
-            menu.getItem(1).getIcon().setAlpha(255);
+            back.setEnabled(true);
+            back.setAlpha(255);
         }
 
         if (!webView.canGoForward()) {
-            menu.getItem(2).setEnabled(false);
-            menu.getItem(2).getIcon().setAlpha(130);
+            forward.setEnabled(false);
+            forward.setAlpha(130);
         } else {
-            menu.getItem(2).setEnabled(true);
-            menu.getItem(2).getIcon().setAlpha(255);
+            forward.setEnabled(true);
+            forward.setAlpha(255);
         }
 
-        return true;
     }
 
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-        }
-
-        if (item.getItemId() == R.id.action_bookmark) {
-            setProgress(true);
-
-
-            // bookmark / unbookmark the url
-            Utils.bookmarkUrl(this, webView.getUrl());
-
-            new RetrieveWikiPageTask(this).execute(webView.getUrl());
-
-//            String msg = Utils.isBookmarked(this, webView.getUrl()) ?
-//                    webView.getTitle() + "is Bookmarked!" :
-//                    webView.getTitle() + " removed!";
-//            Snackbar snackbar = Snackbar
-//                    .make(coordinatorLayout, msg, Snackbar.LENGTH_LONG);
-//            snackbar.show();
-
-            // refresh the toolbar icons, so that bookmark icon color changes
-            // depending on bookmark status
-            invalidateOptionsMenu();
-        }
-
-        if (item.getItemId() == R.id.action_back) {
-            back();
-        }
-
-        if (item.getItemId() == R.id.action_forward) {
-            forward();
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
 
     // backward the browser navigation
     private void back() {
@@ -247,10 +205,29 @@ public class BrowserActivity extends AppCompatActivity implements RetrieveIntere
                 getAllInterests(list);
         } else
         {
-            showSnackBar("Nothing found");
+            mActivity.showSnackBar("Nothing found");
             setProgress(false);
 
         }
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.btn_upload:
+                setProgress(true);
+                Utils.bookmarkUrl(getContext(), webView.getUrl());
+                new RetrieveWikiPageTask(this).execute(webView.getUrl());
+                break;
+            case R.id.btn_forward:
+                forward();
+                break;
+            case R.id.btn_back:
+                back();
+                break;
+        }
+        invalidateButtons();
 
     }
 
@@ -271,15 +248,15 @@ public class BrowserActivity extends AppCompatActivity implements RetrieveIntere
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
-                    showSnackBar("Interest already exist");
+                    mActivity.showSnackBar("Interest already exist");
                     setProgress(false);
 
                 } else {
                     FirebaseDatabase.getInstance().getReference("interests_data").updateChildren(list).addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
-                            //Toast.makeText(BrowserActivity.this, "Finished uploading", Toast.LENGTH_SHORT).show();
-                            showSnackBar("Thanks for expanding our knowledge");
+                            //Toast.makeText(BrowserFragment.this, "Finished uploading", Toast.LENGTH_SHORT).show();
+                            mActivity.showSnackBar("Thanks for expanding our knowledge");
                             Log.d(TAG, "==========finish===============");
                             setProgress(false);
 
@@ -292,7 +269,7 @@ public class BrowserActivity extends AppCompatActivity implements RetrieveIntere
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                showSnackBar("Something went wrong please try again later");
+                mActivity.showSnackBar("Something went wrong please try again later");
                 setProgress(false);
 
 
@@ -315,11 +292,5 @@ public class BrowserActivity extends AppCompatActivity implements RetrieveIntere
 
     }
 
-    public void showSnackBar(String message) {
-        Snackbar snackbar = Snackbar
-                .make(coordinatorLayout, message, Snackbar.LENGTH_LONG);
-        snackbar.show();
-
-    }
 }
 

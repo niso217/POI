@@ -434,6 +434,7 @@ public class GoogleMapsBottomSheetBehavior<V extends View> extends CoordinatorLa
         if (mState == STATE_DRAGGING && action == MotionEvent.ACTION_DOWN) {
             return true;
         }
+        if (mViewDragHelper!=null)
         mViewDragHelper.processTouchEvent(event);
         // Record the velocity
         if (action == MotionEvent.ACTION_DOWN) {

@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.support.v4.content.ContextCompat;
 
 import com.benezra.nir.poi.R;
 
@@ -34,7 +33,7 @@ public class SharePref {
     }
 
     public String getNotificationSound(){
-        return defaultPreferences.getString(mContext.getString(R.string.key_notifications_new_event_ringtone),"content://settings/system/notification_sound");
+        return defaultPreferences.getString(mContext.getString(R.string.key_ringtone),"content://settings/system/notification_sound");
     }
 
 

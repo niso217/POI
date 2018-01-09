@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory android:title="@string/pref_title_notifications">
+
+
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="@string/notifications_new_event"
+            android:title="@string/title_new_notification_sound" />
+
+
+        <SeekBarPreference
+            android:key="@string/key_radius"
+            android:dependency="@string/notifications_new_event"
+            android:title="@string/title_radius"
+            android:summary="@string/summary_radius_range"
+            android:defaultValue="10"
+            app:msbp_minValue="1"
+            app:msbp_maxValue="50"
+            app:msbp_interval="1"
+            app:msbp_measurementUnit="Km"
+            app:msbp_dialogEnabled="false"/>
+
+        <RingtonePreference
+            android:dialogTitle="@string/summary_choose_ringtone"
+            android:key="@string/key_ringtone"
+            android:persistent="false"
+            android:dependency="@string/notifications_new_event"
+            android:ringtoneType="ringtone"
+            android:showDefault="true"
+            android:showSilent="true"
+            android:summary="@string/summary_choose_ringtone"
+            android:title="@string/pref_title_ringtone"
+            app:pref_showAdd="true"
+            app:pref_summaryHasRingtone="The best ringtone: %s" />
+
+        <SwitchPreferenceCompat
+            android:dependency="@string/notifications_new_event"
+            android:defaultValue="true"
+            android:key="@string/key_vibrate"
+            android:summary="@string/summary_vibrate"
+            android:title="@string/title_vibrate" />
+    </PreferenceCategory>
+
+
+</PreferenceScreen>

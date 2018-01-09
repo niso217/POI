@@ -5,75 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
+    android:id="@+id/coordinator"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.benezra.nir.poi.Activity.BrowseInterestActivity">
     <!--tools:showIn="@layactivity_browse_interestents">-->
 
-
-    <android.support.design.widget.AppBarLayout
-        android:id="@+id/appbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fitsSystemWindows="true"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
-
-        <android.support.design.widget.CollapsingToolbarLayout
-            android:id="@+id/collapsing"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fitsSystemWindows="true"
-            app:expandedTitleMarginStart="48dp"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed">
-
-            <ImageView
-                android:id="@+id/backdrop"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:fitsSystemWindows="true"
-                android:scaleType="fitXY" />
-
-
-            <com.xw.repo.BubbleSeekBar
-                android:id="@+id/sb_km"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_margin="10dp"
-                android:layout_marginBottom="10dp"
-                android:layout_weight="1"
-                app:bsb_bubble_color="@color/deepskybluealpha"
-                app:bsb_bubble_text_color="@color/white"
-                app:bsb_max="100"
-                app:bsb_min="0"
-                app:bsb_progress="30"
-                app:bsb_second_track_color="@color/deepskyblue"
-                app:bsb_thumb_color="@color/white"
-                app:bsb_thumb_radius="10dp"
-                app:bsb_thumb_text_color="@color/white"
-                app:bsb_track_color="@color/white" />
-
-            <Button
-                android:id="@+id/dummy"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="gone" />
-
-
-            <com.wang.avi.AVLoadingIndicatorView
-                android:id="@+id/pb_loading"
-                style="@style/AVLoadingIndicatorView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical|center_horizontal"
-                android:visibility="visible"
-                app:indicatorColor="@color/white"
-                app:indicatorName="BallClipRotatePulseIndicator" />
-
-
-        </android.support.design.widget.CollapsingToolbarLayout>
-
-        ​
-    </android.support.design.widget.AppBarLayout>
 
     <android.support.v4.widget.NestedScrollView
         android:id="@+id/nestedscrollview"
@@ -87,13 +23,60 @@
             android:orientation="vertical">
 
 
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/events_recycler_view"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scrollbars="none">
+                android:orientation="vertical">
 
-            </android.support.v7.widget.RecyclerView>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/colorPrimary"
+                    android:orientation="horizontal">
+
+                    <com.xw.repo.BubbleSeekBar
+                        android:id="@+id/sb_km"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom"
+                        android:layout_margin="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:layout_weight="0.9"
+                        app:bsb_bubble_color="@color/deepskybluealpha"
+                        app:bsb_bubble_text_color="@color/white"
+                        app:bsb_max="100"
+                        app:bsb_min="0"
+                        app:bsb_progress="30"
+                        app:bsb_second_track_color="@color/deepskyblue"
+                        app:bsb_thumb_color="@color/white"
+                        app:bsb_thumb_radius="10dp"
+                        app:bsb_thumb_text_color="@color/white"
+                        app:bsb_track_color="@color/white" />
+
+                    <ToggleButton
+                        android:id="@+id/switch_notify"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_gravity="top|right"
+                        android:layout_marginRight="5dp"
+                        android:layout_weight="0.1"
+                        android:background="@drawable/notification_toggle"
+                        android:text="@null"
+                        android:textOff="@null"
+                        android:textOn="@null"
+                        android:visibility="visible" />
+                </LinearLayout>
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/events_recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:scrollbars="none">
+
+                </android.support.v7.widget.RecyclerView>
+
+            </LinearLayout>
 
             <com.wang.avi.AVLoadingIndicatorView
                 android:id="@+id/avi"

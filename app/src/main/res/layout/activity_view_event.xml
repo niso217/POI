@@ -1,29 +1,153 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<android.support.v4.widget.DrawerLayout
+<android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    tools:openDrawer="start">
+    android:id="@+id/coordinatorlayout"
+    android:descendantFocusability="beforeDescendants"
+    android:focusableInTouchMode="true"
+    tools:context=".Activity.ViewEventActivity">
 
-    <include
-        layout="@layout/app_bar_view_events"
+
+    <include layout="@layout/toolbar_collapsing"/>
+
+    <include layout="@layout/content_view_event" />
+
+
+
+    <LinearLayout
+        android:id="@+id/tab_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_anchor="@id/nestedscrollview"
+        app:layout_anchorGravity="top|right|end">
+
+        <android.support.design.widget.TabLayout
+            android:id="@+id/tab_layout_tab"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.6"
+            android:background="@android:color/white"
+            app:tabIndicatorColor="@color/deepskyblue"
+            app:tabGravity="fill"
+            app:tabMaxWidth="0dp"
+            app:tabMode="fixed"
+            app:tabIndicatorHeight="3dp">
+
+            <android.support.design.widget.TabItem
+                android:id="@+id/tab_driving"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_directions_car_black_24dp" />
+
+            <android.support.design.widget.TabItem
+                android:id="@+id/tab_walking"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_directions_walk_black_24dp" />
+
+            <android.support.design.widget.TabItem
+                android:id="@+id/tab_cycling"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_directions_bike_black_24dp" />
+
+            <android.support.design.widget.TabItem
+                android:id="@+id/tab_event_loc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_my_location_black_24dp" />
+        </android.support.design.widget.TabLayout>
+
+        <TextView
+            android:id="@+id/tv_distance"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_weight="0.4"
+            android:background="@color/aliceblue"
+            android:gravity="center_vertical"
+            android:paddingLeft="5dp"
+            android:textSize="14sp"
+            tools:textColor="@android:color/black" />
+
+    </LinearLayout>
+
+    <HorizontalScrollView
+        android:id="@+id/scrolling_icons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:background="@android:color/transparent"
+        android:gravity="center_horizontal|center"
+        android:orientation="horizontal"
+        android:scrollbars="none"
+        app:layout_anchor="@id/nestedscrollview"
+        app:layout_anchorGravity="top|right|end">
 
 
-    <android.support.design.widget.NavigationView
-        android:id="@+id/nav_view"
-        android:layout_width="@dimen/navigation_drawer_width"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        app:menu="@menu/activity_main_drawer"
- />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/icons_margin"
+            android:layout_gravity="center">
+
+
+            <ImageButton
+                android:id="@+id/btn_navigate"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginRight="@dimen/icons_margin"
+                android:background="@drawable/navigate_button" />
+
+            <ImageButton
+                android:id="@+id/btn_share"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/share_button" />
+
+            <ImageButton
+                android:id="@+id/btn_add_image"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginLeft="@dimen/icons_margin"
+                android:background="@drawable/image_button" />
+
+            <ToggleButton
+                android:id="@+id/btn_join"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginLeft="@dimen/icons_margin"
+                android:background="@drawable/join_event_toggle"
+                android:text="@null"
+                android:textOff="@null"
+                android:textOn="@null" />
 
 
 
-</android.support.v4.widget.DrawerLayout>
+            <ImageButton
+                android:id="@+id/btn_chat"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginLeft="@dimen/icons_margin"
+                android:background="@drawable/chat_button" />
+
+            <ImageButton
+                android:id="@+id/btn_cal"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginLeft="@dimen/icons_margin"
+                android:layout_marginRight="@dimen/icons_margin"
+                android:background="@drawable/calendar_button" />
+
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
+
+
+</android.support.design.widget.CoordinatorLayout>
