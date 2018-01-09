@@ -1,28 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<android.support.v4.widget.DrawerLayout
+<android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    tools:openDrawer="start">
+    android:id="@+id/coordinatorlayout"
+    android:descendantFocusability="beforeDescendants"
+    android:focusableInTouchMode="true"
+    tools:context=".Activity.CreateEventActivity">
 
-    <include
-        layout="@layout/app_bar_create_events"
+    <include layout="@layout/toolbar_collapsing"/>
+
+    <include layout="@layout/content_create_event" />
+
+
+    <LinearLayout
+        android:id="@+id/tab_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_anchor="@id/nestedscrollview"
+        app:layout_anchorGravity="top|right|end">
+
+        <android.support.design.widget.TabLayout
+            android:id="@+id/tab_layout_tab"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.6"
+            android:background="@android:color/white"
+            app:tabIndicatorColor="@color/deepskyblue"
+            app:tabGravity="fill"
+            app:tabMaxWidth="0dp"
+            app:tabMode="fixed"
+            app:tabIndicatorHeight="3dp">
 
 
-    <android.support.design.widget.NavigationView
-        android:id="@+id/nav_view"
-        android:layout_width="@dimen/navigation_drawer_width"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        app:menu="@menu/activity_main_drawer" />
+            <android.support.design.widget.TabItem
+                android:id="@+id/tab_current_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_my_location_black_24dp" />
+
+            <android.support.design.widget.TabItem
+                android:id="@+id/tab_search"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:icon="@drawable/ic_search_black_24dp" />
 
 
 
-</android.support.v4.widget.DrawerLayout>
+
+
+
+        </android.support.design.widget.TabLayout>
+
+        <TextView
+            android:id="@+id/tv_distance"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_weight="0.4"
+            android:background="@color/aliceblue"
+            android:gravity="center_vertical"
+            android:paddingLeft="5dp"
+            android:textSize="14sp"
+            tools:textColor="@android:color/black" />
+
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/scrolling_icons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:background="@android:color/transparent"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal"
+        android:scrollbars="none"
+        app:layout_anchor="@id/nestedscrollview"
+        app:layout_anchorGravity="top|right|end">
+
+        <ImageButton
+            android:id="@+id/btn_delete"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginLeft="@dimen/icons_margin"
+            android:background="@drawable/delete_button"
+            android:contentDescription="@string/share"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/btn_share"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginLeft="@dimen/icons_margin"
+            android:background="@drawable/share_button"
+            android:contentDescription="@string/share" />
+
+        <ImageButton
+            android:id="@+id/btn_add_image"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginLeft="@dimen/icons_margin"
+            android:background="@drawable/image_button"
+            android:contentDescription="@string/add_image" />
+
+        <ImageButton
+            android:id="@+id/btn_chat"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginLeft="@dimen/icons_margin"
+            android:background="@drawable/chat_button"
+            android:contentDescription="@string/chat" />
+
+        <ImageButton
+            android:id="@+id/btn_save"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginLeft="@dimen/icons_margin"
+            android:background="@drawable/save_button"
+            android:contentDescription="@string/chat" />
+
+
+    </LinearLayout>
+
+</android.support.design.widget.CoordinatorLayout>
