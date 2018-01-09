@@ -163,7 +163,9 @@ public class CreateEventActivity extends AppCompatActivity
         TabLayout.OnTabSelectedListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
         Response.Listener,
-        Response.ErrorListener{
+        Response.ErrorListener,
+        ViewTreeObserver.OnGlobalLayoutListener
+{
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -344,8 +346,9 @@ public class CreateEventActivity extends AppCompatActivity
         behavior.setPeekHeight(100);
         behavior.setParallax(mPicturesRecyclerView);
 
-        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, calculateDeviceHeight()/2);
-        mPicturesRecyclerView.setLayoutParams(layoutParams);
+
+
+
 
 
     }
@@ -370,6 +373,9 @@ public class CreateEventActivity extends AppCompatActivity
         addInterestsChangeListener();
         getAllEventImages();
         participatesChangeListener();
+        mPicturesRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(this);
+
+
     }
 
     @Override
@@ -1438,6 +1444,13 @@ public class CreateEventActivity extends AppCompatActivity
         ProgressDialogFragment mProgressDialogFragment = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(ProgressDialogFragment.class.getName());
         if (mProgressDialogFragment != null)
             mProgressDialogFragment.dismiss();
+
+    }
+
+    @Override
+    public void onGlobalLayout() {
+        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, calculateDeviceHeight()/2);
+        mPicturesRecyclerView.setLayoutParams(layoutParams);
 
     }
 }

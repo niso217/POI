@@ -101,7 +101,8 @@ public class ViewEventActivity extends AppCompatActivity
         UploadToFireBaseFragment.UploadListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
         GoogleMapsBottomSheetBehavior.BottomSheetCallback,
-        TabLayout.OnTabSelectedListener
+        TabLayout.OnTabSelectedListener,
+        ViewTreeObserver.OnGlobalLayoutListener
 
 {
 
@@ -221,8 +222,6 @@ public class ViewEventActivity extends AppCompatActivity
         behavior.setPeekHeight(100);
         behavior.setParallax(mPicturesRecyclerView);
 
-        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, calculateDeviceHeight()/2);
-        mPicturesRecyclerView.setLayoutParams(layoutParams);
 
 
     }
@@ -262,6 +261,7 @@ public class ViewEventActivity extends AppCompatActivity
         behavior.setBottomSheetCallback(this);
         getAllEventImages();
         participatesChangeListener();
+        mPicturesRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(this);
 
 
     }
@@ -789,6 +789,12 @@ public class ViewEventActivity extends AppCompatActivity
     }
 
 
+    @Override
+    public void onGlobalLayout() {
+        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, calculateDeviceHeight()/2);
+        mPicturesRecyclerView.setLayoutParams(layoutParams);
+
+    }
 }
 
 
