@@ -67,7 +67,8 @@
     <string name="return_to_event">Return</string>
     <string name="discard_event">Event haven\'t saved, are you sure you want to leave?</string>
     <string name="cancel">Cancel</string>
-
+    <string name="exit_app_body">Are you sure you want to leave POI?</string>
+    <string name="exit_app_title">Exit</string>
     <string name="delete_event_title">Delete</string>
     <string name="delete_event_message">Are you sure you want to delte the event?</string>
 

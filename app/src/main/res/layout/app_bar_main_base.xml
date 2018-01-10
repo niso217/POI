@@ -33,8 +33,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_centerHorizontal="true"
-                android:scaleType="fitXY"
-                android:src="@drawable/alcohol_party_dark" />
+                android:scaleType="centerCrop"
+                android:src="@drawable/nir" />
 
             <com.wang.avi.AVLoadingIndicatorView
                 android:id="@+id/pb_loading"

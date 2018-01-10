@@ -34,6 +34,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.benezra.nir.poi.Fragment.AboutFragment;
+import com.benezra.nir.poi.Fragment.AlertDialogFragment;
 import com.benezra.nir.poi.Fragment.BrowserFragment;
 import com.benezra.nir.poi.Fragment.EventByInterestListFragment;
 import com.benezra.nir.poi.Fragment.MainFragment;
@@ -67,9 +68,15 @@ import com.squareup.picasso.Picasso;
 import com.wang.avi.AVLoadingIndicatorView;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.content.DialogInterface.BUTTON_NEGATIVE;
+import static android.content.DialogInterface.BUTTON_NEUTRAL;
+import static android.content.DialogInterface.BUTTON_POSITIVE;
+import static com.benezra.nir.poi.Interface.Constants.ACTION_FINISH;
+import static com.benezra.nir.poi.Interface.Constants.ACTION_REMOVE;
 import static com.benezra.nir.poi.Interface.Constants.APP_BAR_SIZE;
 import static com.benezra.nir.poi.Interface.Constants.CURRENT_FRAGMENT;
 import static com.benezra.nir.poi.Interface.Constants.ID_TOKEN;
@@ -81,7 +88,7 @@ public class MainActivity extends AppCompatActivity
         OnSuccessListener<Location>,
         OnFailureListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
-        GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
+        GoogleApiClient.OnConnectionFailedListener, View.OnClickListener,AlertDialogFragment.DialogListenerCallback {
 
     private Toolbar mToolbar;
     private FusedLocationProviderClient mFusedLocationProviderClient;
@@ -309,7 +316,8 @@ public class MainActivity extends AppCompatActivity
             progress.setVisibility(View.GONE);
             Picasso.with(this)
                     .cancelRequest(background);
-            Picasso.with(this).load(R.drawable.alcohol_party_dark).into(background);
+           // Picasso.with(this).load(R.drawable.nir3).into(background);
+            background.setImageResource(R.drawable.nir8);
         }
 
 
@@ -327,7 +335,7 @@ public class MainActivity extends AppCompatActivity
             drawer.closeDrawer(GravityCompat.START);
         } else {
             if (isMainVisible())
-                super.onBackPressed();
+                BuildReturnDialogFragment();
             else {
                 if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
                     getSupportFragmentManager().popBackStack();
@@ -761,6 +769,31 @@ public class MainActivity extends AppCompatActivity
                     callDrawerItem(R.id.nav_add_event);
                 if (mCurrentFragment.equals(EventByInterestListFragment.class.getSimpleName()))
                     mFABClickedListener.onFABClicked();
+                break;
+        }
+    }
+
+
+    private void BuildReturnDialogFragment() {
+        AlertDialogFragment alertDialog = (AlertDialogFragment) getSupportFragmentManager().findFragmentByTag(AlertDialogFragment.class.getName());
+        if (alertDialog == null) {
+            Log.d(TAG, "opening alert dialog");
+            HashMap<Integer, String> map = new HashMap<>();
+            map.put(BUTTON_POSITIVE, getString(R.string.sure));
+            map.put(BUTTON_NEUTRAL, getString(R.string.return_to_event));
+            alertDialog = AlertDialogFragment.newInstance(
+                    getString(R.string.exit_app_title), getString(R.string.exit_app_body), map, ACTION_FINISH);
+            alertDialog.show(getSupportFragmentManager(), AlertDialogFragment.class.getName());
+
+        }
+    }
+
+    @Override
+    public void onFinishDialog(int state, int action) {
+
+        switch (state) {
+            case BUTTON_POSITIVE:
+                    finish();
                 break;
         }
     }
