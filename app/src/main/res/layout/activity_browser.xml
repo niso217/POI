@@ -18,38 +18,43 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="right|end"
+            android:layout_gravity="right"
             android:background="@color/deepskyblue"
-            android:gravity="end"
+            android:gravity="start|end"
             android:orientation="horizontal"
-            >
-
-            <ImageButton
-                android:id="@+id/btn_upload"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:layout_marginRight="30dp"
-                android:background="@drawable/ic_cloud_upload_white_36dp"
-                />
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp">
 
             <ImageButton
                 android:id="@+id/btn_back"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
-                android:layout_marginRight="30dp"
-                android:background="@drawable/ic_keyboard_arrow_left_white_36dp"
-                />
+                android:layout_weight="0.1"
+                android:background="@drawable/left_arrow_button" />
 
             <ImageButton
                 android:id="@+id/btn_forward"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
-                android:layout_marginRight="5dp"
-                android:background="@drawable/ic_keyboard_arrow_right_white_36dp"
-                 />
+                android:layout_marginLeft="20dp"
+                android:layout_weight="0.1"
+                android:background="@drawable/right_arrow_button" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.6" />
+
+            <ImageButton
+                android:id="@+id/btn_upload"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_weight="0.1"
+                android:background="@drawable/upload_button" />
+
         </LinearLayout>
 
         <include

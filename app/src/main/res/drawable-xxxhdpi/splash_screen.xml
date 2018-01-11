@@ -4,7 +4,8 @@
         android:drawable="@color/colorAccent"/>
 
     <item>
-        <bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+        <bitmap
+            xmlns:android="http://schemas.android.com/apk/res/android"
             android:src="@drawable/main_icon"
             android:gravity="center"
             />

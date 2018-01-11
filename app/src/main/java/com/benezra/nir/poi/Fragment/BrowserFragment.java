@@ -166,18 +166,14 @@ View.OnClickListener{
 
         if (!webView.canGoBack()) {
             back.setEnabled(false);
-            back.setAlpha(130);
         } else {
             back.setEnabled(true);
-            back.setAlpha(255);
         }
 
         if (!webView.canGoForward()) {
             forward.setEnabled(false);
-            forward.setAlpha(130);
         } else {
             forward.setEnabled(true);
-            forward.setAlpha(255);
         }
 
     }
@@ -282,13 +278,18 @@ View.OnClickListener{
         if (state){
             //coordinatorLayout.setEnabled(false);
             mProgressBar.smoothToShow();
-            //webView.setAlpha(0.6f);
+            webView.setAlpha(0.6f);
+            upload.setEnabled(false);
+
         }
             else{
-           // coordinatorLayout.setEnabled(true);
+            //coordinatorLayout.setEnabled(true);
             mProgressBar.smoothToHide();
-            //webView.setAlpha(1f);
+            webView.setAlpha(1f);
+            upload.setEnabled(true);
+
         }
+
 
     }
 

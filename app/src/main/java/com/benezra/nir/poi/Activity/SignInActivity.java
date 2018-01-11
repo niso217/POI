@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.Toast;
@@ -40,7 +41,7 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
     private ProgressBar progressBar;
     private Button btnSignup, btnLogin, btnReset;
     AnimationDrawable animationDrawable;
-    ScrollView scrollView;
+    LinearLayout scrollView;
     private FirebaseAuth mAuth;
     private FirebaseDatabase mFirebaseInstance;
     private static final String TAG = SignInActivity.class.getSimpleName();
@@ -65,7 +66,7 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
             btnLogin = (Button) findViewById(R.id.btn_login);
             btnReset = (Button) findViewById(R.id.btn_reset_password);
 
-            scrollView = (ScrollView) findViewById(R.id.scrollview);
+            scrollView =  findViewById(R.id.scrollview);
             animationDrawable = (AnimationDrawable) scrollView.getBackground();
             animationDrawable.setEnterFadeDuration(2000);
             animationDrawable.setExitFadeDuration(2000);
@@ -77,8 +78,6 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
 
 
             btnLogin.setOnClickListener(this);
-
-
 
     }
 
@@ -188,6 +187,19 @@ public class SignInActivity extends AppCompatActivity implements LoginCallBackIn
     @Override
     public void startLogin() {
         showProgress(getString(R.string.loading), getString(R.string.please_wait));
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+
+            getWindow().getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
     }
 
 

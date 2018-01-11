@@ -93,9 +93,6 @@
             android:name=".Activity.GalleryActivity"
             android:theme="@style/AppTheme.NoTitle" />
         <activity
-            android:name=".Activity.PhotoActivity"
-            android:theme="@style/AppTheme.NoTitle" />
-        <activity
             android:name=".Utils.DataFaker"
             android:parentActivityName=".Activity.MainActivity">
             <meta-data
@@ -118,7 +115,7 @@
         </activity>
         <activity
             android:name=".Activity.SignInActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoTitle" />
 
         <activity android:name=".Geofencing.GeofencingActivity" />
 

@@ -72,6 +72,7 @@
     <string name="delete_event_title">Delete</string>
     <string name="delete_event_message">Are you sure you want to delte the event?</string>
 
+    <string name="description_zoom_touch_close">Expanded image (touch to close)</string>
 
     <!--Progress Dialog Titles-->
     <string name="updating_event">Updating event</string>
@@ -324,10 +325,9 @@ POI will learn about the user day routine and interest in events so it could off
     <string name="invitation_id_default">Invitation ID not set</string>
     <string name="invite_friends">Invite Friends</string>
 
-    <string name="invitation_title">Send App Invite Quickstart Invitation</string>
-    <string name="invitation_message">This app is terrific, give it a try and get $5 off!</string>
+    <string name="invitation_title">Share POI with your friends</string>
+    <string name="invitation_message">This app is terrific, give it a try!</string>
     <string name="invitation_deep_link">http://example.com/offer/five_dollar_offer</string>
-    <string name="invitation_custom_image">https://developers.google.com/identity/images/g-logo.png</string>
     <string name="invitation_cta">Install!</string>
 
     <string name="deep_link_fmt" formatted="false">Deep Link: %s</string>

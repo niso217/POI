@@ -1,15 +1,19 @@
 package com.benezra.nir.poi.Activity;
 
 import android.annotation.SuppressLint;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.annotation.AnyRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
@@ -487,12 +491,13 @@ public class MainActivity extends AppCompatActivity
     public void inflateFragment(Fragment fragment, boolean addToBackStack) {
         mCurrentFragment = fragment.getClass().getSimpleName();
         if (addToBackStack)
-            getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, fragment, mCurrentFragment).addToBackStack(mCurrentFragment).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, fragment, mCurrentFragment).addToBackStack(mCurrentFragment).commitAllowingStateLoss();
         else {
-            getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, fragment, mCurrentFragment).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, fragment, mCurrentFragment).commitAllowingStateLoss();
 
         }
         setFloatingActionImage();
+        setToolbarBackground(null);
 
     }
 
@@ -732,8 +737,8 @@ public class MainActivity extends AppCompatActivity
     private void onInviteClicked() {
         Intent intent = new AppInviteInvitation.IntentBuilder(getString(R.string.invitation_title))
                 .setMessage(getString(R.string.invitation_message))
-                .setDeepLink(Uri.parse(getString(R.string.invitation_deep_link)))
-                .setCustomImage(Uri.parse(getString(R.string.invitation_custom_image)))
+               // .setDeepLink(Uri.parse(getString(R.string.invitation_deep_link)))
+                .setCustomImage(getUriToResource(R.mipmap.ic_launcher))
                 .setCallToActionText(getString(R.string.invitation_cta))
                 .build();
         startActivityForResult(intent, REQUEST_INVITE);
@@ -756,9 +761,21 @@ public class MainActivity extends AppCompatActivity
                 // Sending failed or it was canceled, show failure message to the user
                 // [START_EXCLUDE]
                 showSnackBar(getString(R.string.send_failed));
+
                 // [END_EXCLUDE]
             }
         }
+        inflateFragment(new MainFragment(),false);
+    }
+
+
+    public final Uri getUriToResource(@AnyRes int resId)
+            throws Resources.NotFoundException {
+        Uri resUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE +
+                "://" + getResources().getResourcePackageName(resId)
+                + '/' + getResources().getResourceTypeName(resId)
+                + '/' + getResources().getResourceEntryName(resId));
+        return resUri;
     }
 
     @Override

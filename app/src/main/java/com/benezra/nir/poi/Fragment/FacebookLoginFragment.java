@@ -88,6 +88,13 @@ public class FacebookLoginFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mAuth = FirebaseAuth.getInstance();
+        if (savedInstanceState!=null){
+            if (FirebaseAuth.getInstance().getCurrentUser()!=null)
+                mListener.login(true);
+            else
+                mListener.login(false);
+
+        }
     }
 
 
