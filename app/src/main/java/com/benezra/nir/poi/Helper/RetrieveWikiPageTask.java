@@ -64,6 +64,7 @@ public class RetrieveWikiPageTask extends AsyncTask<String, Integer, Boolean> {
 
     public RetrieveWikiPageTask(RetrieveInterestsTask.AsyncResponse delegate) {
         this.mDelegate = delegate;
+        this.mDelegate.asyncStatus(true);
     }
 
 
@@ -238,6 +239,8 @@ public class RetrieveWikiPageTask extends AsyncTask<String, Integer, Boolean> {
     protected void onPostExecute(Boolean state) {
         super.onPostExecute(state);
         mDelegate.processFinish(state, mEventsInterestDataMap);
+        this.mDelegate.asyncStatus(false);
+
 
     }
 

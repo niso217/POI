@@ -46,9 +46,6 @@ public class RetrieveInterestsTask extends AsyncTask<String,Integer,Boolean> {
     }
 
 
-    public RetrieveInterestsTask() {
-    }
-
 
     public RetrieveInterestsTask(Context mContext, ImageView mImageView, ProgressBar mProgressBar,TextView textView,AsyncResponse delegate) {
         this.mContext = mContext;
@@ -177,17 +174,13 @@ public class RetrieveInterestsTask extends AsyncTask<String,Integer,Boolean> {
         super.onCancelled(aBoolean);
         mTextView.setText("");
         mProgressBar.setProgress(0);
+
     }
 
     private boolean isMapContainsInterest(String interest) {
        return mEventsInterestDataMap.get(interest)==null;
     }
 
-
-
-    protected void onCancelled(){
-
-    }
 
     protected void onProgressUpdate(Integer... progress){
         mProgressBar.setProgress(progress[0]);
@@ -215,6 +208,7 @@ public class RetrieveInterestsTask extends AsyncTask<String,Integer,Boolean> {
 
     public interface AsyncResponse {
         void processFinish(boolean output,Map<String,Object> list);
+        void asyncStatus(boolean status);
     }
 }
 

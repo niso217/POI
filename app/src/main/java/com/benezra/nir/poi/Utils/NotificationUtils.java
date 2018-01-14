@@ -19,6 +19,7 @@ import android.text.Html;
 import android.text.TextUtils;
 import android.util.Patterns;
 
+import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.Interface.Constants;
 import com.benezra.nir.poi.R;
 
@@ -70,8 +71,7 @@ public class NotificationUtils {
         final NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
                 mContext);
 
-        final Uri alarmSound = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE
-                + "://" + mContext.getPackageName() + "/raw/notification");
+        final Uri alarmSound = Uri.parse(SharePref.getInstance(mContext).getNotificationSound());
 
         if (!TextUtils.isEmpty(imageUrl)) {
 
@@ -87,7 +87,7 @@ public class NotificationUtils {
             }
         } else {
             showSmallNotification(mBuilder, icon, title, message, timeStamp, resultPendingIntent, alarmSound);
-            playNotificationSound();
+           // playNotificationSound();
         }
     }
 

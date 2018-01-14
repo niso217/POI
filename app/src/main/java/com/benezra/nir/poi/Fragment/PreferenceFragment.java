@@ -20,7 +20,7 @@ public class PreferenceFragment extends PreferenceFragmentCompatDividers {
 
     @Override
     public void onCreatePreferencesFix(@Nullable Bundle savedInstanceState, String rootKey) {
-        setPreferencesFromResource(R.xml.pref_main_new, rootKey);
+        setPreferencesFromResource(R.xml.pref_main, rootKey);
 
     }
 

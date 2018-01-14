@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory android:title="@string/pref_title_notifications">
 
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="@string/notifications_new_event"
+            android:title="@string/title_new_notification_sound" />
 
-        <com.pavelsikun.seekbarpreference.SeekBarPreference
+
+        <SeekBarPreference
             android:key="@string/key_radius"
+            android:dependency="@string/notifications_new_event"
             android:title="@string/title_radius"
             android:summary="@string/summary_radius_range"
             android:defaultValue="10"
@@ -17,22 +22,20 @@
             app:msbp_measurementUnit="Km"
             app:msbp_dialogEnabled="false"/>
 
-        <SwitchPreference
-            android:defaultValue="true"
-            android:key="@string/notifications_new_event"
-            android:title="@string/title_new_notification_sound" />
-
-
         <RingtonePreference
-            android:defaultValue="content://settings/system/notification_sound"
-            android:dependency="notifications_new_message"
+            android:dialogTitle="@string/summary_choose_ringtone"
             android:key="@string/key_ringtone"
-            android:ringtoneType="notification"
+            android:dependency="@string/notifications_new_event"
+            android:ringtoneType="ringtone"
+            android:showDefault="true"
+            android:showSilent="true"
             android:summary="@string/summary_choose_ringtone"
-            android:title="@string/pref_title_ringtone" />
+            android:title="@string/pref_title_ringtone"
+            app:pref_showAdd="true"
+            app:pref_summaryHasRingtone="The best ringtone: %s" />
 
-        <SwitchPreference
-            android:dependency="notifications_new_message"
+        <SwitchPreferenceCompat
+            android:dependency="@string/notifications_new_event"
             android:defaultValue="true"
             android:key="@string/key_vibrate"
             android:summary="@string/summary_vibrate"

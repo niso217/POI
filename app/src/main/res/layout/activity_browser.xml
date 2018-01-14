@@ -64,6 +64,16 @@
 
     </LinearLayout>
 
+    <FrameLayout
+        android:id="@+id/background"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0.5"
+        android:background="@color/soft_gray">
+
+    </FrameLayout>
+
     <ProgressBar
         android:id="@+id/progressBar"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
@@ -83,5 +93,7 @@
         android:visibility="gone"
         app:indicatorColor="@color/colorAccent"
         app:indicatorName="BallClipRotatePulseIndicator" />
+
+
 
 </android.support.design.widget.CoordinatorLayout>

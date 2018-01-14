@@ -33,12 +33,12 @@ public class SharePref {
     }
 
     public String getNotificationSound(){
-        return defaultPreferences.getString(mContext.getString(R.string.key_ringtone),"content://settings/system/notification_sound");
+        return defaultPreferences.getString("key_notifications_new_message_ringtone","content://settings/system/notification_sound");
     }
 
 
     public boolean isNotificationOn(){
-        return defaultPreferences.getBoolean(mContext.getString(R.string.notifications_new_event),false);
+        return defaultPreferences.getBoolean("notifications_new_message",true);
     }
 
     public int getDefaultRadiusgetDefaultRadius(){

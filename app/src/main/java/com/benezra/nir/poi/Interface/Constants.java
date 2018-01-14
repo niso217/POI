@@ -25,6 +25,10 @@ public interface Constants {
 
     public static final int APP_BAR_SIZE = 8;
 
+
+    public static final String WIKI_BASE_URL = "https://www.wikipedia.org";
+
+
     public static final String DETAILS = "details";
     public static final String END = "end";
     public static final String IMAGE = "image";

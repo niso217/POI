@@ -402,6 +402,11 @@ public class DataFaker extends AppCompatActivity implements
             Toast.makeText(this, "Task failed, network issue", Toast.LENGTH_SHORT).show();
         }
     }
+
+    @Override
+    public void asyncStatus(boolean status) {
+
+    }
 }
 
 

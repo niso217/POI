@@ -6,11 +6,8 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.Fragment;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +16,7 @@ import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 
@@ -26,7 +24,6 @@ import com.benezra.nir.poi.Activity.MainActivity;
 import com.benezra.nir.poi.Helper.RetrieveInterestsTask;
 import com.benezra.nir.poi.Helper.RetrieveWikiPageTask;
 import com.benezra.nir.poi.R;
-import com.benezra.nir.poi.Utils.Utils;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
@@ -38,22 +35,30 @@ import com.wang.avi.AVLoadingIndicatorView;
 
 import java.util.Map;
 
+import static com.benezra.nir.poi.Interface.Constants.WIKI_BASE_URL;
+
 public class BrowserFragment extends Fragment implements
         RetrieveInterestsTask.AsyncResponse,
-View.OnClickListener{
+        View.OnClickListener {
 
     // private String TAG = BrowserFragment.class.getSimpleName();
-    private String url;
     private WebView webView;
     private ProgressBar progressBar;
     private float m_downX;
     CoordinatorLayout coordinatorLayout;
     final static String TAG = BrowserFragment.class.getSimpleName();
-    public static final String ACTION_SHOW_ANYWAYS = TAG + ".ACTION_SHOW_ANYWAYS";
     private AVLoadingIndicatorView mProgressBar;
     private MainActivity mActivity;
-    private ImageButton upload,forward,back;
+    private ImageButton upload, forward, back;
+    private boolean isAsyncRunning;
+    private String lastUrl;
+    private FrameLayout background;
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+    }
 
 
     @Override
@@ -62,30 +67,32 @@ View.OnClickListener{
         View rootView = inflater.inflate(R.layout.activity_browser, container, false);
 
         mProgressBar = rootView.findViewById(R.id.pb_loading);
-        upload =  rootView.findViewById(R.id.btn_upload);
-        forward =  rootView.findViewById(R.id.btn_forward);
-        back =  rootView.findViewById(R.id.btn_back);
-
+        upload = rootView.findViewById(R.id.btn_upload);
+        forward = rootView.findViewById(R.id.btn_forward);
+        back = rootView.findViewById(R.id.btn_back);
+        background = rootView.findViewById(R.id.background);
 
         upload.setOnClickListener(this);
         forward.setOnClickListener(this);
         back.setOnClickListener(this);
 
 
-        url = "https://www.wikipedia.org";
-
-        // if no url is passed, close the activity
-        if (TextUtils.isEmpty(url)) {
-            getActivity().finish();
-        }
-
-        webView = (WebView) rootView.findViewById(R.id.webView);
-        progressBar = (ProgressBar) rootView.findViewById(R.id.progressBar);
-        coordinatorLayout = (CoordinatorLayout) rootView.findViewById(R.id.main_content);
+        webView = rootView.findViewById(R.id.webView);
+        progressBar = rootView.findViewById(R.id.progressBar);
+        coordinatorLayout = rootView.findViewById(R.id.main_content);
 
         initWebView();
 
-        webView.loadUrl(url);
+        if (savedInstanceState == null)
+            webView.loadUrl(WIKI_BASE_URL);
+        else {
+            webView.loadUrl(lastUrl);
+            if (isAsyncRunning)
+                setProgress(true);
+            else
+                setProgress(false);
+        }
+
         return rootView;
     }
 
@@ -118,6 +125,7 @@ View.OnClickListener{
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 progressBar.setVisibility(View.GONE);
+                lastUrl = url;
                 invalidateButtons();
             }
 
@@ -179,7 +187,6 @@ View.OnClickListener{
     }
 
 
-
     // backward the browser navigation
     private void back() {
         if (webView.canGoBack()) {
@@ -199,21 +206,23 @@ View.OnClickListener{
         if (output) {
             if (list != null && list.size() > 0)
                 getAllInterests(list);
-        } else
-        {
+        } else {
             mActivity.showSnackBar("Nothing found");
             setProgress(false);
 
         }
+    }
 
+    @Override
+    public void asyncStatus(boolean status) {
+        isAsyncRunning = status;
     }
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.btn_upload:
                 setProgress(true);
-                Utils.bookmarkUrl(getContext(), webView.getUrl());
                 new RetrieveWikiPageTask(this).execute(webView.getUrl());
                 break;
             case R.id.btn_forward:
@@ -257,7 +266,6 @@ View.OnClickListener{
                             setProgress(false);
 
 
-
                         }
                     });
                 }
@@ -274,18 +282,17 @@ View.OnClickListener{
 
     }
 
-    private void setProgress(boolean state){
-        if (state){
+    private void setProgress(boolean state) {
+        if (state) {
             //coordinatorLayout.setEnabled(false);
             mProgressBar.smoothToShow();
-            webView.setAlpha(0.6f);
+            background.setVisibility(View.VISIBLE);
             upload.setEnabled(false);
 
-        }
-            else{
+        } else {
             //coordinatorLayout.setEnabled(true);
             mProgressBar.smoothToHide();
-            webView.setAlpha(1f);
+            background.setVisibility(View.GONE);
             upload.setEnabled(true);
 
         }

@@ -57,7 +57,6 @@ import static com.benezra.nir.poi.Interface.Constants.EVENT_TITLE;
 public class EventByInterestMapFragment extends Fragment implements
 
         OnMapReadyCallback,
-        GoogleMap.OnInfoWindowClickListener,
         GoogleMap.OnMarkerClickListener,
         RecyclerTouchListener.ClickListener {
 
@@ -73,6 +72,8 @@ public class EventByInterestMapFragment extends Fragment implements
     private Marker lastClicked = null;
     private int mLastSelectedIndex;
     private MainActivity mActivity;
+    private CameraPosition mCameraPosition;
+    private MapStateManager mMapStateManager;
 
 
     public static EventByInterestMapFragment newInstance(ArrayList<Event> event_list) {
@@ -98,9 +99,12 @@ public class EventByInterestMapFragment extends Fragment implements
         mFirebaseInstance.getReference().keepSynced(true);
         mEventList = new ArrayList<>();
         mBoundsBuilder = new LatLngBounds.Builder();
+        mMapStateManager = new MapStateManager(getContext());
 
-        if (savedInstanceState!=null)
-            mLastSelectedIndex = savedInstanceState.getInt("index",0);
+        if (savedInstanceState != null){
+            mLastSelectedIndex = savedInstanceState.getInt("index", 0);
+            mCameraPosition = mMapStateManager.getSavedCameraPosition();
+        }
 
         mEventList = getArguments().getParcelableArrayList(EVENT_LIST);
 
@@ -117,14 +121,13 @@ public class EventByInterestMapFragment extends Fragment implements
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt("index",mLastSelectedIndex);
+        outState.putInt("index", mLastSelectedIndex);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        MapStateManager mgr = new MapStateManager(getContext());
-        mgr.saveMapState(mMap);
+        mMapStateManager.saveMapState(mMap);
     }
 
 
@@ -145,19 +148,18 @@ public class EventByInterestMapFragment extends Fragment implements
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.getUiSettings().setMapToolbarEnabled(false);
-        mMap.setOnInfoWindowClickListener(this);
         mMap.setOnMarkerClickListener(this);
+        mMap.setMapType(mMapStateManager.getSavedMapType());
+
         //mMap.setPadding(0, 300, 300, 300);
 
-        if (!mEventList.isEmpty())
-        {
+        if (!mEventList.isEmpty()) {
             addAllMarkersToMap();
             PaintSelectedEvent(mEventList.get(mLastSelectedIndex).getMarker());
 
         }
 
     }
-
 
 
     private void addAllMarkersToMap() {
@@ -172,13 +174,9 @@ public class EventByInterestMapFragment extends Fragment implements
 
         }
 
-        MapStateManager mgr = new MapStateManager(getContext());
-        CameraPosition position = mgr.getSavedCameraPosition();
-        if (position != null) {
-            CameraUpdate update = CameraUpdateFactory.newCameraPosition(position);
+        if (mCameraPosition != null) {
+            CameraUpdate update = CameraUpdateFactory.newCameraPosition(mCameraPosition);
             mMap.moveCamera(update);
-
-            mMap.setMapType(mgr.getSavedMapType());
         } else {
             if (mEventList.size() > 2) {
                 LatLngBounds bounds = mBoundsBuilder.build();
@@ -197,21 +195,16 @@ public class EventByInterestMapFragment extends Fragment implements
 
         mEventsAdapter = new EventsAdapter(getContext(), mEventList);
 
-        mEventsRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view_events);
+        mEventsRecyclerView = rootView.findViewById(R.id.recycler_view_events);
         final LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, true);
         mEventsRecyclerView.setLayoutManager(layoutManager);
         mEventsRecyclerView.setNestedScrollingEnabled(false);
         mEventsRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(), mEventsRecyclerView, this));
-        //mEventsRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(),DividerItemDecoration.HORIZONTAL_LIST));
         mEventsRecyclerView.setBackgroundResource(R.drawable.image_border);
         mEventsRecyclerView.setAdapter(mEventsAdapter);
 
         SnapHelper snapHelper = new PagerSnapHelper();
         snapHelper.attachToRecyclerView(mEventsRecyclerView);
-
-//        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mEventsAdapter);
-//        mItemTouchHelper = new ItemTouchHelper(callback);
-//        mItemTouchHelper.attachToRecyclerView(mEventsRecyclerView);
 
         mEventsRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -250,29 +243,6 @@ public class EventByInterestMapFragment extends Fragment implements
 
     }
 
-    @Override
-    public void onInfoWindowClick(final Marker marker) {
-
-
-        Intent userEvent = new Intent(getActivity(), ViewEventActivity.class);
-        userEvent.putExtra(EVENT_ID, marker.getTag().toString());
-        userEvent.putExtra(EVENT_TITLE, mCurrentSelectedEvent.getTitle());
-        userEvent.putExtra(EVENT_OWNER, mCurrentSelectedEvent.getOwner());
-        userEvent.putExtra(EVENT_IMAGE, mCurrentSelectedEvent.getImage());
-        userEvent.putExtra(EVENT_DETAILS, mCurrentSelectedEvent.getDetails());
-        userEvent.putExtra(EVENT_LATITUDE, mCurrentSelectedEvent.getLatitude());
-        userEvent.putExtra(EVENT_LONGITUDE, mCurrentSelectedEvent.getLongitude());
-        userEvent.putExtra(EVENT_INTEREST, mCurrentSelectedEvent.getInterest());
-        userEvent.putExtra(EVENT_START, mCurrentSelectedEvent.getStart());
-        userEvent.putExtra(EVENT_END, mCurrentSelectedEvent.getEnd());
-
-        userEvent.putExtra(EVENT_ADDRESS, mCurrentSelectedEvent.getAddress());
-
-
-        startActivity(userEvent);
-
-
-    }
 
     @Override
     public boolean onMarkerClick(final Marker marker) {
@@ -292,7 +262,7 @@ public class EventByInterestMapFragment extends Fragment implements
         return false;
     }
 
-    private void PaintSelectedEvent(Marker marker){
+    private void PaintSelectedEvent(Marker marker) {
         if (lastClicked != null)
             lastClicked.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
         marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));

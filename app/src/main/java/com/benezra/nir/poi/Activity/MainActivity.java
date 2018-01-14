@@ -2,7 +2,6 @@ package com.benezra.nir.poi.Activity;
 
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -31,7 +30,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -76,11 +74,9 @@ import java.util.HashMap;
 import java.util.List;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-import static android.content.DialogInterface.BUTTON_NEGATIVE;
 import static android.content.DialogInterface.BUTTON_NEUTRAL;
 import static android.content.DialogInterface.BUTTON_POSITIVE;
 import static com.benezra.nir.poi.Interface.Constants.ACTION_FINISH;
-import static com.benezra.nir.poi.Interface.Constants.ACTION_REMOVE;
 import static com.benezra.nir.poi.Interface.Constants.APP_BAR_SIZE;
 import static com.benezra.nir.poi.Interface.Constants.CURRENT_FRAGMENT;
 import static com.benezra.nir.poi.Interface.Constants.ID_TOKEN;
@@ -130,9 +126,11 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_base);
 
 
+
         mAuth = FirebaseAuth.getInstance();
 
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
         mHandler = new Handler();
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 

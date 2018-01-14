@@ -43,7 +43,7 @@ import static com.benezra.nir.poi.Interface.Constants.EVENT_START;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_TITLE;
 
 public class MessagingService extends FirebaseMessagingService {
-    private static final String TAG = "FPN";
+    private static final String TAG = MessagingService.class.getSimpleName();
 
 
     private NotificationUtils notificationUtils;
@@ -58,46 +58,22 @@ public class MessagingService extends FirebaseMessagingService {
         if (remoteMessage == null || !SharePref.getInstance(this).isNotificationOn())
             return;
 
-        // Check if message contains a notification payload.
-        if (remoteMessage.getNotification() != null) {
-            Log.e(TAG, "Notification Body: " + remoteMessage.getNotification().getBody());
-            handleNotification(remoteMessage.getNotification().getBody());
-        }
-
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
-            Log.e(TAG, "Data Payload: " + remoteMessage.getData().toString());
-
             try {
-                //JSONObject json = new JSONObject(remoteMessage.getData().toString());
                 handleDataMessage(remoteMessage);
             } catch (Exception e) {
                 Log.e(TAG, "Exception: " + e.getMessage());
             }
         }
+        else
+            Log.e(TAG, "remoteMessage.getData() is empty");
+
     }
 
-    private void handleNotification(String message) {
-        if (!NotificationUtils.isAppIsInBackground(getApplicationContext())) {
-            // app is in foreground, broadcast the push message
-            Intent pushNotification = new Intent(Constants.PUSH_NOTIFICATION);
-            pushNotification.putExtra("message", message);
-            LocalBroadcastManager.getInstance(this).sendBroadcast(pushNotification);
-
-            // play notification sound
-            NotificationUtils notificationUtils = new NotificationUtils(getApplicationContext());
-            notificationUtils.playNotificationSound();
-        } else {
-            // If the app is in background, firebase itself handles the notification
-        }
-    }
 
     private void handleDataMessage(RemoteMessage remoteMessage) {
-        Log.e(TAG, "push json: " + remoteMessage.toString());
-
         try {
-            //JSONObject data = json.getJSONObject("data");
-
             final String title = remoteMessage.getData().get("title");
             final String body = remoteMessage.getData().get("body");
             final String id = remoteMessage.getData().get("id");

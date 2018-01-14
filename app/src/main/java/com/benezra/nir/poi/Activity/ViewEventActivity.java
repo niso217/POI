@@ -41,6 +41,7 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.benezra.nir.poi.Adapter.EventImagesAdapter;
+import com.benezra.nir.poi.Adapter.EventParticipatesAdapter;
 import com.benezra.nir.poi.Adapter.ViewHolders;
 import com.benezra.nir.poi.Utils.DateUtil;
 import com.benezra.nir.poi.Objects.Event;
@@ -123,6 +124,7 @@ public class ViewEventActivity extends AppCompatActivity
     private RecyclerView mPicturesRecyclerView;
     private RecyclerView mParticipateRecyclerView;
     private ArrayList<String> mEventImagesList;
+    private ArrayList<User> mEventParticipateList;
     private EventImagesAdapter mEventImagesAdapter;
     private GoogleMapsBottomSheetBehavior behavior;
     private NestedScrollView mNestedScrollView;
@@ -136,8 +138,7 @@ public class ViewEventActivity extends AppCompatActivity
     public static final int EVENT_LOC_TAB = 3;
     private int mTabSelectedIndex;
 
-
-    private FirebaseRecyclerAdapter<User, ViewHolders.ParticipatesViewHolder> mParticipateAdapter;
+    private EventParticipatesAdapter mParticipateAdapter;
 
 
     @Override
@@ -150,12 +151,15 @@ public class ViewEventActivity extends AppCompatActivity
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventImagesList = new ArrayList<>();
         mEventImagesAdapter = new EventImagesAdapter(this, mEventImagesList);
+        mEventParticipateList = new ArrayList<>();
+        mParticipateAdapter = new EventParticipatesAdapter(this, mEventParticipateList);
+
 
         initView();
 
-        initParticipatesRecycleView();
-
         initImageRecycleView();
+
+        initParticipateRecycleView();
 
         inflateMapFragment();
 
@@ -234,11 +238,6 @@ public class ViewEventActivity extends AppCompatActivity
         }, 100L);
     }
 
-    private void initParticipatesRecycleView() {
-        mParticipateRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
-        mParticipateRecyclerView.setNestedScrollingEnabled(false);
-
-    }
 
 
     private void inflateMapFragment() {
@@ -412,6 +411,14 @@ public class ViewEventActivity extends AppCompatActivity
         snapHelper.attachToRecyclerView(mPicturesRecyclerView);
     }
 
+
+    private void initParticipateRecycleView() {
+        mParticipateRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
+        mParticipateRecyclerView.setNestedScrollingEnabled(false);
+        mParticipateRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mParticipateRecyclerView, null));
+        mParticipateRecyclerView.setAdapter(mParticipateAdapter);
+    }
+
     private void getAllEventImages() {
         Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("pictures");
         query.addValueEventListener(new ValueEventListener() {
@@ -437,32 +444,58 @@ public class ViewEventActivity extends AppCompatActivity
         });
     }
 
-    private void participatesChangeListener() {
+    private void participatesChangeListener(){
         Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
 
-        mParticipateAdapter = new FirebaseRecyclerAdapter<User, ViewHolders.ParticipatesViewHolder>(
-                User.class, R.layout.participate_list_row, ViewHolders.ParticipatesViewHolder.class, query) {
+        query.addValueEventListener(new ValueEventListener() {
             @Override
-            protected void populateViewHolder(ViewHolders.ParticipatesViewHolder participatesViewHolder, User model, int position) {
-                participatesViewHolder.name.setText(model.getName());
-                Picasso.with(ViewEventActivity.this)
-                        .load(model.getAvatar())
-                        .error(R.drawable.common_google_signin_btn_icon_dark)
-                        .into(participatesViewHolder.image);
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                mEventParticipateList.clear();
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot data : dataSnapshot.getChildren()) {
+                        User user = data.getValue(User.class);
+                        mEventParticipateList.add(user);
+
+                    }
+                    mParticipateAdapter.notifyDataSetChanged();
+
+                }
             }
 
-        };
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
 
-        mParticipateRecyclerView.setAdapter(mParticipateAdapter);
-
+            }
+        });
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mParticipateAdapter.cleanup();
 
-    }
+
+//    private void participatesChangeListener() {
+//        Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
+//
+//        mParticipateAdapter = new FirebaseRecyclerAdapter<User, ViewHolders.ParticipatesViewHolder>(
+//                User.class, R.layout.participate_list_row, ViewHolders.ParticipatesViewHolder.class, query) {
+//            @Override
+//            protected void populateViewHolder(ViewHolders.ParticipatesViewHolder participatesViewHolder, User model, int position) {
+//                participatesViewHolder.name.setText(model.getName());
+//                Picasso.with(ViewEventActivity.this)
+//                        .load(model.getAvatar())
+//                        .error(R.drawable.common_google_signin_btn_icon_dark)
+//                        .into(participatesViewHolder.image);
+//            }
+//
+//            @Override
+//            public void onDataChanged() {
+//                super.onDataChanged();
+//
+//            }
+//        };
+//
+//        mParticipateRecyclerView.setAdapter(mParticipateAdapter);
+//
+//    }
+
 
 
     @Override
