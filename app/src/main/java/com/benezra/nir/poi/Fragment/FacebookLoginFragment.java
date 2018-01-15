@@ -156,7 +156,7 @@ public class FacebookLoginFragment extends Fragment implements
     public void onError(FacebookException error) {
         mListener.login(false);
 
-        Log.d(TAG, "facebook:onError", error);
+        Log.d(TAG, "facebook:onErrorDialog", error);
 
     }
 }

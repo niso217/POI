@@ -17,6 +17,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.NestedScrollView;
@@ -38,6 +39,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.benezra.nir.poi.Adapter.EventImagesAdapter;
@@ -130,6 +132,7 @@ public class ViewEventActivity extends AppCompatActivity
     private NestedScrollView mNestedScrollView;
     private HorizontalScrollView mHorizontalScrollView;
     private LinearLayout mNavigationBarLayout;
+    private CoordinatorLayout mCoordinatorLayout;
     private TabLayout mTabLayout;
 
     public static final int DRIVING_TAB = 0;
@@ -202,6 +205,7 @@ public class ViewEventActivity extends AppCompatActivity
         mNavigationBarLayout = findViewById(R.id.tab_layout);
         mTitle = findViewById(R.id.tv_title);
         mTitle.setEnabled(false);
+        mCoordinatorLayout = findViewById(R.id.coordinatorlayout);
         mJoin = findViewById(R.id.btn_join);
         mShare = findViewById(R.id.btn_share);
         mNavigate = findViewById(R.id.btn_navigate);
@@ -702,6 +706,19 @@ public class ViewEventActivity extends AppCompatActivity
 
     @Override
     public void onFinishDialog(String image) {
+        showSnackBar(getString(R.string.image_uploaded));
+    }
+
+    @Override
+    public void onErrorDialog(String error) {
+        showSnackBar(getString(R.string.image_uploaded_error));
+
+    }
+
+    public void showSnackBar(String message) {
+        Snackbar snackbar = Snackbar
+                .make(mCoordinatorLayout, message, Snackbar.LENGTH_LONG);
+        snackbar.show();
 
     }
 

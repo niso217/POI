@@ -24,10 +24,9 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
-import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
+import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Utils.BitmapUtil;
 import com.benezra.nir.poi.Objects.EventPhotos;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -88,6 +87,7 @@ public class UploadToFireBaseFragment extends DialogFragment{
     // 1. Defines the listener interface with a method passing back data result.
     public interface UploadListener {
         void onFinishDialog(String image);
+        void onErrorDialog(String error);
     }
 
     @Override
@@ -96,6 +96,8 @@ public class UploadToFireBaseFragment extends DialogFragment{
 
         setCancelable(false);
         mProgressDialog = new ProgressDialog(getActivity(), getTheme());
+        mProgressDialog.setTitle(getString(R.string.image_uploaded_title));
+        mProgressDialog.setMessage(getString(R.string.please_wait));
         mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL); // Progress Dialog Style Spinner
         mProgressDialog.setMax(MAX); // Progress Dialog Max Value
         initHandler();
@@ -109,12 +111,22 @@ public class UploadToFireBaseFragment extends DialogFragment{
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRetainInstance(true);
         String id = getArguments().getString(ID);
         Uri uri = getArguments().getParcelable(URI);
         mFirebaseEventPicReference = FirebaseDatabase.getInstance().getReference("events").child(id).child("pictures");
         uploadBytes(uri,id);
 
 
+    }
+
+    @Override
+    public void onDestroyView() {
+        Dialog dialog = getDialog();
+        if (dialog != null && getRetainInstance()) {
+            dialog.setDismissMessage(null);
+        }
+        super.onDestroyView();
     }
 
     private void initHandler() {
@@ -173,14 +185,13 @@ public class UploadToFireBaseFragment extends DialogFragment{
                             Log.i(TAG, "Name: " + taskSnapshot.getMetadata().getName());
                             writeNewImageInfoToDB(pic_id,taskSnapshot.getDownloadUrl().toString());
                             mListener.onFinishDialog(taskSnapshot.getDownloadUrl().toString());
-                            Toast.makeText(getContext(), "File Uploaded ", Toast.LENGTH_LONG).show();
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception exception) {
                             dismiss();
-                            Toast.makeText(getContext(), exception.getMessage(), Toast.LENGTH_LONG).show();
+                            mListener.onErrorDialog(exception.getMessage());
                         }
                     })
                     .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
@@ -204,7 +215,8 @@ public class UploadToFireBaseFragment extends DialogFragment{
                         }
                     });
         } else {
-            Toast.makeText(getContext(), "No File!", Toast.LENGTH_LONG).show();
+            mListener.onErrorDialog("No file");
+
         }
     }
 
@@ -212,20 +224,5 @@ public class UploadToFireBaseFragment extends DialogFragment{
         String key = mFirebaseEventPicReference.push().getKey();
         mFirebaseEventPicReference.child(key).setValue(new EventPhotos(url,title));
     }
-
-    private boolean validateInputFileName(String fileName) {
-
-        if (TextUtils.isEmpty(fileName)) {
-            Toast.makeText(getContext(), "Enter file name!", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-
-        return true;
-    }
-
-
-
-
-
 
 }

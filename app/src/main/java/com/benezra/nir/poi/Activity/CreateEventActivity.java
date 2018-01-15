@@ -40,6 +40,7 @@ import android.widget.ProgressBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import java.time.Period;
 import java.util.Arrays;
@@ -1342,7 +1343,14 @@ public class CreateEventActivity extends AppCompatActivity
     @Override
     public void onFinishDialog(String image) {
         mCurrentEvent.setImage(image);
+        showSnackBar(getString(R.string.image_uploaded));
         isChangeMade();
+
+    }
+
+    @Override
+    public void onErrorDialog(String error) {
+        showSnackBar(getString(R.string.image_uploaded_error));
 
     }
 

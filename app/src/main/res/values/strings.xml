@@ -80,6 +80,9 @@
     <string name="delete_event">Deleting event</string>
     <string name="please_wait">Please wait...</string>
     <string name="event_created">Event created successfully</string>
+    <string name="image_uploaded_title">Uploading Image</string>
+    <string name="image_uploaded">Image uploaded successfully</string>
+    <string name="image_uploaded_error">Failed upload image</string>
 
     <!--Icons Descriptions-->
     <string name="navigate">Navigate</string>
