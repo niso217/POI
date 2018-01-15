@@ -38,7 +38,7 @@ public class SplashActivity extends Activity {
         mFirebaseInstance = FirebaseDatabase.getInstance();
 
         if (mAuth.getCurrentUser() != null) {
-            Intent intent = new Intent(SplashActivity.this, TutorialActivity.class);
+            Intent intent = new Intent(SplashActivity.this, MainActivity.class);
             startActivity(intent);
             finish();
         } else {

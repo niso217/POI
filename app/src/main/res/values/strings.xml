@@ -176,16 +176,16 @@
     <string name="summary_about">POI is an application that allow creating and displaying events that are in a chosen area by GPS. A user that will be interested in a certain event will get into the system and will appear to him some several options such as open a new event or searching for an exciting one by time and place.
 POI will learn about the user day routine and interest in events so it could offer him events that are related to his interest.
 </string>
-    <string name="app_version">0.7</string>
+    <string name="app_version">1</string>
     <string name="summary_support">Got any queries? We are happy to help!</string>
     <string name="title_send_feedback">Send Feedback</string>
     <string name="title_faq">FAQ</string>
     <string name="summary_faq">View frequently asked questions</string>
     <string name="url_faq">http://www.google.com</string>
     <string name="privacy_policy">Privacy Policy</string>
-    <string name="url_privacy">http://www.google.com</string>
+    <string name="url_privacy">https://firebasestorage.googleapis.com/v0/b/pointerest-ce04f.appspot.com/o/docs%2Fprivacy_policy.html?alt=media&amp;token=abbb5a82-1495-43ea-a930-d54bf8e1c46b</string>
     <string name="title_terms">Terms &amp; Conditions</string>
-    <string name="url_terms">http://www.google.com</string>
+    <string name="url_terms">https://firebasestorage.googleapis.com/v0/b/pointerest-ce04f.appspot.com/o/docs%2Fterms_and_conditions.html?alt=media&amp;token=053b2852-37c0-4b29-b917-e8b79ba9eee6</string>
     <string name="title_version">Version</string>
     <string name="choose_email_client">Choose email client</string>
     <string name="title_gallery_storage">Default Storage</string>

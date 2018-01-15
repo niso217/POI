@@ -22,6 +22,7 @@
             android:title="@string/action_settings" />
         <item
             android:id="@+id/nav_help"
+            android:visible="false"
             android:icon="@drawable/ic_local_library_white_24dp"
             android:title="@string/action_help" />
         <item
@@ -41,6 +42,7 @@
 
     <group android:id="@+id/nav_group_dev"
         android:checkableBehavior="all"
+        android:visible="false"
         >
         <item
             android:id="@+id/fake_data"

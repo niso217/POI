@@ -32,6 +32,7 @@ public class AboutFragment extends PreferenceFragmentCompatDividers {
                 return true;
             }
         });
+
     }
 
     @Override
