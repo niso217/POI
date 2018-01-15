@@ -19,6 +19,11 @@ import com.takisoft.fix.support.v7.preference.PreferenceFragmentCompatDividers;
 public class PreferenceFragment extends PreferenceFragmentCompatDividers {
 
     @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+    }
+
+    @Override
     public void onCreatePreferencesFix(@Nullable Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.pref_main, rootKey);
 
@@ -33,4 +38,6 @@ public class PreferenceFragment extends PreferenceFragmentCompatDividers {
             // setDividerPreferences(DIVIDER_OFFICIAL);
         }
     }
+
+
 }

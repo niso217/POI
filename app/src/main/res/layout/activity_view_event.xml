@@ -76,7 +76,7 @@
 
     </LinearLayout>
 
-    <HorizontalScrollView
+    <LinearLayout
         android:id="@+id/scrolling_icons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -85,43 +85,47 @@
         android:gravity="center_horizontal|center"
         android:orientation="horizontal"
         android:scrollbars="none"
+        android:weightSum="6"
         app:layout_anchor="@id/nestedscrollview"
         app:layout_anchorGravity="top|right|end">
 
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="@dimen/icons_margin"
-            android:layout_gravity="center">
-
 
             <ImageButton
                 android:id="@+id/btn_navigate"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:layout_marginRight="@dimen/icons_margin"
-                android:background="@drawable/navigate_button" />
+                android:layout_weight="1"
+                app:srcCompat="@drawable/navigate_button" />
 
             <ImageButton
                 android:id="@+id/btn_share"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:background="@drawable/share_button" />
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:layout_weight="1"
+                app:srcCompat="@drawable/share_button" />
 
             <ImageButton
                 android:id="@+id/btn_add_image"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:layout_marginLeft="@dimen/icons_margin"
-                android:background="@drawable/image_button" />
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:layout_weight="1"
+                app:srcCompat="@drawable/image_button" />
 
-            <ToggleButton
+            <ImageButton
                 android:id="@+id/btn_join"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:layout_marginLeft="@dimen/icons_margin"
-                android:background="@drawable/join_event_toggle"
+                android:background="@android:color/transparent"
+                android:layout_weight="1"
+                app:srcCompat="@drawable/join_event_toggle"
+                android:scaleType="fitCenter"
                 android:text="@null"
                 android:textOff="@null"
                 android:textOn="@null" />
@@ -132,22 +136,22 @@
                 android:id="@+id/btn_chat"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:layout_marginLeft="@dimen/icons_margin"
-                android:background="@drawable/chat_button" />
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/chat_button" />
 
             <ImageButton
                 android:id="@+id/btn_cal"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:layout_marginLeft="@dimen/icons_margin"
-                android:layout_marginRight="@dimen/icons_margin"
-                android:background="@drawable/calendar_button" />
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/calendar_button" />
 
 
         </LinearLayout>
-
-    </HorizontalScrollView>
-
 
 
 </android.support.design.widget.CoordinatorLayout>

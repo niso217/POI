@@ -100,7 +100,6 @@ public class ViewEventActivity extends AppCompatActivity
         MapFragment.MapFragmentCallback,
         ImageCameraDialogFragment.ImageCameraDialogCallbackNew,
         RecyclerTouchListener.ClickListener,
-        CompoundButton.OnCheckedChangeListener,
         UploadToFireBaseFragment.UploadListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
         GoogleMapsBottomSheetBehavior.BottomSheetCallback,
@@ -120,8 +119,7 @@ public class ViewEventActivity extends AppCompatActivity
     private LinearLayout mPrivateLinearLayout;
     private MapFragment mapFragment;
     private boolean mTouchEventFired;
-    private ImageButton mNavigate, mAddImage, mChat, mShare, mCalender;
-    private ToggleButton mJoin;
+    private ImageButton mNavigate, mAddImage, mChat, mShare, mCalender,mJoin;
     private TextView mTitle, mDetails, mTextViewDistance;
     private RecyclerView mPicturesRecyclerView;
     private RecyclerView mParticipateRecyclerView;
@@ -130,7 +128,7 @@ public class ViewEventActivity extends AppCompatActivity
     private EventImagesAdapter mEventImagesAdapter;
     private GoogleMapsBottomSheetBehavior behavior;
     private NestedScrollView mNestedScrollView;
-    private HorizontalScrollView mHorizontalScrollView;
+    private LinearLayout mHorizontalScrollView;
     private LinearLayout mNavigationBarLayout;
     private CoordinatorLayout mCoordinatorLayout;
     private TabLayout mTabLayout;
@@ -201,7 +199,7 @@ public class ViewEventActivity extends AppCompatActivity
 
     private void initView() {
         mHorizontalScrollView = findViewById(R.id.scrolling_icons);
-        focusRight();
+       // focusRight();
         mNavigationBarLayout = findViewById(R.id.tab_layout);
         mTitle = findViewById(R.id.tv_title);
         mTitle.setEnabled(false);
@@ -234,13 +232,13 @@ public class ViewEventActivity extends AppCompatActivity
 
     }
 
-    private void focusRight() {
-        mHorizontalScrollView.postDelayed(new Runnable() {
-            public void run() {
-                mHorizontalScrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT);
-            }
-        }, 100L);
-    }
+//    private void focusRight() {
+//        mHorizontalScrollView.postDelayed(new Runnable() {
+//            public void run() {
+//                mHorizontalScrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT);
+//            }
+//        }, 100L);
+//    }
 
 
 
@@ -254,7 +252,7 @@ public class ViewEventActivity extends AppCompatActivity
     }
 
     private void initListeners() {
-        mJoin.setOnCheckedChangeListener(this);
+        mJoin.setOnClickListener(this);
         mShare.setOnClickListener(this);
         mNavigate.setOnClickListener(this);
         mAddImage.setOnClickListener(this);
@@ -327,6 +325,12 @@ public class ViewEventActivity extends AppCompatActivity
             case R.id.btn_cal:
                 addToCalender();
                 break;
+            case R.id.btn_join:
+                mJoinEvent =  !mJoin.isActivated();
+                setMenuItemChecked();
+                JoinLeaveEvent();
+                Log.d(TAG, "isJoined onCheckedChanged " + mJoinEvent);
+                break;
         }
     }
 
@@ -370,18 +374,7 @@ public class ViewEventActivity extends AppCompatActivity
 
     }
 
-    @Override
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        switch (buttonView.getId()) {
-            case R.id.btn_join:
-                mJoinEvent = isChecked;
-                setMenuItemChecked();
-                JoinLeaveEvent();
-                Log.d(TAG, "isJoined onCheckedChanged " + mJoinEvent);
-                break;
-        }
 
-    }
 
     private void isJoined() {
         Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
@@ -526,7 +519,7 @@ public class ViewEventActivity extends AppCompatActivity
             mPrivateLinearLayout.setVisibility(View.INVISIBLE);
             setButtonState(false);
         }
-        mJoin.setChecked(mJoinEvent);
+        mJoin.setActivated(mJoinEvent);
 
     }
 

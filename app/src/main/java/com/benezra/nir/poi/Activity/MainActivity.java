@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity
         OnSuccessListener<Location>,
         OnFailureListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
-        GoogleApiClient.OnConnectionFailedListener, View.OnClickListener,AlertDialogFragment.DialogListenerCallback {
+        GoogleApiClient.OnConnectionFailedListener, View.OnClickListener, AlertDialogFragment.DialogListenerCallback {
 
     private Toolbar mToolbar;
     private FusedLocationProviderClient mFusedLocationProviderClient;
@@ -124,7 +124,6 @@ public class MainActivity extends AppCompatActivity
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_base);
-
 
 
         mAuth = FirebaseAuth.getInstance();
@@ -318,7 +317,7 @@ public class MainActivity extends AppCompatActivity
             progress.setVisibility(View.GONE);
             Picasso.with(this)
                     .cancelRequest(background);
-           // Picasso.with(this).load(R.drawable.nir3).into(background);
+            // Picasso.with(this).load(R.drawable.nir3).into(background);
             background.setImageResource(R.drawable.nir8);
         }
 
@@ -336,12 +335,16 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            if (isMainVisible())
+            if (isVisible(MainFragment.class.getSimpleName()))
                 BuildReturnDialogFragment();
             else {
                 if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                    if (isVisible(AboutFragment.class.getSimpleName()) ||
+                            isVisible(BrowserFragment.class.getSimpleName()) ||
+                            isVisible(PreferenceFragment.class.getSimpleName()))
+                        inflateFragment(new MainFragment(), false);
+                    else
                     getSupportFragmentManager().popBackStack();
-
                 } else {
                     inflateFragment(new MainFragment(), false);
                     selectNavigationItem(R.id.nav_main);
@@ -351,8 +354,10 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private boolean isMainVisible() {
-        Fragment hm = getSupportFragmentManager().findFragmentByTag(MainFragment.class.getSimpleName());
+
+
+    private boolean isVisible(String fragment) {
+        Fragment hm = getSupportFragmentManager().findFragmentByTag(fragment);
         if (hm != null)
             if (hm.isVisible())
                 return true;
@@ -426,34 +431,21 @@ public class MainActivity extends AppCompatActivity
                 break;
             case R.id.nav_about:
                 inflateFragment(new AboutFragment(), false);
-
                 break;
             case R.id.nav_share:
-                //shareApp();
-                /// intent = new Intent(this, HelpActivity.class);
-                // createBackStack(intent);
                 onInviteClicked();
                 break;
             case R.id.nav_add_interest:
-//                intent = new Intent(this, BrowserFragment.class);
-//                intent.setAction(BrowserFragment.ACTION_SHOW_ANYWAYS);
-//                createBackStack(intent);
                 inflateFragment(new BrowserFragment(), false);
                 break;
             case R.id.nav_settings:
-//                intent = new Intent(this, SettingsActivity.class);
-//                createBackStack(intent);
+
                 inflateFragment(new PreferenceFragment(), false);
                 break;
             case R.id.fake_data:
                 intent = new Intent(this, DataFaker.class);
                 intent.setAction(TutorialActivity.ACTION_SHOW_ANYWAYS);
                 createBackStack(intent);
-                //intent = new Intent(this, GeofencingActivity.class);
-                //createBackStack(intent);
-                //intent = new Intent(this, BlaBlaActivity.class);
-                //createBackStack(intent);
-                //sendExample();
                 break;
             default:
                 finish();
@@ -735,7 +727,7 @@ public class MainActivity extends AppCompatActivity
     private void onInviteClicked() {
         Intent intent = new AppInviteInvitation.IntentBuilder(getString(R.string.invitation_title))
                 .setMessage(getString(R.string.invitation_message))
-               // .setDeepLink(Uri.parse(getString(R.string.invitation_deep_link)))
+                // .setDeepLink(Uri.parse(getString(R.string.invitation_deep_link)))
                 .setCustomImage(getUriToResource(R.mipmap.ic_launcher))
                 .setCallToActionText(getString(R.string.invitation_cta))
                 .build();
@@ -763,7 +755,7 @@ public class MainActivity extends AppCompatActivity
                 // [END_EXCLUDE]
             }
         }
-        inflateFragment(new MainFragment(),false);
+        inflateFragment(new MainFragment(), false);
     }
 
 
@@ -808,7 +800,7 @@ public class MainActivity extends AppCompatActivity
 
         switch (state) {
             case BUTTON_POSITIVE:
-                    finish();
+                finish();
                 break;
         }
     }

@@ -79,49 +79,60 @@
         android:gravity="center_horizontal"
         android:orientation="horizontal"
         android:scrollbars="none"
+        android:weightSum="5"
         app:layout_anchor="@id/nestedscrollview"
         app:layout_anchorGravity="top|right|end">
 
         <ImageButton
             android:id="@+id/btn_delete"
+            android:scaleType="fitCenter"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:layout_marginLeft="@dimen/icons_margin"
-            android:background="@drawable/delete_button"
-            android:contentDescription="@string/share"
+            android:background="@android:color/transparent"
+            android:layout_weight="1"
+            app:srcCompat="@drawable/delete_button"
+            android:contentDescription="@string/delete"
             android:visibility="gone" />
 
         <ImageButton
             android:id="@+id/btn_share"
+            android:scaleType="fitCenter"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:layout_marginLeft="@dimen/icons_margin"
-            android:background="@drawable/share_button"
+            app:srcCompat="@drawable/share_button"
+            android:background="@android:color/transparent"
+            android:layout_weight="1"
             android:contentDescription="@string/share" />
 
         <ImageButton
             android:id="@+id/btn_add_image"
+            android:scaleType="fitCenter"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:layout_marginLeft="@dimen/icons_margin"
-            android:background="@drawable/image_button"
+            android:background="@android:color/transparent"
+            app:srcCompat="@drawable/image_button"
+            android:layout_weight="1"
             android:contentDescription="@string/add_image" />
 
         <ImageButton
             android:id="@+id/btn_chat"
+            android:scaleType="fitCenter"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:layout_marginLeft="@dimen/icons_margin"
-            android:background="@drawable/chat_button"
+            android:background="@android:color/transparent"
+            app:srcCompat="@drawable/chat_button"
+            android:layout_weight="1"
             android:contentDescription="@string/chat" />
 
         <ImageButton
             android:id="@+id/btn_save"
+            android:scaleType="fitCenter"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:layout_marginLeft="@dimen/icons_margin"
-            android:background="@drawable/save_button"
-            android:contentDescription="@string/chat" />
+            android:background="@android:color/transparent"
+            app:srcCompat="@drawable/save_button"
+            android:layout_weight="1"
+            android:contentDescription="@string/save" />
 
 
     </LinearLayout>
