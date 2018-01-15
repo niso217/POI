@@ -15,6 +15,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.AnyRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -112,6 +113,7 @@ public class MainActivity extends AppCompatActivity
     public static final int REQ_START_SHARE = 2;
     private FloatingActionButton mFloatingActionButton;
     private String mCurrentFragment;
+    private CollapsingToolbarLayout mCollapsingToolbarLayout;
 
 
     private Handler mHandler;
@@ -129,6 +131,15 @@ public class MainActivity extends AppCompatActivity
         mAuth = FirebaseAuth.getInstance();
 
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        mCollapsingToolbarLayout = findViewById(R.id.collapsingtoolbarlayout);
+
+//        mCollapsingToolbarLayout.setOnScrollChangeListener(new View.OnScrollChangeListener() {
+//            @Override
+//            public void onScrollChange(View view, int i, int i1, int i2, int i3) {
+//
+//            }
+//        });
 
         mHandler = new Handler();
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -341,8 +352,10 @@ public class MainActivity extends AppCompatActivity
                 if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
                     if (isVisible(AboutFragment.class.getSimpleName()) ||
                             isVisible(BrowserFragment.class.getSimpleName()) ||
-                            isVisible(PreferenceFragment.class.getSimpleName()))
+                            isVisible(PreferenceFragment.class.getSimpleName())){
                         inflateFragment(new MainFragment(), false);
+                        selectNavigationItem(R.id.nav_main);
+                    }
                     else
                     getSupportFragmentManager().popBackStack();
                 } else {
