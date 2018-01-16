@@ -468,33 +468,6 @@ public class ViewEventActivity extends AppCompatActivity
 
 
 
-//    private void participatesChangeListener() {
-//        Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
-//
-//        mParticipateAdapter = new FirebaseRecyclerAdapter<User, ViewHolders.ParticipatesViewHolder>(
-//                User.class, R.layout.participate_list_row, ViewHolders.ParticipatesViewHolder.class, query) {
-//            @Override
-//            protected void populateViewHolder(ViewHolders.ParticipatesViewHolder participatesViewHolder, User model, int position) {
-//                participatesViewHolder.name.setText(model.getName());
-//                Picasso.with(ViewEventActivity.this)
-//                        .load(model.getAvatar())
-//                        .error(R.drawable.common_google_signin_btn_icon_dark)
-//                        .into(participatesViewHolder.image);
-//            }
-//
-//            @Override
-//            public void onDataChanged() {
-//                super.onDataChanged();
-//
-//            }
-//        };
-//
-//        mParticipateRecyclerView.setAdapter(mParticipateAdapter);
-//
-//    }
-
-
-
     @Override
     public void onBackPressed() {
         if (behavior.getState() == STATE_COLLAPSED)

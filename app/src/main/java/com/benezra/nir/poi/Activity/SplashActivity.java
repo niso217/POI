@@ -39,9 +39,7 @@ import static com.benezra.nir.poi.Interface.Constants.NOTIFY_TOKEN;
 public class SplashActivity extends Activity {
 
     private FirebaseAuth mAuth;
-    private FirebaseDatabase mFirebaseInstance;
     private static final String TAG = SignInActivity.class.getSimpleName();
-    View view;
 
 
     @Override
@@ -50,8 +48,6 @@ public class SplashActivity extends Activity {
 
         //Get Firebase mAuth instance
         mAuth = FirebaseAuth.getInstance();
-        mFirebaseInstance = FirebaseDatabase.getInstance();
-        view = findViewById(android.R.id.content);
 
         if (!isNetworkAvailable())
         {
