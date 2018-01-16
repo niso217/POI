@@ -86,7 +86,11 @@ public class BrowserFragment extends Fragment implements
         if (savedInstanceState == null)
             webView.loadUrl(WIKI_BASE_URL);
         else {
-            webView.loadUrl(lastUrl);
+            if (lastUrl!=null)
+                webView.loadUrl(lastUrl);
+            else
+                webView.loadUrl(WIKI_BASE_URL);
+
             if (isAsyncRunning)
                 setProgress(true);
             else

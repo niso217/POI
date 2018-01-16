@@ -412,8 +412,17 @@ public class EventByInterestListFragment extends Fragment implements
     }
 
     @Override
-    public void onAppBarChanged() {
-        if (mBbubbleSeekBar!=null)
-        mBbubbleSeekBar.correctOffsetWhenContainerOnScrolling();
+    public void onAppBarExpended() {
+        if (mBbubbleSeekBar!=null){
+            mBbubbleSeekBar.setEnabled(true);
+            mBbubbleSeekBar.correctOffsetWhenContainerOnScrolling();
+
+
+        }
+    }
+
+    @Override
+    public void onAppBarCollapsed() {
+        mBbubbleSeekBar.setEnabled(false);
     }
 }
