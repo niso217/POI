@@ -226,9 +226,10 @@ public class EventByInterestListFragment extends Fragment implements
 
     }
 
+
     @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public void onPause() {
+        super.onPause();
         mActivity.setFABCallBack(null);
 
     }
@@ -255,7 +256,6 @@ public class EventByInterestListFragment extends Fragment implements
 
 
         mBbubbleSeekBar = rootView.findViewById(R.id.sb_km);
-
 
         mBbubbleSeekBar.setOnProgressChangedListener(new BubbleSeekBar.OnProgressChangedListener() {
             @Override
@@ -409,5 +409,11 @@ public class EventByInterestListFragment extends Fragment implements
     @Override
     public void onFABClicked() {
         mActivity.inflateFragment(EventByInterestMapFragment.newInstance(mEventList),true);
+    }
+
+    @Override
+    public void onAppBarChanged() {
+        if (mBbubbleSeekBar!=null)
+        mBbubbleSeekBar.correctOffsetWhenContainerOnScrolling();
     }
 }

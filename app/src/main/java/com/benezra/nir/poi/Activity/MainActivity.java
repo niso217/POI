@@ -1,19 +1,28 @@
 package com.benezra.nir.poi.Activity;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
+import android.service.carrier.CarrierMessagingService;
 import android.support.annotation.AnyRes;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
@@ -35,6 +44,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.benezra.nir.poi.Fragment.AboutFragment;
 import com.benezra.nir.poi.Fragment.AlertDialogFragment;
@@ -52,9 +62,23 @@ import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.core.GeoHash;
 import com.google.android.gms.appinvite.AppInviteInvitation;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -86,10 +110,12 @@ import static com.benezra.nir.poi.Interface.Constants.USER_LOCATION;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-        OnSuccessListener<Location>,
-        OnFailureListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
-        GoogleApiClient.OnConnectionFailedListener, View.OnClickListener, AlertDialogFragment.DialogListenerCallback {
+        GoogleApiClient.OnConnectionFailedListener,
+        View.OnClickListener,
+        AlertDialogFragment.DialogListenerCallback,
+        AppBarLayout.OnOffsetChangedListener,GoogleApiClient.ConnectionCallbacks ,
+        OnCompleteListener<LocationSettingsResponse> {
 
     private Toolbar mToolbar;
     private FusedLocationProviderClient mFusedLocationProviderClient;
@@ -111,12 +137,16 @@ public class MainActivity extends AppCompatActivity
     static final int MAIN_CONTENT_FADEOUT_DURATION = 150;
     static final int MAIN_CONTENT_FADEIN_DURATION = 250;
     public static final int REQ_START_SHARE = 2;
+    public static final int REQUEST_CHECK_SETTINGS = 3;
+    private LocationSettingsRequest mLocationSettingsRequest;
     private FloatingActionButton mFloatingActionButton;
     private String mCurrentFragment;
-    private CollapsingToolbarLayout mCollapsingToolbarLayout;
-
-
+    private AppBarLayout mAppBarLayout;
+    private LocationRequest mLocationRequest;
+    private GoogleApiClient mGoogleApiClient;
     private Handler mHandler;
+    private long UPDATE_INTERVAL = 10 * 60;  /* 60 secs */
+    private long FASTEST_INTERVAL = 2000; /* 2 sec */
 
 
     @Override
@@ -132,14 +162,6 @@ public class MainActivity extends AppCompatActivity
 
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        mCollapsingToolbarLayout = findViewById(R.id.collapsingtoolbarlayout);
-
-//        mCollapsingToolbarLayout.setOnScrollChangeListener(new View.OnScrollChangeListener() {
-//            @Override
-//            public void onScrollChange(View view, int i, int i1, int i2, int i3) {
-//
-//            }
-//        });
 
         mHandler = new Handler();
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -165,6 +187,9 @@ public class MainActivity extends AppCompatActivity
 
         setUpDeepLinking();
 
+        startLocationUpdates();
+
+
         if (savedInstanceState == null) {
             askForLocation();
             //inflateFragment(new MainFragment(), false);
@@ -187,7 +212,66 @@ public class MainActivity extends AppCompatActivity
         mFloatingActionButton = findViewById(R.id.fab);
         mFloatingActionButton.setOnClickListener(this);
 
+        mAppBarLayout = findViewById(R.id.appbar);
 
+
+
+    }
+
+
+
+    // Trigger new location updates at interval
+    protected void startLocationUpdates() {
+
+        // Create the location request to start receiving updates
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        mLocationRequest.setInterval(UPDATE_INTERVAL);
+        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
+
+        // Create LocationSettingsRequest object using location request
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+        builder.addLocationRequest(mLocationRequest);
+        mLocationSettingsRequest = builder.build();
+
+    }
+
+    public void initFusedLocation(){
+
+        Task<LocationSettingsResponse> result =
+                LocationServices.getSettingsClient(this).checkLocationSettings(mLocationSettingsRequest);
+        result.addOnCompleteListener(this);
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestLocation(){
+        mFusedLocationProviderClient.requestLocationUpdates(mLocationRequest, new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+
+                mUserLocation = locationResult.getLastLocation();
+
+                if (mUserLocation!=null)
+                {
+                    broadcastLocation(mUserLocation);
+
+                    GeoHash geoHash = new GeoHash(new GeoLocation(mUserLocation.getLatitude(), mUserLocation.getLongitude()));
+                    FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
+                            .child("/g").setValue(geoHash.getGeoHashString());
+                    List<Double> loc = Arrays.asList(mUserLocation.getLatitude(), mUserLocation.getLongitude());
+                    FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
+                            .child("/l").setValue(loc);
+
+
+                    FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
+                            .child("location_history").push().setValue(
+                            new LocationHistory(loc, DateUtil.getCurrentDateTimeInMilliseconds()));
+
+                    Log.d(TAG,"Location Updated");
+                }
+                mFusedLocationProviderClient.removeLocationUpdates(this);
+            }
+        }, Looper.myLooper());
     }
 
 
@@ -284,6 +368,10 @@ public class MainActivity extends AppCompatActivity
     public void setFABCallBack(FABClickedListener listener) {
         if (listener instanceof FABClickedListener) {
             mFABClickedListener = listener;
+            setAppBarOffset(true);
+        } else {
+            mFABClickedListener = null;
+            setAppBarOffset(false);
         }
     }
 
@@ -352,12 +440,11 @@ public class MainActivity extends AppCompatActivity
                 if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
                     if (isVisible(AboutFragment.class.getSimpleName()) ||
                             isVisible(BrowserFragment.class.getSimpleName()) ||
-                            isVisible(PreferenceFragment.class.getSimpleName())){
+                            isVisible(PreferenceFragment.class.getSimpleName())) {
                         inflateFragment(new MainFragment(), false);
                         selectNavigationItem(R.id.nav_main);
-                    }
-                    else
-                    getSupportFragmentManager().popBackStack();
+                    } else
+                        getSupportFragmentManager().popBackStack();
                 } else {
                     inflateFragment(new MainFragment(), false);
                     selectNavigationItem(R.id.nav_main);
@@ -366,7 +453,6 @@ public class MainActivity extends AppCompatActivity
 
         }
     }
-
 
 
     private boolean isVisible(String fragment) {
@@ -493,9 +579,11 @@ public class MainActivity extends AppCompatActivity
 
     public void inflateFragment(Fragment fragment, boolean addToBackStack) {
         mCurrentFragment = fragment.getClass().getSimpleName();
+
         if (addToBackStack)
             getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, fragment, mCurrentFragment).addToBackStack(mCurrentFragment).commitAllowingStateLoss();
         else {
+            getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
             getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, fragment, mCurrentFragment).commitAllowingStateLoss();
 
         }
@@ -533,12 +621,7 @@ public class MainActivity extends AppCompatActivity
             mFloatingActionButton.setVisibility(View.GONE);
     }
 
-    @SuppressLint("MissingPermission")
-    private void initFusedLocation() {
-        mFusedLocationProviderClient.getLastLocation()
-                .addOnSuccessListener(this, this)
-                .addOnFailureListener(this, this);
-    }
+
 
     public void askForLocation() {
         navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
@@ -579,42 +662,17 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    @Override
-    public void onSuccess(Location location) {
-        // Got last known location. In some rare situations this can be null.
-        if (location != null) {
-            broadcastLocation(location);
-            mUserLocation = location;
-            GeoHash geoHash = new GeoHash(new GeoLocation(location.getLatitude(), location.getLongitude()));
-            FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
-                    .child("/g").setValue(geoHash.getGeoHashString());
-            List<Double> loc = Arrays.asList(location.getLatitude(), location.getLongitude());
-            FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
-                    .child("/l").setValue(loc);
 
 
-            FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
-                    .child("location_history").push().setValue(
-                    new LocationHistory(loc, DateUtil.getCurrentDateTimeInMilliseconds()));
-
-        }
-
-
-    }
-
-    @Override
-    public void onFailure(@NonNull Exception e) {
-        Log.d(TAG, e.getMessage().toString());
-    }
 
     public void showSnackBarWithAction(String message) {
         Snackbar snackbar = Snackbar
                 .make(mDrawerLayout, message, Snackbar.LENGTH_LONG)
-                .setAction("UNDO", new View.OnClickListener() {
+                .setAction("SETTINGS", new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Snackbar snackbar1 = Snackbar.make(mDrawerLayout, "Message is restored!", Snackbar.LENGTH_SHORT);
-                        snackbar1.show();
+                        startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+
                     }
                 });
 
@@ -634,6 +692,13 @@ public class MainActivity extends AppCompatActivity
     public void setAppBarExpended() {
         AppBarLayout appBarLayout = findViewById(R.id.appbar);
         appBarLayout.setExpanded(true, true);
+    }
+
+    public void setAppBarOffset(boolean state) {
+        if (state)
+            mAppBarLayout.addOnOffsetChangedListener(this);
+        else
+            mAppBarLayout.removeOnOffsetChangedListener(this);
     }
 
 
@@ -752,23 +817,42 @@ public class MainActivity extends AppCompatActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         Log.d(TAG, "onActivityResult: requestCode=" + requestCode + ", resultCode=" + resultCode);
+        switch (requestCode) {
+            case REQUEST_INVITE:
+                if (resultCode == RESULT_OK) {
+                    // Get the invitation IDs of all sent messages
+                    String[] ids = AppInviteInvitation.getInvitationIds(resultCode, data);
+                    for (String id : ids) {
+                        Log.d(TAG, "onActivityResult: sent invitation " + id);
+                    }
+                } else {
+                    // Sending failed or it was canceled, show failure message to the user
+                    // [START_EXCLUDE]
+                    showSnackBar(getString(R.string.send_failed));
 
-        if (requestCode == REQUEST_INVITE) {
-            if (resultCode == RESULT_OK) {
-                // Get the invitation IDs of all sent messages
-                String[] ids = AppInviteInvitation.getInvitationIds(resultCode, data);
-                for (String id : ids) {
-                    Log.d(TAG, "onActivityResult: sent invitation " + id);
+                    // [END_EXCLUDE]
                 }
-            } else {
-                // Sending failed or it was canceled, show failure message to the user
-                // [START_EXCLUDE]
-                showSnackBar(getString(R.string.send_failed));
+                inflateFragment(new MainFragment(), false);
+                break;
 
-                // [END_EXCLUDE]
-            }
+            case REQUEST_CHECK_SETTINGS:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        // All required changes were successfully made
+                        requestLocation();
+
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        // The user was asked to change settings, but chose not to
+                        showSnackBarWithAction("please enable location services");
+                        break;
+                    default:
+                        break;
+                }
+                break;
+
         }
-        inflateFragment(new MainFragment(), false);
+
     }
 
 
@@ -788,7 +872,8 @@ public class MainActivity extends AppCompatActivity
                 if (mCurrentFragment.equals(MainFragment.class.getSimpleName()))
                     callDrawerItem(R.id.nav_add_event);
                 if (mCurrentFragment.equals(EventByInterestListFragment.class.getSimpleName()))
-                    mFABClickedListener.onFABClicked();
+                    if (mFABClickedListener != null)
+                        mFABClickedListener.onFABClicked();
                 break;
         }
     }
@@ -818,6 +903,67 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+        if (mFABClickedListener == null) return;
+
+        if (verticalOffset == 0) {
+            mFABClickedListener.onAppBarChanged();
+        } else if (Math.abs(verticalOffset) >= appBarLayout.getTotalScrollRange()) {
+            mFABClickedListener.onAppBarChanged();
+
+        }
+
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+
+    @Override
+    public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
+        try {
+            LocationSettingsResponse response = task.getResult(ApiException.class);
+            // All location settings are satisfied. The client can initialize location
+            // requests here.
+            requestLocation();
+
+        } catch (ApiException exception) {
+            switch (exception.getStatusCode()) {
+                case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                    // Location settings are not satisfied. But could be fixed by showing the
+                    // user a dialog.
+                    try {
+                        // Cast to a resolvable exception.
+                        ResolvableApiException resolvable = (ResolvableApiException) exception;
+                        // Show the dialog by calling startResolutionForResult(),
+                        // and check the result in onActivityResult().
+                        resolvable.startResolutionForResult(
+                                this,
+                                REQUEST_CHECK_SETTINGS);
+                    } catch (IntentSender.SendIntentException e) {
+                        // Ignore the error.
+                    } catch (ClassCastException e) {
+                        // Ignore, should be an impossible error.
+                    }
+                    break;
+                case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                    // Location settings are not satisfied. However, we have no way to fix the
+                    // settings so we won't show the dialog.
+
+                    break;
+            }
+        }
+    }
+
+
 
     // [END on_activity_result]
     public interface LocationChangedListener {
@@ -826,6 +972,9 @@ public class MainActivity extends AppCompatActivity
 
     public interface FABClickedListener {
         public void onFABClicked();
+
+        public void onAppBarChanged();
+
     }
 
 
