@@ -35,7 +35,7 @@
                 android:layout_height="match_parent"
                 android:layout_centerHorizontal="true"
                 android:scaleType="centerCrop"
-                android:src="@drawable/nir8" />
+                android:src="@drawable/main_background" />
 
             <com.wang.avi.AVLoadingIndicatorView
                 android:id="@+id/pb_loading"

@@ -402,7 +402,7 @@ public class MainActivity extends AppCompatActivity
             Picasso.with(this)
                     .cancelRequest(background);
             // Picasso.with(this).load(R.drawable.nir3).into(background);
-            background.setImageResource(R.drawable.nir8);
+            background.setImageResource(R.drawable.main_background);
         }
 
 
