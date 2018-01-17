@@ -232,15 +232,6 @@ public class ViewEventActivity extends AppCompatActivity
 
     }
 
-//    private void focusRight() {
-//        mHorizontalScrollView.postDelayed(new Runnable() {
-//            public void run() {
-//                mHorizontalScrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT);
-//            }
-//        }, 100L);
-//    }
-
-
 
     private void inflateMapFragment() {
         mapFragment = (MapFragment) getSupportFragmentManager().findFragmentByTag(MapFragment.class.getSimpleName());

@@ -63,9 +63,11 @@ public interface Constants {
     public static final String NOTIFY_TOKEN = "notify_token";
 
     public static final String CURRENT_FRAGMENT = "current_fragment";
+    public static final String IS_LOCATION_RESOLVER = "is_location_resolver";
 
     //permissions type
     public static final String USER_LOCATION = "user_location";
+    public static final String USER_TEMP_LOCATION = "user_temp_location";
     public static final String LOCATION = "location";
     public static final String CAMERA = "camera";
 

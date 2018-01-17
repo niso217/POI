@@ -173,6 +173,7 @@ public class MainEventFragment extends Fragment implements
             inflateEventByInterest(position);
         } else {
             mActivity.setLocationCallBack(this);
+            mActivity.setLocationResolver(false);
             mActivity.askForLocation();
 
         }

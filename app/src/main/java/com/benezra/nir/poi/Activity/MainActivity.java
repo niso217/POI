@@ -51,6 +51,7 @@ import com.benezra.nir.poi.Objects.LocationHistory;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.Utils.DataFaker;
 import com.benezra.nir.poi.Utils.DateUtil;
+import com.benezra.nir.poi.Utils.LocationUtil;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.core.GeoHash;
 import com.google.android.gms.appinvite.AppInviteInvitation;
@@ -91,6 +92,7 @@ import static com.benezra.nir.poi.Interface.Constants.ACTION_FINISH;
 import static com.benezra.nir.poi.Interface.Constants.APP_BAR_SIZE;
 import static com.benezra.nir.poi.Interface.Constants.CURRENT_FRAGMENT;
 import static com.benezra.nir.poi.Interface.Constants.ID_TOKEN;
+import static com.benezra.nir.poi.Interface.Constants.IS_LOCATION_RESOLVER;
 import static com.benezra.nir.poi.Interface.Constants.NOTIFY_TOKEN;
 import static com.benezra.nir.poi.Interface.Constants.USER_LOCATION;
 
@@ -108,6 +110,7 @@ public class MainActivity extends AppCompatActivity
     private FirebaseAuth mAuth;
     private DrawerLayout mDrawerLayout;
     private Location mUserLocation;
+    private Location mTempUserLocation;
     private LocationChangedListener mOnLocationChangedListener;
     private FABClickedListener mFABClickedListener;
     protected SharedPreferences mSharedPreferences;
@@ -132,12 +135,12 @@ public class MainActivity extends AppCompatActivity
     private Handler mHandler;
     private long UPDATE_INTERVAL = 10 * 60;  /* 60 secs */
     private long FASTEST_INTERVAL = 2000; /* 2 sec */
+    private boolean isLocationResolver;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        //setTheme(R.style.transparent);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_base);
@@ -175,11 +178,6 @@ public class MainActivity extends AppCompatActivity
         startLocationUpdates();
 
 
-        if (savedInstanceState == null) {
-            askForLocation();
-            //inflateFragment(new MainFragment(), false);
-        }
-
         getSupportFragmentManager().addOnBackStackChangedListener(new FragmentManager.OnBackStackChangedListener() {
             @Override
             public void onBackStackChanged() {
@@ -200,9 +198,7 @@ public class MainActivity extends AppCompatActivity
         mAppBarLayout = findViewById(R.id.appbar);
 
 
-
     }
-
 
 
     // Trigger new location updates at interval
@@ -221,7 +217,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    public void initFusedLocation(){
+    public void initFusedLocation() {
 
         Task<LocationSettingsResponse> result =
                 LocationServices.getSettingsClient(this).checkLocationSettings(mLocationSettingsRequest);
@@ -229,30 +225,39 @@ public class MainActivity extends AppCompatActivity
     }
 
     @SuppressLint("MissingPermission")
-    private void requestLocation(){
+    private void requestLocation() {
+        //save the last location for comparison
         mFusedLocationProviderClient.requestLocationUpdates(mLocationRequest, new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
 
+                if (mUserLocation != null)
+                    mTempUserLocation = saveLastLocationObject();
+
                 mUserLocation = locationResult.getLastLocation();
 
-                if (mUserLocation!=null)
-                {
+                if (mUserLocation != null) {
+
                     broadcastLocation(mUserLocation);
 
-                    GeoHash geoHash = new GeoHash(new GeoLocation(mUserLocation.getLatitude(), mUserLocation.getLongitude()));
-                    FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
-                            .child("/g").setValue(geoHash.getGeoHashString());
-                    List<Double> loc = Arrays.asList(mUserLocation.getLatitude(), mUserLocation.getLongitude());
-                    FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
-                            .child("/l").setValue(loc);
+                    if (mTempUserLocation == null || LocationUtil.distance(mTempUserLocation, mUserLocation) > 0.02) {
+                        GeoHash geoHash = new GeoHash(new GeoLocation(mUserLocation.getLatitude(), mUserLocation.getLongitude()));
+                        FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
+                                .child("/g").setValue(geoHash.getGeoHashString());
+                        List<Double> loc = Arrays.asList(mUserLocation.getLatitude(), mUserLocation.getLongitude());
+                        FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
+                                .child("/l").setValue(loc);
 
 
-                    FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
-                            .child("location_history").push().setValue(
-                            new LocationHistory(loc, DateUtil.getCurrentDateTimeInMilliseconds()));
+                        FirebaseDatabase.getInstance().getReference().child("users").child(mAuth.getCurrentUser().getUid())
+                                .child("location_history").push().setValue(
+                                new LocationHistory(loc, DateUtil.getCurrentDateTimeInMilliseconds()));
 
-                    Log.d(TAG,"Location Updated");
+                        Log.d(TAG, "new location sent to firebase database");
+
+                    }
+
+                    Log.d(TAG, "Location Updated");
                 }
                 mFusedLocationProviderClient.removeLocationUpdates(this);
             }
@@ -322,8 +327,15 @@ public class MainActivity extends AppCompatActivity
         super.onRestoreInstanceState(savedInstanceState);
         mUserLocation = savedInstanceState.getParcelable(USER_LOCATION);
         mCurrentFragment = savedInstanceState.getString(CURRENT_FRAGMENT);
+        isLocationResolver = savedInstanceState.getBoolean(IS_LOCATION_RESOLVER);
 
+    }
 
+    private Location saveLastLocationObject() {
+        Location location = new Location("");
+        location.setLongitude(mUserLocation.getLongitude());
+        location.setLatitude(mUserLocation.getLatitude());
+        return location;
     }
 
     @Override
@@ -331,12 +343,14 @@ public class MainActivity extends AppCompatActivity
         super.onSaveInstanceState(outState);
         outState.putParcelable(USER_LOCATION, mUserLocation);
         outState.putString(CURRENT_FRAGMENT, mCurrentFragment);
+        outState.putBoolean(IS_LOCATION_RESOLVER, isLocationResolver);
 
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        askForLocation();
         setFloatingActionImage();
     }
 
@@ -347,7 +361,8 @@ public class MainActivity extends AppCompatActivity
     public void setLocationCallBack(LocationChangedListener listener) {
         if (listener instanceof LocationChangedListener) {
             mOnLocationChangedListener = listener;
-        }
+        } else
+            mOnLocationChangedListener = null;
     }
 
     public void setFABCallBack(FABClickedListener listener) {
@@ -607,9 +622,13 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-
     public void askForLocation() {
-        navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+
+        if (!isLocationResolver){
+            isLocationResolver = true;
+            navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
+
+        }
 
     }
 
@@ -635,7 +654,9 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void UserIgnoredPermissionDialog() {
         showSnackBar(getString(R.string.no_location_determined));
-        inflateFragment(new MainFragment(), false);
+        isLocationResolver = false;
+        //inflateFragment(new MainFragment(), false);
+
 
     }
 
@@ -646,8 +667,6 @@ public class MainActivity extends AppCompatActivity
         }
         return true;
     }
-
-
 
 
     public void showSnackBarWithAction(String message) {
@@ -776,7 +795,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-
     /**
      * User has clicked the 'Invite' button, launch the invitation UI with the proper
      * title, message, and deep link
@@ -819,12 +837,14 @@ public class MainActivity extends AppCompatActivity
                 switch (resultCode) {
                     case Activity.RESULT_OK:
                         // All required changes were successfully made
-                        requestLocation();
+                        //requestLocation();
+                        isLocationResolver = false;
 
                         break;
                     case Activity.RESULT_CANCELED:
                         // The user was asked to change settings, but chose not to
                         showSnackBarWithAction("please enable location services");
+                        isLocationResolver = true;
                         break;
                     default:
                         break;
@@ -835,6 +855,9 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    public void setLocationResolver(boolean locationResolver) {
+        isLocationResolver = locationResolver;
+    }
 
     public final Uri getUriToResource(@AnyRes int resId)
             throws Resources.NotFoundException {
@@ -897,13 +920,13 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-
     @Override
     public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
         try {
             LocationSettingsResponse response = task.getResult(ApiException.class);
             // All location settings are satisfied. The client can initialize location
             // requests here.
+            isLocationResolver = false;
             requestLocation();
 
         } catch (ApiException exception) {
@@ -928,12 +951,12 @@ public class MainActivity extends AppCompatActivity
                 case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                     // Location settings are not satisfied. However, we have no way to fix the
                     // settings so we won't show the dialog.
+                    isLocationResolver = false;
 
                     break;
             }
         }
     }
-
 
 
     // [END on_activity_result]
@@ -943,7 +966,9 @@ public class MainActivity extends AppCompatActivity
 
     public interface FABClickedListener {
         public void onFABClicked();
+
         public void onAppBarExpended();
+
         public void onAppBarCollapsed();
 
     }

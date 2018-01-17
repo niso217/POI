@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
@@ -166,8 +167,10 @@ public class CreateEventActivity extends AppCompatActivity
         PermissionsDialogFragment.PermissionsGrantedCallback,
         Response.Listener,
         Response.ErrorListener,
-        ViewTreeObserver.OnGlobalLayoutListener
-{
+        ViewTreeObserver.OnGlobalLayoutListener {
+
+    private static final String LIST_STATE_KEY = "state";
+    private static final String SCROLL_STATE = "scroll_state";
 
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
@@ -208,14 +211,15 @@ public class CreateEventActivity extends AppCompatActivity
     public static final String ACTION_SHOW_ANYWAYS = TAG + ".ACTION_SHOW_ANYWAYS";
     private CoordinatorLayout mCoordinatorLayout;
     private EventParticipatesAdapter mParticipateAdapter;
-
+    private LinearLayoutManager mLinearLayoutManager;
+    private Parcelable mListState;
+    private int mScrollingState;
 
 
     private TabLayout mTabLayout;
 
 
     private int mTabSelectedIndex;
-
 
 
     @Override
@@ -229,13 +233,11 @@ public class CreateEventActivity extends AppCompatActivity
         mEventTimeStart = Calendar.getInstance();
         mEventTimeEnd = Calendar.getInstance();
 
-
-
+        mScrollingState = STATE_ANCHORED;
         mEventImagesList = new ArrayList<>();
         mEventImagesAdapter = new EventImagesAdapter(this, mEventImagesList);
         mEventParticipateList = new ArrayList<>();
         mParticipateAdapter = new EventParticipatesAdapter(this, mEventParticipateList);
-
         mPicturesKeys = new HashSet<>();
 
 
@@ -259,7 +261,13 @@ public class CreateEventActivity extends AppCompatActivity
             mParticipates = savedInstanceState.getParcelableArrayList("participates");
             mMode = savedInstanceState.getBoolean("mode");
             mTabSelectedIndex = savedInstanceState.getInt("tab_selected_index");
+            mListState = savedInstanceState.getParcelable(LIST_STATE_KEY);
+            mScrollingState = savedInstanceState.getInt(SCROLL_STATE);
+            if (mScrollingState == STATE_COLLAPSED) {
+                behavior.setState(mScrollingState);
+                switchViews(true);
 
+            }
             setEventFields();
 
 
@@ -352,10 +360,6 @@ public class CreateEventActivity extends AppCompatActivity
         behavior.setParallax(mPicturesRecyclerView);
 
 
-
-
-
-
     }
 
     private void initListeners() {
@@ -380,7 +384,6 @@ public class CreateEventActivity extends AppCompatActivity
         participatesChangeListener();
         mPicturesRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(this);
 
-
     }
 
     @Override
@@ -388,29 +391,23 @@ public class CreateEventActivity extends AppCompatActivity
         switch (newState) {
             case STATE_DRAGGING:
                 switchViews(false);
+                mScrollingState = STATE_DRAGGING;
                 Log.d("state", "STATE_DRAGGING");
-                break;
-            case STATE_SETTLING:
-                Log.d("state", "STATE_SETTLING");
                 break;
             case STATE_EXPANDED:
                 mHorizontalScrollView.setVisibility(View.GONE);
                 Log.d("state", "STATE_EXPANDED");
-                //switchViews(false);
+                mScrollingState = STATE_EXPANDED;
                 break;
             case STATE_COLLAPSED:
-                //behavior.setState(STATE_HIDDEN);
                 Log.d("state", "STATE_OLLAPSED");
                 switchViews(true);
-                break;
-            case STATE_HIDDEN:
-                Log.d("state", "STATE_HIDDEN");
-                // mHorizontalScrollView.setVisibility(View.GONE);
+                mScrollingState = STATE_COLLAPSED;
                 break;
             case STATE_ANCHORED:
-                // mHorizontalScrollView.setVisibility(View.VISIBLE);
                 Log.d("state", "STATE_ANCHORED");
                 switchViews(false);
+                mScrollingState = STATE_ANCHORED;
                 break;
 
 
@@ -432,7 +429,8 @@ public class CreateEventActivity extends AppCompatActivity
 
 
     private void initImageRecycleView() {
-        mPicturesRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
+        mLinearLayoutManager = new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false);
+        mPicturesRecyclerView.setLayoutManager(mLinearLayoutManager);
         mPicturesRecyclerView.setNestedScrollingEnabled(false);
         mPicturesRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mPicturesRecyclerView, this));
         mPicturesRecyclerView.setAdapter(mEventImagesAdapter);
@@ -454,7 +452,15 @@ public class CreateEventActivity extends AppCompatActivity
 
                     }
                     mEventImagesAdapter.notifyDataSetChanged();
-                    setVisibility(mPicturesRecyclerView, 1.0f, 300, true);
+                    if (mScrollingState == STATE_COLLAPSED)
+                        switchViews(true);
+                    else
+                        switchViews(false);
+
+                    if (mListState != null) {
+                        mLinearLayoutManager.onRestoreInstanceState(mListState);
+                    }
+
 
                 } else
                     setVisibility(mPicturesRecyclerView, 0.0f, 0, false);
@@ -559,13 +565,13 @@ public class CreateEventActivity extends AppCompatActivity
                 endDateChange(year, month, dayOfMonth);
                 int hour_start = mEventTimeEnd.get(Calendar.HOUR_OF_DAY);
                 int minute_start = mEventTimeEnd.get(Calendar.MINUTE);
-                    new TimePickerDialog(CreateEventActivity.this, new TimePickerDialog.OnTimeSetListener() {
-                        @Override
-                        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                            endTimeChanged(hourOfDay, minute);
+                new TimePickerDialog(CreateEventActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        endTimeChanged(hourOfDay, minute);
 
-                        }
-                    }, hour_start, minute_start, false).show();
+                    }
+                }, hour_start, minute_start, false).show();
 
 
             }
@@ -588,19 +594,19 @@ public class CreateEventActivity extends AppCompatActivity
                 int hour_start = mEventTimeStart.get(Calendar.HOUR_OF_DAY);
                 int minute_start = mEventTimeStart.get(Calendar.MINUTE);
 
-                if (mEventTimeStart.getTimeInMillis() > mEventTimeEnd.getTimeInMillis()){
+                if (mEventTimeStart.getTimeInMillis() > mEventTimeEnd.getTimeInMillis()) {
                     mEventTimeEnd.setTimeInMillis(mEventTimeStart.getTimeInMillis());
-                    endDateChange(mEventTimeEnd.get(Calendar.YEAR),mEventTimeEnd.get(Calendar.MONTH),mEventTimeEnd.get(Calendar.DAY_OF_MONTH));
-                    endTimeChanged(mEventTimeEnd.get(Calendar.HOUR),mEventTimeEnd.get(Calendar.MINUTE));
+                    endDateChange(mEventTimeEnd.get(Calendar.YEAR), mEventTimeEnd.get(Calendar.MONTH), mEventTimeEnd.get(Calendar.DAY_OF_MONTH));
+                    endTimeChanged(mEventTimeEnd.get(Calendar.HOUR), mEventTimeEnd.get(Calendar.MINUTE));
                 }
 
-                    new TimePickerDialog(CreateEventActivity.this, new TimePickerDialog.OnTimeSetListener() {
-                        @Override
-                        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                            startTimeChanged(hourOfDay, minute);
+                new TimePickerDialog(CreateEventActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        startTimeChanged(hourOfDay, minute);
 
-                        }
-                    }, hour_start, minute_start, false).show();
+                    }
+                }, hour_start, minute_start, false).show();
 
             }
         }, year_start, month_start, day_start);
@@ -777,7 +783,8 @@ public class CreateEventActivity extends AppCompatActivity
                     Log.d(TAG, "open");
                 } else {
                     Log.d(TAG, "close");
-                    behavior.setState(STATE_ANCHORED);
+                    if (mScrollingState != STATE_COLLAPSED)
+                        behavior.setState(STATE_ANCHORED);
                     mCoordinatorLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
             }
@@ -826,7 +833,7 @@ public class CreateEventActivity extends AppCompatActivity
     }
 
 
-    private void setAllDayStartTime(){
+    private void setAllDayStartTime() {
         mEventTimeStart.set(Calendar.HOUR_OF_DAY, 0);
         mEventTimeStart.set(Calendar.MINUTE, 0);
         mEventTimeStart.set(Calendar.SECOND, 0);
@@ -835,7 +842,7 @@ public class CreateEventActivity extends AppCompatActivity
 
     }
 
-    private void setAllDayEndTime(){
+    private void setAllDayEndTime() {
         mEventTimeEnd.set(Calendar.HOUR_OF_DAY, 23);
         mEventTimeEnd.set(Calendar.MINUTE, 59);
         mEventTimeEnd.set(Calendar.SECOND, 0);
@@ -844,14 +851,13 @@ public class CreateEventActivity extends AppCompatActivity
 
     }
 
-    private void setTimeText(){
+    private void setTimeText() {
         tvTimePickerStart.setText(DateUtil.CalendartoTime(mEventTimeStart.getTime()));
         tvDatePickerEnd.setText(DateUtil.CalendartoDate(mEventTimeEnd.getTime()));
         tvDatePickerStart.setText(DateUtil.CalendartoDate(mEventTimeStart.getTime()));
         tvTimePickerEnd.setText(DateUtil.CalendartoTime(mEventTimeEnd.getTime()));
 
     }
-
 
 
     @Override
@@ -996,7 +1002,7 @@ public class CreateEventActivity extends AppCompatActivity
     }
 
 
-    private void participatesChangeListener(){
+    private void participatesChangeListener() {
         Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
 
         query.addValueEventListener(new ValueEventListener() {
@@ -1080,8 +1086,8 @@ public class CreateEventActivity extends AppCompatActivity
         outState.putParcelableArrayList("interests", mInterestsList);
         outState.putParcelableArrayList("participates", mParticipates);
         outState.putBoolean("mode", mMode);
-
-
+        outState.putInt(SCROLL_STATE, mScrollingState);
+        outState.putParcelable(LIST_STATE_KEY, mLinearLayoutManager.onSaveInstanceState());
     }
 
 
@@ -1362,7 +1368,7 @@ public class CreateEventActivity extends AppCompatActivity
 
     }
 
-    private void onTabSelect(){
+    private void onTabSelect() {
         switch (mTabSelectedIndex) {
             case LOCATION_TAB:
                 navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
@@ -1388,10 +1394,13 @@ public class CreateEventActivity extends AppCompatActivity
         if (show) {
             mNavigationBarLayout.setVisibility(View.VISIBLE);
             mHorizontalScrollView.setVisibility(View.GONE);
+            setVisibility(mPicturesRecyclerView, 0.0f, 0, false);
 
         } else {
             mNavigationBarLayout.setVisibility(View.GONE);
             mHorizontalScrollView.setVisibility(View.VISIBLE);
+            setVisibility(mPicturesRecyclerView, 1.0f, 300, true);
+
         }
 
     }
@@ -1402,7 +1411,7 @@ public class CreateEventActivity extends AppCompatActivity
 
         try {
             manJson.put("user_id", FirebaseAuth.getInstance().getCurrentUser().getUid());
-            manJson.put("title", getString(R.string.new_event_title) +" " + mCurrentEvent.getInterest());
+            manJson.put("title", getString(R.string.new_event_title) + " " + mCurrentEvent.getInterest());
             manJson.put("body", getString(R.string.new_event_body));
             manJson.put("interest", mCurrentEvent.getInterest());
             manJson.put("event_id", mCurrentEvent.getId());
@@ -1466,7 +1475,7 @@ public class CreateEventActivity extends AppCompatActivity
 
     @Override
     public void onGlobalLayout() {
-        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, calculateDeviceHeight()/2);
+        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, calculateDeviceHeight() / 2);
         mPicturesRecyclerView.setLayoutParams(layoutParams);
 
     }
