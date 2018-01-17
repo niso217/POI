@@ -263,11 +263,6 @@ public class CreateEventActivity extends AppCompatActivity
             mTabSelectedIndex = savedInstanceState.getInt("tab_selected_index");
             mListState = savedInstanceState.getParcelable(LIST_STATE_KEY);
             mScrollingState = savedInstanceState.getInt(SCROLL_STATE);
-            if (mScrollingState == STATE_COLLAPSED) {
-                behavior.setState(mScrollingState);
-                switchViews(true);
-
-            }
             setEventFields();
 
 
@@ -388,31 +383,37 @@ public class CreateEventActivity extends AppCompatActivity
 
     @Override
     public void onStateChanged(@NonNull View bottomSheet, int newState) {
-        switch (newState) {
+        mScrollingState = newState;
+        initScrollViewState();
+    }
+
+
+    private void initScrollViewState() {
+
+        switch (mScrollingState) {
             case STATE_DRAGGING:
-                switchViews(false);
-                mScrollingState = STATE_DRAGGING;
-                Log.d("state", "STATE_DRAGGING");
+                mNavigationBarLayout.setVisibility(View.GONE);
+                mHorizontalScrollView.setVisibility(View.VISIBLE);
+                setVisibility(mPicturesRecyclerView, 1.0f, 300, true);
                 break;
             case STATE_EXPANDED:
                 mHorizontalScrollView.setVisibility(View.GONE);
-                Log.d("state", "STATE_EXPANDED");
-                mScrollingState = STATE_EXPANDED;
                 break;
             case STATE_COLLAPSED:
-                Log.d("state", "STATE_OLLAPSED");
-                switchViews(true);
-                mScrollingState = STATE_COLLAPSED;
+                mNavigationBarLayout.setVisibility(View.VISIBLE);
+                mHorizontalScrollView.setVisibility(View.GONE);
+                setVisibility(mPicturesRecyclerView, 0.0f, 0, false);
                 break;
             case STATE_ANCHORED:
-                Log.d("state", "STATE_ANCHORED");
-                switchViews(false);
-                mScrollingState = STATE_ANCHORED;
+                mNavigationBarLayout.setVisibility(View.GONE);
+                mHorizontalScrollView.setVisibility(View.VISIBLE);
+                setVisibility(mPicturesRecyclerView, 1.0f, 300, true);
                 break;
 
 
         }
     }
+
 
     @Override
     public void onSlide(@NonNull View bottomSheet, float slideOffset) {
@@ -452,10 +453,7 @@ public class CreateEventActivity extends AppCompatActivity
 
                     }
                     mEventImagesAdapter.notifyDataSetChanged();
-                    if (mScrollingState == STATE_COLLAPSED)
-                        switchViews(true);
-                    else
-                        switchViews(false);
+                    initScrollViewState();
 
                     if (mListState != null) {
                         mLinearLayoutManager.onRestoreInstanceState(mListState);
@@ -783,8 +781,8 @@ public class CreateEventActivity extends AppCompatActivity
                     Log.d(TAG, "open");
                 } else {
                     Log.d(TAG, "close");
-                    if (mScrollingState != STATE_COLLAPSED)
-                        behavior.setState(STATE_ANCHORED);
+                    behavior.setState(mScrollingState);
+                    initScrollViewState();
                     mCoordinatorLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
             }
@@ -1390,20 +1388,6 @@ public class CreateEventActivity extends AppCompatActivity
         onTabSelect();
     }
 
-    private void switchViews(boolean show) {
-        if (show) {
-            mNavigationBarLayout.setVisibility(View.VISIBLE);
-            mHorizontalScrollView.setVisibility(View.GONE);
-            setVisibility(mPicturesRecyclerView, 0.0f, 0, false);
-
-        } else {
-            mNavigationBarLayout.setVisibility(View.GONE);
-            mHorizontalScrollView.setVisibility(View.VISIBLE);
-            setVisibility(mPicturesRecyclerView, 1.0f, 300, true);
-
-        }
-
-    }
 
     public void NotifyAllUsersNewEvent() {
 

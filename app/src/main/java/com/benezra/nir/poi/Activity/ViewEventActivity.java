@@ -12,6 +12,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.provider.CalendarContract;
 import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
@@ -108,6 +109,8 @@ public class ViewEventActivity extends AppCompatActivity
 
 {
 
+    private static final String LIST_STATE_KEY = "state";
+    private static final String SCROLL_STATE = "scroll_state";
     private GoogleMap mMap;
     private FirebaseUser mFirebaseUser;
     private Event mCurrentEvent;
@@ -132,6 +135,9 @@ public class ViewEventActivity extends AppCompatActivity
     private LinearLayout mNavigationBarLayout;
     private CoordinatorLayout mCoordinatorLayout;
     private TabLayout mTabLayout;
+    private LinearLayoutManager mLinearLayoutManager;
+    private Parcelable mListState;
+    private int mScrollingState;
 
     public static final int DRIVING_TAB = 0;
     public static final int WALKING_TAB = 1;
@@ -148,6 +154,7 @@ public class ViewEventActivity extends AppCompatActivity
         setContentView(R.layout.activity_view_event);
 
 
+        mScrollingState = STATE_ANCHORED;
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventImagesList = new ArrayList<>();
@@ -172,6 +179,8 @@ public class ViewEventActivity extends AppCompatActivity
             mJoinEvent = savedInstanceState.getBoolean("join");
             mTouchEventFired = savedInstanceState.getBoolean("touch");
             mTabSelectedIndex = savedInstanceState.getInt("tab_selected_index");
+            mListState = savedInstanceState.getParcelable(LIST_STATE_KEY);
+            mScrollingState = savedInstanceState.getInt(SCROLL_STATE);
             setEventFields();
             setMenuItemChecked();
 
@@ -280,7 +289,8 @@ public class ViewEventActivity extends AppCompatActivity
                     Log.d(TAG, "open");
                 } else {
                     Log.d(TAG, "close");
-                    behavior.setState(STATE_ANCHORED);
+                    behavior.setState(mScrollingState);
+                    initScrollViewState();
                     contentView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
             }
@@ -391,7 +401,8 @@ public class ViewEventActivity extends AppCompatActivity
 
 
     private void initImageRecycleView() {
-        mPicturesRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false));
+        mLinearLayoutManager = new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false);
+        mPicturesRecyclerView.setLayoutManager(mLinearLayoutManager);
         mPicturesRecyclerView.setNestedScrollingEnabled(false);
         mPicturesRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mPicturesRecyclerView, this));
         mPicturesRecyclerView.setAdapter(mEventImagesAdapter);
@@ -419,10 +430,15 @@ public class ViewEventActivity extends AppCompatActivity
                         mEventImagesList.add(eventPhotos.getUrl());
 
                     }
-                    mPicturesRecyclerView.setVisibility(View.VISIBLE);
                     mEventImagesAdapter.notifyDataSetChanged();
+                    initScrollViewState();
 
-                }
+                    if (mListState != null) {
+                        mLinearLayoutManager.onRestoreInstanceState(mListState);
+                    }
+
+                }else
+                    setVisibility(mPicturesRecyclerView, 0.0f, 0, false);
             }
 
             @Override
@@ -545,6 +561,8 @@ public class ViewEventActivity extends AppCompatActivity
         outState.putBoolean("join", mJoinEvent);
         outState.putBoolean("touch", mTouchEventFired);
         outState.putInt("tab_selected_index", mTabSelectedIndex);
+        outState.putInt(SCROLL_STATE, mScrollingState);
+        outState.putParcelable(LIST_STATE_KEY, mLinearLayoutManager.onSaveInstanceState());
 
 
     }
@@ -682,37 +700,70 @@ public class ViewEventActivity extends AppCompatActivity
 
     @Override
     public void onStateChanged(@NonNull View bottomSheet, int newState) {
-        switch (newState) {
+        mScrollingState = newState;
+        initScrollViewState();
+    }
+
+    private void initScrollViewState() {
+
+        switch (mScrollingState) {
             case STATE_DRAGGING:
-                switchViews(false);
-                Log.d("state", "STATE_DRAGGING");
-                break;
-            case STATE_SETTLING:
-                Log.d("state", "STATE_SETTLING");
+                mNavigationBarLayout.setVisibility(View.GONE);
+                mHorizontalScrollView.setVisibility(View.VISIBLE);
+                setVisibility(mPicturesRecyclerView, 1.0f, 300, true);
                 break;
             case STATE_EXPANDED:
                 mHorizontalScrollView.setVisibility(View.GONE);
-                Log.d("state", "STATE_EXPANDED");
-                //switchViews(false);
                 break;
             case STATE_COLLAPSED:
-                //behavior.setState(STATE_HIDDEN);
-                Log.d("state", "STATE_OLLAPSED");
-                switchViews(true);
-                break;
-            case STATE_HIDDEN:
-                Log.d("state", "STATE_HIDDEN");
-                // mHorizontalScrollView.setVisibility(View.GONE);
+                mNavigationBarLayout.setVisibility(View.VISIBLE);
+                mHorizontalScrollView.setVisibility(View.GONE);
+                setVisibility(mPicturesRecyclerView, 0.0f, 0, false);
                 break;
             case STATE_ANCHORED:
-                // mHorizontalScrollView.setVisibility(View.VISIBLE);
-                Log.d("state", "STATE_ANCHORED");
-                switchViews(false);
+                mNavigationBarLayout.setVisibility(View.GONE);
+                mHorizontalScrollView.setVisibility(View.VISIBLE);
+                setVisibility(mPicturesRecyclerView, 1.0f, 300, true);
                 break;
 
 
         }
     }
+
+    private void setVisibility(final View view, final float alpha, long duration, boolean animate) {
+
+        if (animate)
+            view.animate()
+                    .alpha(alpha)
+                    .setDuration(duration)
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            super.onAnimationEnd(animation);
+                            if (alpha == 1.0f)
+                                view.setVisibility(View.VISIBLE);
+                            if (alpha == 0.0f)
+                                view.setVisibility(View.GONE);
+                            Log.d(TAG, alpha + "");
+
+                        }
+                    });
+        else {
+            if (alpha == 1.0f) {
+                view.setAlpha(1.0f);
+                view.setVisibility(View.VISIBLE);
+            }
+
+            if (alpha == 0.0f) {
+                view.setAlpha(0.0f);
+                view.setVisibility(View.GONE);
+            }
+
+        }
+
+    }
+
+
 
     @Override
     public void onSlide(@NonNull View bottomSheet, float slideOffset) {
