@@ -1,13 +1,17 @@
 package com.benezra.nir.poi.Fragment;
 
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -31,7 +35,9 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.benezra.nir.poi.Interface.Constants.LOCATION;
 import static com.benezra.nir.poi.Interface.Constants.LOCATION_CALLBACK;
+import static com.benezra.nir.poi.Interface.Constants.LOCATION_CHANGED;
 import static com.benezra.nir.poi.Interface.Constants.POSITION;
 import static com.facebook.FacebookSdk.getApplicationContext;
 
@@ -40,7 +46,7 @@ import static com.facebook.FacebookSdk.getApplicationContext;
  * A simple {@link Fragment} subclass.
  */
 public class MainEventFragment extends Fragment implements
-        RecyclerTouchListener.ClickListener, SearchView.OnQueryTextListener, MainActivity.LocationChangedListener {
+        RecyclerTouchListener.ClickListener, SearchView.OnQueryTextListener {
 
     private FirebaseDatabase mFirebaseInstance;
     private RecyclerView mInteresRecyclerView;
@@ -64,28 +70,41 @@ public class MainEventFragment extends Fragment implements
         }
     }
 
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (mAwaitCallback){
+                mAwaitCallback=false;
+                Location location = intent.getParcelableExtra(LOCATION);
+                inflateEventByInterest(mSelectedPosition);
+            }
+            // Get data from intent and update
+        }
+    };
 
 
     @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putInt(POSITION, mSelectedPosition);
-        outState.putBoolean(LOCATION_CALLBACK, mAwaitCallback);
+    public void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(mMessageReceiver);
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(getContext()).registerReceiver(mMessageReceiver,
+                new IntentFilter(LOCATION_CHANGED));
+    }
+
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mFirebaseInstance = FirebaseDatabase.getInstance();
         setRetainInstance(true);
+        mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventsInterestDataList = new ArrayList<>();
         mEventsInterestsAdapter = new EventsInterestsAdapter(getContext(), mEventsInterestDataList);
-
-        if (savedInstanceState != null) {
-            mSelectedPosition = savedInstanceState.getInt(POSITION);
-            mAwaitCallback = savedInstanceState.getBoolean(LOCATION_CALLBACK);
-        }
-
     }
 
 
@@ -172,7 +191,7 @@ public class MainEventFragment extends Fragment implements
         if (mActivity.getUserLocation() != null) {
             inflateEventByInterest(position);
         } else {
-            mActivity.setLocationCallBack(this);
+            mAwaitCallback = true;
             mActivity.setLocationResolver(false);
             mActivity.askForLocation();
 
@@ -184,13 +203,6 @@ public class MainEventFragment extends Fragment implements
 
     }
 
-    @Override
-    public void onLocationChanged(Location location) {
-        Log.d(TAG, "location changed");
-        mActivity.setLocationCallBack(null);
-        inflateEventByInterest(mSelectedPosition);
-
-    }
 
     private void inflateEventByInterest(int position) {
         mActivity.inflateFragment(EventByInterestListFragment.newInstance(

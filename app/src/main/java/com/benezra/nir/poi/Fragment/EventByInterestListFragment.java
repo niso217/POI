@@ -1,13 +1,17 @@
 package com.benezra.nir.poi.Fragment;
 
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -55,6 +59,8 @@ import static com.benezra.nir.poi.Interface.Constants.EVENT_LONGITUDE;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_OWNER;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_START;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_TITLE;
+import static com.benezra.nir.poi.Interface.Constants.LOCATION;
+import static com.benezra.nir.poi.Interface.Constants.LOCATION_CHANGED;
 import static com.benezra.nir.poi.Interface.Constants.SEARCH_RADIUS;
 
 /**
@@ -79,7 +85,6 @@ public class EventByInterestListFragment extends Fragment implements
     private AVLoadingIndicatorView mProgressBar;
     private AVLoadingIndicatorView mAVLoadingIndicatorView;
     private ToggleButton mToggleButton;
-
     private int mRadius = 30;
 
 
@@ -105,14 +110,10 @@ public class EventByInterestListFragment extends Fragment implements
         mAuth = FirebaseAuth.getInstance();
         mSelectedInterest = getArguments().getString(EVENT_INTEREST);
         mImageUrl = getArguments().getString(EVENT_IMAGE);
-
-
-        if (savedInstanceState!=null)
-            mRadius = savedInstanceState.getInt(SEARCH_RADIUS);
-
-
-
     }
+
+
+
 
 
 
@@ -124,6 +125,15 @@ public class EventByInterestListFragment extends Fragment implements
 
         }
     }
+
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Location location = intent.getParcelableExtra(LOCATION);
+            if (location != null)
+                updateEventDistance(location);
+        }
+    };
 
     @Override
     public void onClick(View view, int position) {
@@ -153,7 +163,7 @@ public class EventByInterestListFragment extends Fragment implements
 
     }
 
-    private void initToggle(){
+    private void initToggle() {
         mToggleButton.setVisibility(View.VISIBLE);
 
         mToggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -204,11 +214,6 @@ public class EventByInterestListFragment extends Fragment implements
         // Required empty public constructor
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putInt(SEARCH_RADIUS,mRadius);
-    }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
@@ -219,9 +224,12 @@ public class EventByInterestListFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
+        LocalBroadcastManager.getInstance(getContext()).registerReceiver(mMessageReceiver,
+                new IntentFilter(LOCATION_CHANGED));
         mActivity.setFABCallBack(this);
         mActivity.setmCurrentFragment(TAG);
         setFabVisibility();
+
 
 
     }
@@ -231,7 +239,7 @@ public class EventByInterestListFragment extends Fragment implements
     public void onPause() {
         super.onPause();
         mActivity.setFABCallBack(null);
-
+        LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(mMessageReceiver);
     }
 
     @Override
@@ -370,7 +378,7 @@ public class EventByInterestListFragment extends Fragment implements
                             Event event = data.getValue(Event.class);
                             event.setDistance(mActivity.getUserLocation());
                             if (event.isStatus())
-                            mEventList.add(event);
+                                mEventList.add(event);
                         }
                     }
                     mEventsAdapter.notifyDataSetChanged();
@@ -408,17 +416,25 @@ public class EventByInterestListFragment extends Fragment implements
 
     @Override
     public void onFABClicked() {
-        mActivity.inflateFragment(EventByInterestMapFragment.newInstance(mEventList),true);
+        mActivity.inflateFragment(EventByInterestMapFragment.newInstance(mEventList), true);
     }
 
     @Override
     public void onAppBarExpended() {
-        if (mBbubbleSeekBar!=null){
+        if (mBbubbleSeekBar != null) {
             mBbubbleSeekBar.setEnabled(true);
             mBbubbleSeekBar.correctOffsetWhenContainerOnScrolling();
 
 
         }
+    }
+
+    private void updateEventDistance(Location location) {
+        for (int i = 0; i < mEventList.size(); i++) {
+            mEventList.get(i).setDistance(location);
+        }
+        mEventsAdapter.notifyDataSetChanged();
+        Collections.sort(mEventList);
     }
 
     @Override

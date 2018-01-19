@@ -27,6 +27,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -93,6 +94,8 @@ import static com.benezra.nir.poi.Interface.Constants.APP_BAR_SIZE;
 import static com.benezra.nir.poi.Interface.Constants.CURRENT_FRAGMENT;
 import static com.benezra.nir.poi.Interface.Constants.ID_TOKEN;
 import static com.benezra.nir.poi.Interface.Constants.IS_LOCATION_RESOLVER;
+import static com.benezra.nir.poi.Interface.Constants.LOCATION;
+import static com.benezra.nir.poi.Interface.Constants.LOCATION_CHANGED;
 import static com.benezra.nir.poi.Interface.Constants.NOTIFY_TOKEN;
 import static com.benezra.nir.poi.Interface.Constants.USER_LOCATION;
 
@@ -111,7 +114,6 @@ public class MainActivity extends AppCompatActivity
     private DrawerLayout mDrawerLayout;
     private Location mUserLocation;
     private Location mTempUserLocation;
-    private LocationChangedListener mOnLocationChangedListener;
     private FABClickedListener mFABClickedListener;
     protected SharedPreferences mSharedPreferences;
     private FirebaseUser mFirebaseUser;
@@ -238,7 +240,8 @@ public class MainActivity extends AppCompatActivity
 
                 if (mUserLocation != null) {
 
-                    broadcastLocation(mUserLocation);
+                    //broadcastLocation(mUserLocation);
+                    broadcastLocationChanged(mUserLocation);
 
                     if (mTempUserLocation == null || LocationUtil.distance(mTempUserLocation, mUserLocation) > 0.02) {
                         GeoHash geoHash = new GeoHash(new GeoLocation(mUserLocation.getLatitude(), mUserLocation.getLongitude()));
@@ -358,12 +361,6 @@ public class MainActivity extends AppCompatActivity
         return mUserLocation;
     }
 
-    public void setLocationCallBack(LocationChangedListener listener) {
-        if (listener instanceof LocationChangedListener) {
-            mOnLocationChangedListener = listener;
-        } else
-            mOnLocationChangedListener = null;
-    }
 
     public void setFABCallBack(FABClickedListener listener) {
         if (listener instanceof FABClickedListener) {
@@ -373,11 +370,6 @@ public class MainActivity extends AppCompatActivity
             mFABClickedListener = null;
             setAppBarOffset(false);
         }
-    }
-
-    private void broadcastLocation(Location location) {
-        if (mOnLocationChangedListener != null)
-            mOnLocationChangedListener.onLocationChanged(location);
     }
 
 
@@ -624,7 +616,7 @@ public class MainActivity extends AppCompatActivity
 
     public void askForLocation() {
 
-        if (!isLocationResolver){
+        if (!isLocationResolver) {
             isLocationResolver = true;
             navigateToCaptureFragment(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION});
 
@@ -958,11 +950,12 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
-    // [END on_activity_result]
-    public interface LocationChangedListener {
-        public void onLocationChanged(Location location);
+    private void broadcastLocationChanged(Location location) {
+        Intent intent = new Intent(LOCATION_CHANGED);
+        intent.putExtra(LOCATION, location);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
+
 
     public interface FABClickedListener {
         public void onFABClicked();

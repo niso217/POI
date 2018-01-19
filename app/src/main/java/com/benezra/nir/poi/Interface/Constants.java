@@ -58,6 +58,7 @@ public interface Constants {
     public static final String PROD_ADD = "https://poi-project.herokuapp.com/noti/sendToToken";
     public static final String PROD_UPDATE = "https://poi-project.herokuapp.com/noti/updateEvent";
 
+    public static final String LOCATION_CHANGED = "location_changed";
 
     public static final String ID_TOKEN = "id_token";
     public static final String NOTIFY_TOKEN = "notify_token";

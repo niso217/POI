@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Created by nir on 12/31/15.
  */
-public class MainFragment extends Fragment implements MainActivity.LocationChangedListener{
+public class MainFragment extends Fragment{
 
     private static final String TAG = MainFragment.class.getSimpleName();
     private MainActivity mActivity;
@@ -86,10 +86,6 @@ public class MainFragment extends Fragment implements MainActivity.LocationChang
         return view;
     }
 
-    @Override
-    public void onLocationChanged(Location location) {
-        Log.d(TAG,"location changed");
-    }
 
 
     class PagerAdapter extends FragmentPagerAdapter {
