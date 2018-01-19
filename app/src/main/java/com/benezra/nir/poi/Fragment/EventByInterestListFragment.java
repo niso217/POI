@@ -430,11 +430,8 @@ public class EventByInterestListFragment extends Fragment implements
     }
 
     private void updateEventDistance(Location location) {
-        for (int i = 0; i < mEventList.size(); i++) {
-            mEventList.get(i).setDistance(location);
-        }
-        mEventsAdapter.notifyDataSetChanged();
-        Collections.sort(mEventList);
+        initGeoFire(mRadius);
+
     }
 
     @Override

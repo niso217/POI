@@ -73,29 +73,10 @@ public class MainEventFragment extends Fragment implements
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (mAwaitCallback){
-                mAwaitCallback=false;
-                Location location = intent.getParcelableExtra(LOCATION);
                 inflateEventByInterest(mSelectedPosition);
-            }
-            // Get data from intent and update
+                LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(mMessageReceiver);
         }
     };
-
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(mMessageReceiver);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        LocalBroadcastManager.getInstance(getContext()).registerReceiver(mMessageReceiver,
-                new IntentFilter(LOCATION_CHANGED));
-    }
-
 
 
     @Override
@@ -191,7 +172,9 @@ public class MainEventFragment extends Fragment implements
         if (mActivity.getUserLocation() != null) {
             inflateEventByInterest(position);
         } else {
-            mAwaitCallback = true;
+           // mAwaitCallback = true;
+            LocalBroadcastManager.getInstance(getContext()).registerReceiver(mMessageReceiver,
+                    new IntentFilter(LOCATION_CHANGED));
             mActivity.setLocationResolver(false);
             mActivity.askForLocation();
 

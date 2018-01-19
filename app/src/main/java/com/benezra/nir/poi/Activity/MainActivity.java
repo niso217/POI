@@ -60,6 +60,7 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationAvailability;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -263,6 +264,11 @@ public class MainActivity extends AppCompatActivity
                     Log.d(TAG, "Location Updated");
                 }
                 mFusedLocationProviderClient.removeLocationUpdates(this);
+            }
+
+            @Override
+            public void onLocationAvailability(LocationAvailability locationAvailability) {
+                super.onLocationAvailability(locationAvailability);
             }
         }, Looper.myLooper());
     }
