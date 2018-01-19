@@ -16,6 +16,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
@@ -52,6 +53,7 @@ import com.android.volley.VolleyError;
 import com.benezra.nir.poi.Adapter.EventImagesAdapter;
 import com.benezra.nir.poi.Adapter.EventParticipatesAdapter;
 import com.benezra.nir.poi.Adapter.ViewHolders;
+import com.benezra.nir.poi.Fragment.ChatFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
 import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.Helper.VolleyHelper;
@@ -227,7 +229,7 @@ public class CreateEventActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_event);
 
-
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         mFirebaseInstance = FirebaseDatabase.getInstance();
         mEventTimeStart = Calendar.getInstance();
@@ -354,7 +356,6 @@ public class CreateEventActivity extends AppCompatActivity
         behavior.setPeekHeight(100);
         behavior.setParallax(mPicturesRecyclerView);
 
-
     }
 
     private void initListeners() {
@@ -378,6 +379,18 @@ public class CreateEventActivity extends AppCompatActivity
         getAllEventImages();
         participatesChangeListener();
         mPicturesRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(this);
+        mNestedScrollView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+
+            @Override
+            public void onGlobalLayout() {
+                if (isVisible(ChatFragment.class.getSimpleName()))
+                setNestedScrollViewMargin(100);
+                else
+                    setNestedScrollViewMargin(0);
+
+
+            }
+        });
 
     }
 
@@ -400,7 +413,11 @@ public class CreateEventActivity extends AppCompatActivity
                 mHorizontalScrollView.setVisibility(View.GONE);
                 break;
             case STATE_COLLAPSED:
-                mNavigationBarLayout.setVisibility(View.VISIBLE);
+                if (!isVisible(ChatFragment.class.getSimpleName()))
+                    mNavigationBarLayout.setVisibility(View.VISIBLE);
+                else
+                    mNavigationBarLayout.setVisibility(View.GONE);
+
                 mHorizontalScrollView.setVisibility(View.GONE);
                 setVisibility(mPicturesRecyclerView, 0.0f, 0, false);
                 break;
@@ -412,6 +429,16 @@ public class CreateEventActivity extends AppCompatActivity
 
 
         }
+    }
+
+    private boolean isVisible(String fragment) {
+        Fragment hm = getSupportFragmentManager().findFragmentByTag(fragment);
+        if (hm != null)
+            if (hm.isVisible())
+                return true;
+
+
+        return false;
     }
 
 
@@ -487,7 +514,7 @@ public class CreateEventActivity extends AppCompatActivity
         if (mapFragment == null) {
             Log.d(TAG, "map fragment null");
             mapFragment = new MapFragment();
-            getSupportFragmentManager().beginTransaction().add(R.id.framelayout, mapFragment, MapFragment.class.getSimpleName()).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.framelayout, mapFragment, MapFragment.class.getSimpleName()).commit();
         }
     }
 
@@ -524,9 +551,15 @@ public class CreateEventActivity extends AppCompatActivity
                 initEventEnd();
                 break;
             case R.id.btn_chat:
-                Intent i = new Intent(CreateEventActivity.this, ChatActivity.class);
-                i.putExtra(EVENT_ID, mCurrentEvent.getId());
-                startActivity(i);
+//                Intent i = new Intent(CreateEventActivity.this, ChatActivity.class);
+//                i.putExtra(EVENT_ID, mCurrentEvent.getId());
+//                startActivity(i);
+                behavior.setState(mScrollingState = STATE_COLLAPSED);
+                initScrollViewState();
+                ChatFragment chat = ChatFragment.newInstance(mCurrentEvent.getId());
+                getSupportFragmentManager().beginTransaction().replace(R.id.framelayout, chat, ChatFragment.class.getSimpleName()).addToBackStack(null).commit();
+                setNestedScrollViewMargin(100);
+
                 break;
             case R.id.btn_add_image:
                 navigateToCaptureFragment(new String[]{Manifest.permission.CAMERA});
@@ -548,6 +581,15 @@ public class CreateEventActivity extends AppCompatActivity
                 break;
 
         }
+    }
+
+    private void setNestedScrollViewMargin(int top) {
+        CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) mNestedScrollView
+                .getLayoutParams();
+        layoutParams.setMargins(0, top, 0, 0);
+        mNestedScrollView.setLayoutParams(layoutParams);
+
+
     }
 
     private void initEventEnd() {
@@ -903,9 +945,17 @@ public class CreateEventActivity extends AppCompatActivity
     @Override
     public void onBackPressed() {
 
-        if (behavior.getState() == STATE_COLLAPSED)
+        if (behavior.getState() == STATE_COLLAPSED) {
+            if (isVisible(ChatFragment.class.getSimpleName())) {
+                CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) mNestedScrollView
+                        .getLayoutParams();
+                layoutParams.setMargins(0, 0, 0, 0);
+                mNestedScrollView.setLayoutParams(layoutParams);
+                getSupportFragmentManager().popBackStack();
+            }
             behavior.setState(STATE_ANCHORED);
-        else {
+
+        } else {
 
             if (mMode)
                 BuildReturnDialogFragment();

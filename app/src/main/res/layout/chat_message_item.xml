@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_margin="5dp"
     android:clickable="true"
     android:focusable="true"
     android:orientation="horizontal">
@@ -10,10 +11,12 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_margin="5dp"
-        android:layout_marginLeft="0dp"
-        android:layout_marginTop="0dp"
+        android:layout_gravity="center"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
         android:background="@drawable/outgoing_message"
+        android:gravity="center"
+        android:minWidth="200dp"
         android:orientation="horizontal"
         android:padding="10dp">
 
@@ -21,14 +24,15 @@
             android:id="@+id/message_image"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_gravity="top|center_vertical|center_horizontal"
+            android:layout_gravity="center_vertical|center_horizontal"
             android:src="@drawable/com_facebook_profile_picture_blank_portrait"
             app:civ_border_color="@color/colorAccent"
             app:civ_border_width="1dp" />
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:orientation="vertical"
             android:paddingLeft="5dp">
 
@@ -36,8 +40,10 @@
                 android:id="@+id/message_user"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="end"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
+                android:text="dsfdfsdfds"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -48,17 +54,19 @@
                 android:layout_marginTop="5dp"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
+                android:text="dsfdfsdfds"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/message_time"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="end"
                 android:layout_marginTop="5dp"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
-                android:textAlignment="textEnd"
+                android:text="dsfdfsdfds"
                 android:textSize="10sp"
                 android:textStyle="bold" />
         </LinearLayout>
