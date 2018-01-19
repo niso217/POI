@@ -46,6 +46,7 @@ import android.widget.ToggleButton;
 import com.benezra.nir.poi.Adapter.EventImagesAdapter;
 import com.benezra.nir.poi.Adapter.EventParticipatesAdapter;
 import com.benezra.nir.poi.Adapter.ViewHolders;
+import com.benezra.nir.poi.Fragment.AlertDialogFragment;
 import com.benezra.nir.poi.Utils.DateUtil;
 import com.benezra.nir.poi.Objects.Event;
 import com.benezra.nir.poi.Fragment.ImageCameraDialogFragment;
@@ -63,6 +64,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -73,9 +75,13 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.content.DialogInterface.BUTTON_NEUTRAL;
+import static android.content.DialogInterface.BUTTON_POSITIVE;
 import static com.benezra.nir.poi.Fragment.MapFragment.LOCATION_TAB;
+import static com.benezra.nir.poi.Interface.Constants.ACTION_REMOVE;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_END;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_ANCHORED;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
@@ -105,6 +111,7 @@ public class ViewEventActivity extends AppCompatActivity
         PermissionsDialogFragment.PermissionsGrantedCallback,
         GoogleMapsBottomSheetBehavior.BottomSheetCallback,
         TabLayout.OnTabSelectedListener,
+        AlertDialogFragment.DialogListenerCallback,
         ViewTreeObserver.OnGlobalLayoutListener
 
 {
@@ -122,7 +129,7 @@ public class ViewEventActivity extends AppCompatActivity
     private LinearLayout mPrivateLinearLayout;
     private MapFragment mapFragment;
     private boolean mTouchEventFired;
-    private ImageButton mNavigate, mAddImage, mChat, mShare, mCalender,mJoin;
+    private ImageButton mNavigate, mAddImage, mChat, mShare, mCalender, mJoin;
     private TextView mTitle, mDetails, mTextViewDistance;
     private RecyclerView mPicturesRecyclerView;
     private RecyclerView mParticipateRecyclerView;
@@ -208,7 +215,7 @@ public class ViewEventActivity extends AppCompatActivity
 
     private void initView() {
         mHorizontalScrollView = findViewById(R.id.scrolling_icons);
-       // focusRight();
+        // focusRight();
         mNavigationBarLayout = findViewById(R.id.tab_layout);
         mTitle = findViewById(R.id.tv_title);
         mTitle.setEnabled(false);
@@ -238,7 +245,6 @@ public class ViewEventActivity extends AppCompatActivity
         behavior.setParallax(mPicturesRecyclerView);
 
 
-
     }
 
 
@@ -262,6 +268,7 @@ public class ViewEventActivity extends AppCompatActivity
         behavior.setBottomSheetCallback(this);
         getAllEventImages();
         participatesChangeListener();
+        setEventRemovedListener();
         mPicturesRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(this);
 
 
@@ -327,11 +334,24 @@ public class ViewEventActivity extends AppCompatActivity
                 addToCalender();
                 break;
             case R.id.btn_join:
-                mJoinEvent =  !mJoin.isActivated();
+                mJoinEvent = !mJoin.isActivated();
                 setMenuItemChecked();
                 JoinLeaveEvent();
                 Log.d(TAG, "isJoined onCheckedChanged " + mJoinEvent);
                 break;
+        }
+    }
+
+    private void BuildDeleteFragment() {
+        AlertDialogFragment alertDialog = (AlertDialogFragment) getSupportFragmentManager().findFragmentByTag(AlertDialogFragment.class.getName());
+        if (alertDialog == null) {
+            Log.d(TAG, "opening alert dialog");
+            HashMap<Integer, String> map = new HashMap<>();
+            map.put(BUTTON_POSITIVE, getString(R.string.leave));
+            alertDialog = AlertDialogFragment.newInstance(
+                    getString(R.string.user_removed_event), getString(R.string.user_removed_event_message), map, ACTION_REMOVE);
+            alertDialog.show(getSupportFragmentManager(), AlertDialogFragment.class.getName());
+
         }
     }
 
@@ -374,7 +394,6 @@ public class ViewEventActivity extends AppCompatActivity
     public void UserIgnoredPermissionDialog() {
 
     }
-
 
 
     private void isJoined() {
@@ -437,7 +456,7 @@ public class ViewEventActivity extends AppCompatActivity
                         mLinearLayoutManager.onRestoreInstanceState(mListState);
                     }
 
-                }else
+                } else
                     setVisibility(mPicturesRecyclerView, 0.0f, 0, false);
             }
 
@@ -448,7 +467,7 @@ public class ViewEventActivity extends AppCompatActivity
         });
     }
 
-    private void participatesChangeListener(){
+    private void participatesChangeListener() {
         Query query = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).child("participates");
 
         query.addValueEventListener(new ValueEventListener() {
@@ -472,7 +491,6 @@ public class ViewEventActivity extends AppCompatActivity
             }
         });
     }
-
 
 
     @Override
@@ -509,6 +527,42 @@ public class ViewEventActivity extends AppCompatActivity
         mChat.setEnabled(state);
         mAddImage.setEnabled(state);
         mCalender.setEnabled(state);
+    }
+
+    private void setEventRemovedListener() {
+
+        mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                Log.d(TAG, "onChildAdded");
+
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                Log.d(TAG, "onChildChanged");
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.getValue().equals(mCurrentEvent.getId()))
+                BuildDeleteFragment();
+                Log.d(TAG, "onChildRemoved");
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                Log.d(TAG, "onChildMoved");
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d(TAG, "onCancelled");
+
+            }
+        });
     }
 
     private void JoinEvent() {
@@ -764,7 +818,6 @@ public class ViewEventActivity extends AppCompatActivity
     }
 
 
-
     @Override
     public void onSlide(@NonNull View bottomSheet, float slideOffset) {
 
@@ -849,9 +902,14 @@ public class ViewEventActivity extends AppCompatActivity
 
     @Override
     public void onGlobalLayout() {
-        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, calculateDeviceHeight()/2);
+        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, calculateDeviceHeight() / 2);
         mPicturesRecyclerView.setLayoutParams(layoutParams);
 
+    }
+
+    @Override
+    public void onFinishDialog(int state, int action) {
+        finish();
     }
 }
 

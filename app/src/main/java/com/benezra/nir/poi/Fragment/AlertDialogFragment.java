@@ -14,6 +14,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 
 import java.util.HashMap;
@@ -63,8 +64,6 @@ public class AlertDialogFragment extends DialogFragment implements DialogInterfa
             mListener = (DialogListenerCallback) context;
         }
     }
-
-
 
     // 1. Defines the listener interface with a method passing back data result.
     public interface DialogListenerCallback {

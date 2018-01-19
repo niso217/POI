@@ -70,6 +70,9 @@
     <string name="exit_app_body">Are you sure you want to leave POI?</string>
     <string name="exit_app_title">Exit</string>
     <string name="delete_event_title">Delete</string>
+    <string name="user_removed_event">Sorry</string>
+    <string name="user_removed_event_message">user deleted the event</string>
+
     <string name="delete_event_message">Are you sure you want to delte the event?</string>
 
     <string name="description_zoom_touch_close">Expanded image (touch to close)</string>
