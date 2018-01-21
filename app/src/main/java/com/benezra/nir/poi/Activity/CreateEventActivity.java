@@ -33,18 +33,14 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.AdapterView;
-import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
-import android.widget.Toast;
 
-import java.time.Period;
 import java.util.Arrays;
 import java.util.Calendar;
 
@@ -52,9 +48,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.benezra.nir.poi.Adapter.EventImagesAdapter;
 import com.benezra.nir.poi.Adapter.EventParticipatesAdapter;
-import com.benezra.nir.poi.Adapter.ViewHolders;
 import com.benezra.nir.poi.Fragment.ChatFragment;
 import com.benezra.nir.poi.Fragment.ProgressDialogFragment;
+import com.benezra.nir.poi.Fragment.UploadEventToFireBaseFragment;
 import com.benezra.nir.poi.Helper.SharePref;
 import com.benezra.nir.poi.Helper.VolleyHelper;
 import com.benezra.nir.poi.Utils.DateUtil;
@@ -65,7 +61,7 @@ import com.benezra.nir.poi.Fragment.ImageCameraDialogFragment;
 import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
 import com.benezra.nir.poi.Adapter.CustomSpinnerAdapter;
-import com.benezra.nir.poi.Fragment.UploadToFireBaseFragment;
+import com.benezra.nir.poi.Fragment.UploadImageToFireBaseFragment;
 import com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior;
 import com.benezra.nir.poi.Objects.EventPhotos;
 import com.benezra.nir.poi.Objects.EventsInterestData;
@@ -75,7 +71,6 @@ import com.benezra.nir.poi.Objects.User;
 import com.benezra.nir.poi.Utils.LocationUtil;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.core.GeoHash;
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.places.Place;
@@ -92,12 +87,10 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.squareup.picasso.Picasso;
 import com.toptoche.searchablespinnerlibrary.SearchableSpinner;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.jsoup.helper.DataUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -116,17 +109,18 @@ import static android.content.DialogInterface.BUTTON_POSITIVE;
 import static com.benezra.nir.poi.Fragment.MapFragment.EVENT_LOC_TAB;
 import static com.benezra.nir.poi.Fragment.MapFragment.LOCATION_TAB;
 import static com.benezra.nir.poi.Fragment.MapFragment.SEARCH_TAB;
+import static com.benezra.nir.poi.Interface.Constants.CREATE;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_END;
 import static com.benezra.nir.poi.Interface.Constants.ID_TOKEN;
 import static com.benezra.nir.poi.Interface.Constants.PROD_ADD;
 import static com.benezra.nir.poi.Interface.Constants.PROD_UPDATE;
+import static com.benezra.nir.poi.Interface.Constants.REMOVE;
 import static com.benezra.nir.poi.Interface.Constants.STATUS;
+import static com.benezra.nir.poi.Interface.Constants.UPDATE;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_ANCHORED;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_DRAGGING;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_EXPANDED;
-import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_HIDDEN;
-import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_SETTLING;
 import static com.benezra.nir.poi.Interface.Constants.ACTION_FINISH;
 import static com.benezra.nir.poi.Interface.Constants.ACTION_REMOVE;
 import static com.benezra.nir.poi.Interface.Constants.ADDRESS;
@@ -163,13 +157,13 @@ public class CreateEventActivity extends AppCompatActivity
         MapFragment.MapFragmentCallback,
         PlaceSelectionListener,
         View.OnFocusChangeListener,
-        UploadToFireBaseFragment.UploadListener,
+        UploadImageToFireBaseFragment.UploadListener,
         GoogleMapsBottomSheetBehavior.BottomSheetCallback,
         TabLayout.OnTabSelectedListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
         Response.Listener,
         Response.ErrorListener,
-        ViewTreeObserver.OnGlobalLayoutListener {
+        ViewTreeObserver.OnGlobalLayoutListener, UploadEventToFireBaseFragment.UploadEventListener {
 
     private static final String LIST_STATE_KEY = "state";
     private static final String SCROLL_STATE = "scroll_state";
@@ -384,7 +378,7 @@ public class CreateEventActivity extends AppCompatActivity
             @Override
             public void onGlobalLayout() {
                 if (isVisible(ChatFragment.class.getSimpleName()))
-                setNestedScrollViewMargin(100);
+                    setNestedScrollViewMargin(100);
                 else
                     setNestedScrollViewMargin(0);
 
@@ -655,21 +649,9 @@ public class CreateEventActivity extends AppCompatActivity
     }
 
     private void delete() {
-        deleteEventDataBase();
-        deleteEventStorage();
+        BuildUploadEventProgressDialogFragment(REMOVE);
     }
 
-    private void deleteEventDataBase() {
-        showProgress(getString(R.string.delete_event), getString(R.string.please_wait));
-
-        mFirebaseInstance.getReference("events").child(mCurrentEvent.getId()).removeValue(new DatabaseReference.CompletionListener() {
-            @Override
-            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                hideProgressMessage();
-            }
-        });
-
-    }
 
     private void deleteEventStorage() {
 
@@ -1202,78 +1184,28 @@ public class CreateEventActivity extends AppCompatActivity
     private void saveEventToFirebase() {
 
 
-        DatabaseReference eventReference = mFirebaseInstance.getReference("events").child(mCurrentEvent.getId());
-
-
-        GeoHash geoHash = new GeoHash(new GeoLocation(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude()));
-        Map<String, Object> updates = new HashMap<>();
-
-        if (mMode) {
-            Map<String, User> map = setOwnerAsParticipate();
-            updates.put(PARTICIPATES, map);
-            showProgress(getString(R.string.creating_event), getString(R.string.please_wait));
-
-
-        } else
-            showProgress(getString(R.string.updating_event), getString(R.string.please_wait));
-
-
-        updates.put(ID, mCurrentEvent.getId());
-        updates.put(DETAILS, mCurrentEvent.getDetails());
-        updates.put(START, mCurrentEvent.getStart());
-        updates.put(END, mCurrentEvent.getEnd());
-        updates.put(LATITUDE, mCurrentEvent.getLatitude());
-        updates.put(LONGITUDE, mCurrentEvent.getLongitude());
-        updates.put(TITLE, mCurrentEvent.getTitle());
-        updates.put(INTEREST, mCurrentEvent.getInterest());
-        updates.put(ADDRESS, mCurrentEvent.getAddress());
-        updates.put(OWNER, mCurrentEvent.getOwner());
-        updates.put(STATUS, true);
-
         if (mCurrentEvent.getImage() == null || mCurrentEvent.getImage().equals("")) {
             int index = mCustomSpinnerAdapter.getPosition((String) mspinnerCustom.getSelectedItem());
             if (index > -1)
-                updates.put(IMAGE, mInterestsList.get(index).getImage());
-        } else
-            updates.put(IMAGE, mCurrentEvent.getImage());
+                mCurrentEvent.setImage(mInterestsList.get(index).getImage());
+        }
 
-
-        updates.put("/g", geoHash.getGeoHashString());
-        updates.put("/l", Arrays.asList(mCurrentEvent.getLatitude(), mCurrentEvent.getLongitude()));
-        eventReference.updateChildren(updates, new DatabaseReference.CompletionListener() {
-            @Override
-            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                hideProgressMessage();
-                showSnackBar(getString(R.string.event_created));
-                //finish();
-                if (mMode) {
-                    NotifyAllUsersNewEvent();
-
-                } else {
-                    NotifyAllUsersUpdateEvent();
-
-
-                }
-                mMode = false;
-                cloneEvent();
-                initMode();
-
-            }
-
-        });
+        if (mMode)
+        BuildUploadEventProgressDialogFragment(CREATE);
+        else
+            BuildUploadEventProgressDialogFragment(UPDATE);
 
 
     }
 
+    private void BuildUploadEventProgressDialogFragment(int operation) {
+        UploadEventToFireBaseFragment progressDialog = (UploadEventToFireBaseFragment) getSupportFragmentManager().findFragmentByTag(UploadEventToFireBaseFragment.class.getName());
+        if (progressDialog == null) {
+            Log.d(TAG, "opening BuildUploadEventProgressDialogFragment");
+            progressDialog = UploadEventToFireBaseFragment.newInstance(mCurrentEvent, operation);
+            progressDialog.show(getSupportFragmentManager(), UploadEventToFireBaseFragment.class.getName());
 
-    private Map<String, User> setOwnerAsParticipate() {
-        User owner = new User();
-        owner.setName(mFirebaseUser.getDisplayName());
-        owner.setEmail(mFirebaseUser.getEmail());
-        owner.setAvatar(mFirebaseUser.getPhotoUrl().toString());
-        HashMap<String, User> map = new HashMap<>();
-        map.put(mFirebaseUser.getUid(), owner);
-        return map;
+        }
     }
 
 
@@ -1282,7 +1214,7 @@ public class CreateEventActivity extends AppCompatActivity
         ImageCameraDialogFragment ImageCameraFragment = (ImageCameraDialogFragment) getSupportFragmentManager().findFragmentByTag(ImageCameraDialogFragment.class.getName());
 
         if (ImageCameraFragment == null) {
-            Log.d(TAG, "opening image camera dialog");
+            Log.d(TAG, "opening buildImageAndTitleChooser");
             ImageCameraFragment = ImageCameraDialogFragment.newInstance();
             ImageCameraFragment.show(getSupportFragmentManager(), ImageCameraDialogFragment.class.getName());
 
@@ -1291,11 +1223,11 @@ public class CreateEventActivity extends AppCompatActivity
     }
 
     private void BuildProgressDialogFragment(Uri uri) {
-        UploadToFireBaseFragment progressDialog = (UploadToFireBaseFragment) getSupportFragmentManager().findFragmentByTag(UploadToFireBaseFragment.class.getName());
+        UploadImageToFireBaseFragment progressDialog = (UploadImageToFireBaseFragment) getSupportFragmentManager().findFragmentByTag(UploadImageToFireBaseFragment.class.getName());
         if (progressDialog == null) {
             Log.d(TAG, "opening origress dialog");
-            progressDialog = UploadToFireBaseFragment.newInstance(uri, mCurrentEvent.getId());
-            progressDialog.show(getSupportFragmentManager(), UploadToFireBaseFragment.class.getName());
+            progressDialog = UploadImageToFireBaseFragment.newInstance(uri, mCurrentEvent.getId());
+            progressDialog.show(getSupportFragmentManager(), UploadImageToFireBaseFragment.class.getName());
 
         }
     }
@@ -1511,6 +1443,38 @@ public class CreateEventActivity extends AppCompatActivity
     public void onGlobalLayout() {
         CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(CoordinatorLayout.LayoutParams.MATCH_PARENT, calculateDeviceHeight() / 2);
         mPicturesRecyclerView.setLayoutParams(layoutParams);
+
+    }
+
+
+    @Override
+    public void onEventFinishDialog(int operation) {
+        switch (operation) {
+
+            case CREATE:
+                showSnackBar(getString(R.string.event_created));
+                NotifyAllUsersNewEvent();
+                mMode = false;
+                cloneEvent();
+                initMode();
+                break;
+            case UPDATE:
+                showSnackBar(getString(R.string.event_update));
+                NotifyAllUsersUpdateEvent();
+                mMode = false;
+                cloneEvent();
+                initMode();
+                break;
+            case REMOVE:
+                deleteEventStorage();
+                break;
+
+
+        }
+    }
+
+    @Override
+    public void onEventErrorDialog(String error) {
 
     }
 }

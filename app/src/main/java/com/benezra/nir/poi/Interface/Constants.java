@@ -19,6 +19,14 @@ public interface Constants {
     public static final String EVENT_ADDRESS = "event_address";
     public static final String EVENT_LIST = "event_list";
     public static final String SEARCH_RADIUS = "search_radius";
+    public static final String EVENT = "event";
+    public static final String MODE = "mode";
+
+    public static final String OPERATION = "operation";
+    public static final int CREATE = 0;
+    public static final int UPDATE = 1;
+    public static final int REMOVE = -1;
+
 
     public static final String POSITION = "position";
     public static final String LOCATION_CALLBACK = "location_callback";

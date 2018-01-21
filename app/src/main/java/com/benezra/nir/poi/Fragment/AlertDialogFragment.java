@@ -57,6 +57,12 @@ public class AlertDialogFragment extends DialogFragment implements DialogInterfa
     }
 
     @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+    }
+
+    @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         this.mContext = context;
@@ -68,6 +74,15 @@ public class AlertDialogFragment extends DialogFragment implements DialogInterfa
     // 1. Defines the listener interface with a method passing back data result.
     public interface DialogListenerCallback {
         void onFinishDialog(int state,int action);
+    }
+
+    @Override
+    public void onDestroyView() {
+        Dialog dialog = getDialog();
+        if (dialog != null && getRetainInstance()) {
+            dialog.setDismissMessage(null);
+        }
+        super.onDestroyView();
     }
 
     @Override

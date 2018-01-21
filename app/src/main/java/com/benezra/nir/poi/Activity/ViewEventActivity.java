@@ -4,22 +4,19 @@ import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Parcelable;
 import android.provider.CalendarContract;
 import android.support.annotation.NonNull;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
@@ -27,39 +24,32 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PagerSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
-import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.CompoundButton;
-import android.widget.HorizontalScrollView;
+import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import com.benezra.nir.poi.Adapter.EventImagesAdapter;
 import com.benezra.nir.poi.Adapter.EventParticipatesAdapter;
-import com.benezra.nir.poi.Adapter.ViewHolders;
 import com.benezra.nir.poi.Fragment.AlertDialogFragment;
+import com.benezra.nir.poi.Fragment.ChatFragment;
 import com.benezra.nir.poi.Utils.DateUtil;
 import com.benezra.nir.poi.Objects.Event;
 import com.benezra.nir.poi.Fragment.ImageCameraDialogFragment;
 import com.benezra.nir.poi.Fragment.MapFragment;
 import com.benezra.nir.poi.Fragment.PermissionsDialogFragment;
-import com.benezra.nir.poi.Fragment.UploadToFireBaseFragment;
+import com.benezra.nir.poi.Fragment.UploadImageToFireBaseFragment;
 import com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior;
 import com.benezra.nir.poi.Helper.AsyncGeocoder;
 import com.benezra.nir.poi.Objects.EventPhotos;
 import com.benezra.nir.poi.R;
 import com.benezra.nir.poi.RecyclerTouchListener;
 import com.benezra.nir.poi.Objects.User;
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.auth.FirebaseAuth;
@@ -70,15 +60,12 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.HashMap;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-import static android.content.DialogInterface.BUTTON_NEUTRAL;
 import static android.content.DialogInterface.BUTTON_POSITIVE;
 import static com.benezra.nir.poi.Fragment.MapFragment.LOCATION_TAB;
 import static com.benezra.nir.poi.Interface.Constants.ACTION_REMOVE;
@@ -87,8 +74,6 @@ import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_ANCHO
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_COLLAPSED;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_DRAGGING;
 import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_EXPANDED;
-import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_HIDDEN;
-import static com.benezra.nir.poi.View.GoogleMapsBottomSheetBehavior.STATE_SETTLING;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_ADDRESS;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_DETAILS;
 import static com.benezra.nir.poi.Interface.Constants.EVENT_ID;
@@ -107,7 +92,7 @@ public class ViewEventActivity extends AppCompatActivity
         MapFragment.MapFragmentCallback,
         ImageCameraDialogFragment.ImageCameraDialogCallbackNew,
         RecyclerTouchListener.ClickListener,
-        UploadToFireBaseFragment.UploadListener,
+        UploadImageToFireBaseFragment.UploadListener,
         PermissionsDialogFragment.PermissionsGrantedCallback,
         GoogleMapsBottomSheetBehavior.BottomSheetCallback,
         TabLayout.OnTabSelectedListener,
@@ -160,6 +145,8 @@ public class ViewEventActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_event);
 
+
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
         mScrollingState = STATE_ANCHORED;
         mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -270,6 +257,18 @@ public class ViewEventActivity extends AppCompatActivity
         participatesChangeListener();
         setEventRemovedListener();
         mPicturesRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(this);
+        mNestedScrollView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+
+            @Override
+            public void onGlobalLayout() {
+                if (isVisible(ChatFragment.class.getSimpleName()))
+                    setNestedScrollViewMargin(100);
+                else
+                    setNestedScrollViewMargin(0);
+
+
+            }
+        });
 
 
     }
@@ -323,9 +322,11 @@ public class ViewEventActivity extends AppCompatActivity
                 startActivity(Intent.createChooser(sharingIntent, "Shearing Option"));
                 break;
             case R.id.btn_chat:
-                Intent i = new Intent(ViewEventActivity.this, ChatActivity.class);
-                i.putExtra(EVENT_ID, mCurrentEvent.getId());
-                startActivity(i);
+                behavior.setState(mScrollingState = STATE_COLLAPSED);
+                initScrollViewState();
+                ChatFragment chat = ChatFragment.newInstance(mCurrentEvent.getId());
+                getSupportFragmentManager().beginTransaction().replace(R.id.framelayout, chat, ChatFragment.class.getSimpleName()).addToBackStack(null).commit();
+                setNestedScrollViewMargin(100);
                 break;
             case R.id.btn_add_image:
                 navigateToCaptureFragment(new String[]{Manifest.permission.CAMERA});
@@ -340,6 +341,15 @@ public class ViewEventActivity extends AppCompatActivity
                 Log.d(TAG, "isJoined onCheckedChanged " + mJoinEvent);
                 break;
         }
+    }
+
+    private void setNestedScrollViewMargin(int top) {
+        CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) mNestedScrollView
+                .getLayoutParams();
+        layoutParams.setMargins(0, top, 0, 0);
+        mNestedScrollView.setLayoutParams(layoutParams);
+
+
     }
 
     private void BuildDeleteFragment() {
@@ -495,9 +505,16 @@ public class ViewEventActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        if (behavior.getState() == STATE_COLLAPSED)
+        if (behavior.getState() == STATE_COLLAPSED) {
+            if (isVisible(ChatFragment.class.getSimpleName())) {
+                CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) mNestedScrollView
+                        .getLayoutParams();
+                layoutParams.setMargins(0, 0, 0, 0);
+                mNestedScrollView.setLayoutParams(layoutParams);
+                getSupportFragmentManager().popBackStack();
+            }
             behavior.setState(STATE_ANCHORED);
-        else
+        } else
             super.onBackPressed();
     }
 
@@ -547,7 +564,7 @@ public class ViewEventActivity extends AppCompatActivity
             @Override
             public void onChildRemoved(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue().equals(mCurrentEvent.getId()))
-                BuildDeleteFragment();
+                    BuildDeleteFragment();
                 Log.d(TAG, "onChildRemoved");
             }
 
@@ -705,11 +722,11 @@ public class ViewEventActivity extends AppCompatActivity
     }
 
     private void BuildProgressDialogFragment(Uri uri) {
-        UploadToFireBaseFragment progressDialog = (UploadToFireBaseFragment) getSupportFragmentManager().findFragmentByTag(UploadToFireBaseFragment.class.getName());
+        UploadImageToFireBaseFragment progressDialog = (UploadImageToFireBaseFragment) getSupportFragmentManager().findFragmentByTag(UploadImageToFireBaseFragment.class.getName());
         if (progressDialog == null) {
             Log.d(TAG, "opening origress dialog");
-            progressDialog = UploadToFireBaseFragment.newInstance(uri, mCurrentEvent.getId());
-            progressDialog.show(getSupportFragmentManager(), UploadToFireBaseFragment.class.getName());
+            progressDialog = UploadImageToFireBaseFragment.newInstance(uri, mCurrentEvent.getId());
+            progressDialog.show(getSupportFragmentManager(), UploadImageToFireBaseFragment.class.getName());
 
         }
     }
@@ -770,7 +787,10 @@ public class ViewEventActivity extends AppCompatActivity
                 mHorizontalScrollView.setVisibility(View.GONE);
                 break;
             case STATE_COLLAPSED:
-                mNavigationBarLayout.setVisibility(View.VISIBLE);
+                if (!isVisible(ChatFragment.class.getSimpleName()))
+                    mNavigationBarLayout.setVisibility(View.VISIBLE);
+                else
+                    mNavigationBarLayout.setVisibility(View.GONE);
                 mHorizontalScrollView.setVisibility(View.GONE);
                 setVisibility(mPicturesRecyclerView, 0.0f, 0, false);
                 break;
@@ -782,6 +802,16 @@ public class ViewEventActivity extends AppCompatActivity
 
 
         }
+    }
+
+    private boolean isVisible(String fragment) {
+        Fragment hm = getSupportFragmentManager().findFragmentByTag(fragment);
+        if (hm != null)
+            if (hm.isVisible())
+                return true;
+
+
+        return false;
     }
 
     private void setVisibility(final View view, final float alpha, long duration, boolean animate) {

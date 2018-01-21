@@ -73,9 +73,14 @@
     <string name="user_removed_event">Sorry</string>
     <string name="user_removed_event_message">user deleted the event</string>
 
-    <string name="delete_event_message">Are you sure you want to delte the event?</string>
+    <string name="delete_event_message">Are you sure you want to remove the event?</string>
 
     <string name="description_zoom_touch_close">Expanded image (touch to close)</string>
+
+
+    <string name="permissions_declined">Permissions Declined</string>
+
+
 
     <!--Progress Dialog Titles-->
     <string name="updating_event">Updating event</string>
@@ -83,6 +88,7 @@
     <string name="delete_event">Deleting event</string>
     <string name="please_wait">Please wait...</string>
     <string name="event_created">Event created successfully</string>
+    <string name="event_update">Event updated successfully</string>
     <string name="image_uploaded_title">Uploading Image</string>
     <string name="image_uploaded">Image uploaded successfully</string>
     <string name="image_uploaded_error">Failed upload image</string>

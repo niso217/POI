@@ -4,6 +4,7 @@ package com.benezra.nir.poi.Fragment;
  * Created by nir on 07/10/2017.
  */
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -38,7 +39,7 @@ public class PermissionsDialogFragment extends DialogFragment {
     private String[] permissions;
     private boolean inProgress = false;
     private AlertDialog settings, retry;
-    private String [] messages;
+    private String[] messages;
 
     public static PermissionsDialogFragment newInstance() {
         return new PermissionsDialogFragment();
@@ -57,18 +58,6 @@ public class PermissionsDialogFragment extends DialogFragment {
     }
 
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putStringArray("permissions", permissions);
-        outState.putBoolean("inProgress", inProgress);
-        outState.putBoolean("shouldResolve", shouldResolve);
-        outState.putBoolean("externalGrantNeeded", externalGrantNeeded);
-        outState.putBoolean("shouldRetry", shouldRetry);
-        outState.putStringArray("messages", messages);
-
-    }
-
     public void setPermissions(String[] permissions) {
         this.permissions = permissions;
     }
@@ -77,27 +66,37 @@ public class PermissionsDialogFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null) {
-            permissions = savedInstanceState.getStringArray("permissions");
-            inProgress = savedInstanceState.getBoolean("inProgress");
-            shouldResolve = savedInstanceState.getBoolean("shouldResolve");
-            externalGrantNeeded = savedInstanceState.getBoolean("externalGrantNeeded");
-            shouldRetry = savedInstanceState.getBoolean("shouldRetry");
-            messages = savedInstanceState.getStringArray("messages");
 
-        }
-        else
-        {
-            if (permissions[0].equals(ACCESS_FINE_LOCATION) || permissions[0].equals(ACCESS_COARSE_LOCATION))
-                messages = new String []{getString(R.string.location_permission),getString(R.string.location_permission_settings)};
-            else if (permissions[0].equals(CAMERA))
-                messages = new String []{getString(R.string.camera_permission),getString(R.string.camera_permission_settings)};
-        }
+        setRetainInstance(true);
+        if (permissions[0].equals(ACCESS_FINE_LOCATION) || permissions[0].equals(ACCESS_COARSE_LOCATION))
+            messages = new String[]{getString(R.string.location_permission), getString(R.string.location_permission_settings)};
+        else if (permissions[0].equals(CAMERA))
+            messages = new String[]{getString(R.string.camera_permission), getString(R.string.camera_permission_settings)};
+
         setStyle(STYLE_NO_TITLE, R.style.PermissionsDialogFragmentStyle);
         if (!shouldResolve)
             requestNecessaryPermissions();
         setCancelable(false);
 
+
+    }
+
+    @Override
+    public void onDestroyView() {
+        Dialog dialog = getDialog();
+        if (dialog != null && getRetainInstance()) {
+            dialog.setDismissMessage(null);
+        }
+        super.onDestroyView();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (retry!=null && retry.isShowing())
+        retry.dismiss();
+        if (settings!=null && settings.isShowing())
+            settings.dismiss();
 
     }
 
@@ -127,13 +126,6 @@ public class PermissionsDialogFragment extends DialogFragment {
 
     }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        context = null;
-        listener = null;
-    }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -160,54 +152,64 @@ public class PermissionsDialogFragment extends DialogFragment {
     }
 
     private void showAppSettingsDialog() {
-        settings = new AlertDialog.Builder(context)
-                .setTitle("Permissions Required")
-                .setMessage(messages[1])
-                .setPositiveButton("App Settings", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        Intent intent = new Intent();
-                        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                        Uri uri = Uri.fromParts("package", context.getApplicationContext().getPackageName(), null);
-                        intent.setData(uri);
-                        context.startActivity(intent);
-                        dismiss();
-                    }
-                })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        listener.UserIgnoredPermissionDialog();
-                        dismiss();
-                    }
-                }).setCancelable(false).create();
-        if (!settings.isShowing())
+        if (settings==null) {
+
+            settings = new AlertDialog.Builder(context)
+                    .setTitle("Permissions Required")
+                    .setMessage(messages[1])
+                    .setPositiveButton("App Settings", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            Intent intent = new Intent();
+                            intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                            Uri uri = Uri.fromParts("package", context.getApplicationContext().getPackageName(), null);
+                            intent.setData(uri);
+                            context.startActivity(intent);
+                            dismiss();
+                        }
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            listener.UserIgnoredPermissionDialog();
+                            dismiss();
+                        }
+                    }).setCancelable(false).create();
             settings.show();
+        }
+        else if (!settings.isShowing())
+            settings.show();
+
     }
 
     private void showRetryDialog() {
-        retry = new AlertDialog.Builder(context)
-                .setTitle("Permissions Declined")
-                .setMessage(messages[0])
-                .setPositiveButton("Retry", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        requestNecessaryPermissions();
-                    }
-                })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        listener.UserIgnoredPermissionDialog();
-                        dismiss();
-                    }
-                }).setCancelable(false).create();
-        if (!retry.isShowing())
+        if (retry==null){
+            retry = new AlertDialog.Builder(context)
+                    .setTitle("Permissions Declined")
+                    .setMessage(messages[0])
+                    .setPositiveButton("Retry", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            requestNecessaryPermissions();
+                        }
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            listener.UserIgnoredPermissionDialog();
+                            dismiss();
+                        }
+                    }).setCancelable(false).create();
             retry.show();
+        }
+       else if (!retry.isShowing())
+            retry.show();
+
     }
 
     public interface PermissionsGrantedCallback {
         void navigateToCaptureFragment(String[] permissions);
+
         void UserIgnoredPermissionDialog();
     }
 

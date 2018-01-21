@@ -6,6 +6,12 @@ package com.benezra.nir.poi.Fragment;
  * Created by nirb on 19/09/2017.
  * <p>
  * Created by nirb on 19/09/2017.
+ * <p>
+ * Created by nirb on 19/09/2017.
+ * <p>
+ * Created by nirb on 19/09/2017.
+ * <p>
+ * Created by nirb on 19/09/2017.
  */
 
 
@@ -31,8 +37,11 @@ import com.benezra.nir.poi.Utils.BitmapUtil;
 import com.benezra.nir.poi.Objects.EventPhotos;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnPausedListener;
 import com.google.firebase.storage.OnProgressListener;
@@ -40,6 +49,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.UUID;
 
 import static com.benezra.nir.poi.Interface.Constants.ID;
@@ -49,14 +59,16 @@ import static com.benezra.nir.poi.Interface.Constants.URI;
 /**
  * this class helps to handle dialog popup response from the user
  */
-public class UploadToFireBaseFragment extends DialogFragment{
+public class UploadImageToFireBaseFragment extends DialogFragment {
 
     private ProgressDialog mProgressDialog;
     private Handler mHandler;
     private DatabaseReference mFirebaseEventPicReference;
+    private DatabaseReference mFirebaseEventReference;
+
     private static final int MAX = 100;
     private Context mContext;
-    final static String TAG = UploadToFireBaseFragment.class.getSimpleName();
+    final static String TAG = UploadImageToFireBaseFragment.class.getSimpleName();
     private UploadListener mListener;
 
 
@@ -64,17 +76,17 @@ public class UploadToFireBaseFragment extends DialogFragment{
     public void onAttach(Context context) {
         super.onAttach(context);
         this.mContext = context;
-        if (context instanceof UploadToFireBaseFragment.UploadListener) {
-            mListener = (UploadToFireBaseFragment.UploadListener) context;
+        if (context instanceof UploadImageToFireBaseFragment.UploadListener) {
+            mListener = (UploadImageToFireBaseFragment.UploadListener) context;
         }
     }
 
-    public UploadToFireBaseFragment() {
+    public UploadImageToFireBaseFragment() {
         // Empty constructor required for DialogFragment
     }
 
-    public static UploadToFireBaseFragment newInstance(Uri uri,String id) {
-        UploadToFireBaseFragment frag = new UploadToFireBaseFragment();
+    public static UploadImageToFireBaseFragment newInstance(Uri uri, String id) {
+        UploadImageToFireBaseFragment frag = new UploadImageToFireBaseFragment();
         Bundle args = new Bundle();
         args.putParcelable(URI, uri);
         args.putString(ID, id);
@@ -87,6 +99,7 @@ public class UploadToFireBaseFragment extends DialogFragment{
     // 1. Defines the listener interface with a method passing back data result.
     public interface UploadListener {
         void onFinishDialog(String image);
+
         void onErrorDialog(String error);
     }
 
@@ -114,8 +127,9 @@ public class UploadToFireBaseFragment extends DialogFragment{
         setRetainInstance(true);
         String id = getArguments().getString(ID);
         Uri uri = getArguments().getParcelable(URI);
+        mFirebaseEventReference = FirebaseDatabase.getInstance().getReference("events");
         mFirebaseEventPicReference = FirebaseDatabase.getInstance().getReference("events").child(id).child("pictures");
-        uploadBytes(uri,id);
+        uploadBytes(uri, id);
 
 
     }
@@ -162,7 +176,7 @@ public class UploadToFireBaseFragment extends DialogFragment{
     }
 
 
-    private void uploadBytes(Uri picUri,String id) {
+    private void uploadBytes(Uri picUri, final String id) {
 
 
         if (picUri != null) {
@@ -170,8 +184,13 @@ public class UploadToFireBaseFragment extends DialogFragment{
             Bitmap bitmap = BitmapUtil.UriToBitmap(getContext(), picUri);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
+            try {
+                BitmapUtil.rotateImageIfRequired(bitmap,getContext(),picUri);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             byte[] data = baos.toByteArray();
-            final String pic_id  = UUID.randomUUID().toString() +".jpg";
+            final String pic_id = UUID.randomUUID().toString() + ".jpg";
 
 
             StorageReference fileRef = FirebaseStorage.getInstance().getReference().child("images").child(id).child(pic_id);
@@ -183,8 +202,7 @@ public class UploadToFireBaseFragment extends DialogFragment{
 
                             Log.i(TAG, "Uri: " + taskSnapshot.getDownloadUrl());
                             Log.i(TAG, "Name: " + taskSnapshot.getMetadata().getName());
-                            writeNewImageInfoToDB(pic_id,taskSnapshot.getDownloadUrl().toString());
-                            mListener.onFinishDialog(taskSnapshot.getDownloadUrl().toString());
+                            isEventExist(id, pic_id, taskSnapshot.getDownloadUrl().toString());
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -220,9 +238,29 @@ public class UploadToFireBaseFragment extends DialogFragment{
         }
     }
 
-    private void writeNewImageInfoToDB(String title,String url) {
+    private void isEventExist(final String id, final String title, final String url) {
+        mFirebaseEventReference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.hasChild(id))
+                    writeNewImageInfoToDB(title, url);
+                else
+                    mListener.onFinishDialog("");
+
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void writeNewImageInfoToDB(String title, String url) {
         String key = mFirebaseEventPicReference.push().getKey();
-        mFirebaseEventPicReference.child(key).setValue(new EventPhotos(url,title));
+        mFirebaseEventPicReference.child(key).setValue(new EventPhotos(url, title));
+        mListener.onFinishDialog(url);
     }
 
 }
