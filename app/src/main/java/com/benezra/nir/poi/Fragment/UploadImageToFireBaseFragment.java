@@ -183,11 +183,23 @@ public class UploadImageToFireBaseFragment extends DialogFragment {
 
             Bitmap bitmap = BitmapUtil.UriToBitmap(getContext(), picUri);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
+
             try {
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
                 BitmapUtil.rotateImageIfRequired(bitmap,getContext(),picUri);
-            } catch (IOException e) {
+
+            }
+            catch (NullPointerException e){
+                mListener.onErrorDialog("failed to load image");
                 e.printStackTrace();
+                dismiss();
+                return;
+            }
+            catch (IOException e) {
+                mListener.onErrorDialog("failed to load image");
+                e.printStackTrace();
+                dismiss();
+                return;
             }
             byte[] data = baos.toByteArray();
             final String pic_id = UUID.randomUUID().toString() + ".jpg";

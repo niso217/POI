@@ -451,7 +451,7 @@ public class CreateEventActivity extends AppCompatActivity
 
 
     private void initImageRecycleView() {
-        mLinearLayoutManager = new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, false);
+        mLinearLayoutManager = new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.HORIZONTAL, true);
         mPicturesRecyclerView.setLayoutManager(mLinearLayoutManager);
         mPicturesRecyclerView.setNestedScrollingEnabled(false);
         mPicturesRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mPicturesRecyclerView, this));
