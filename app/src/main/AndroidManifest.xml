@@ -71,9 +71,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Activity.ChatActivity"
-            android:theme="@style/AppTheme.NoTitle"></activity>
-        <activity
             android:name=".Activity.CreateEventActivity"
             android:parentActivityName=".Activity.MainActivity"
             android:theme="@style/AppTheme.NoTitle">
