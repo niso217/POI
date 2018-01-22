@@ -101,7 +101,7 @@ public class EventByInterestMapFragment extends Fragment implements
         mBoundsBuilder = new LatLngBounds.Builder();
         mMapStateManager = new MapStateManager(getContext());
 
-        if (savedInstanceState != null){
+        if (savedInstanceState != null) {
             mLastSelectedIndex = savedInstanceState.getInt("index", 0);
             mCameraPosition = mMapStateManager.getSavedCameraPosition();
         }
@@ -265,7 +265,8 @@ public class EventByInterestMapFragment extends Fragment implements
     private void PaintSelectedEvent(Marker marker) {
         if (lastClicked != null)
             lastClicked.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+        if (marker != null)
+            marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
         lastClicked = marker;
     }
 
