@@ -801,7 +801,7 @@ public class MainActivity extends AppCompatActivity
     private void onInviteClicked() {
         Intent intent = new AppInviteInvitation.IntentBuilder(getString(R.string.invitation_title))
                 .setMessage(getString(R.string.invitation_message))
-                // .setDeepLink(Uri.parse(getString(R.string.invitation_deep_link)))
+                 .setDeepLink(Uri.parse(getString(R.string.invitation_deep_link)))
                 .setCustomImage(getUriToResource(R.mipmap.ic_launcher))
                 .setCallToActionText(getString(R.string.invitation_cta))
                 .build();

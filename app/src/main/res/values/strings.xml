@@ -340,7 +340,7 @@ POI will learn about the user day routine and interest in events so it could off
 
     <string name="invitation_title">Share POI with your friends</string>
     <string name="invitation_message">This app is terrific, give it a try!</string>
-    <string name="invitation_deep_link">http://example.com/offer/five_dollar_offer</string>
+    <string name="invitation_deep_link">http://play.google.com/store/apps/details?id=com.benezra.nir.poi</string>
     <string name="invitation_cta">Install!</string>
 
     <string name="deep_link_fmt" formatted="false">Deep Link: %s</string>
